@@ -6,16 +6,16 @@ use App\Http\Controllers\Api\User\Package\UserPackageController;
 use App\Http\Controllers\Api\User\PackageAddon\UserPackageAddonController;
 
 // Load InitialRoutes
-if (file_exists($userRoutes = __DIR__.'InitialRoutes/example.php')) {
+if (file_exists($userRoutes = __DIR__.'/InitialRoutes/example.php')) {
     require $userRoutes;
 }
 
 
-if (file_exists($userRoutes = __DIR__.'InitialRoutes/users.php')) {
+if (file_exists($userRoutes = __DIR__.'/InitialRoutes/users.php')) {
     require $userRoutes;
 }
 
-if (file_exists($adminRoutes = __DIR__.'InitialRoutes/admins.php')) {
+if (file_exists($adminRoutes = __DIR__.'/InitialRoutes/admins.php')) {
     require $adminRoutes;
 }
 

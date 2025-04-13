@@ -12,41 +12,30 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
-        'stripe_customer_id',
-        'profile_picture',
         'password',
+        'phone',
+        'gender',
+        'dob',
+        'religion',
+        'caste',
+        'sub_caste',
+        'marital_status',
+        'height',
+        'disability',
+        'mother_tongue',
+        'profile_created_by',
+        'verified',
+        'profile_completion',
+        'account_status',
         'email_verified_at',
         'email_verification_hash',
         'otp',
         'otp_expires_at',
-
-
-
-        'phone',
-        'business_name',
-        'country',
-        'state',
-        'city',
-        'region',
-        'zip_code',
-        'stripe_customer_id'
-
-
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
@@ -56,21 +45,15 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'otp_expires_at',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'dob' => 'date',
+        'disability' => 'boolean',
+        'verified' => 'boolean',
     ];
 
-    /**
-     * Get the identifier that will be stored in the subject claim of the JWT.
-     *
-     * @return mixed
-     */
+
     public function getJWTIdentifier()
     {
         return $this->getKey();
@@ -88,57 +71,57 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
             'email' => $this->email,
             'email_verified' => !is_null($this->email_verified_at),
         ];
-    }
-
-
-    public function userPackage()
+    }    public function profile()
     {
-        return $this->hasOne(UserPackage::class);
+        return $this->hasOne(Profile::class);
     }
 
-    public function userPackagePackagesHistory()
+    public function partnerPreference()
     {
-        return $this->hasMany(UserPackage::class);
+        return $this->hasOne(PartnerPreference::class);
     }
 
-    public function currentPackage()
+    public function photos()
     {
-        return $this->userPackage ? $this->userPackage->package : null;
+        return $this->hasMany(Photo::class);
     }
 
-    public function hasFeature($feature)
+    public function primaryPhoto()
     {
-        $package = $this->currentPackage();
-        return $package && in_array($feature, $package->features);
+        return $this->hasOne(Photo::class)->where('is_primary', true);
     }
 
-
-    public function saveProfilePicture($file)
+    public function matches()
     {
-        $filePath = uploadFileToS3($file, 'profile_pictures'); // Define the S3 directory
-        $this->profile_picture = $filePath;
-        $this->save();
-
-        return $filePath;
+        return $this->hasMany(UserMatch::class, 'user_id');
     }
 
-    /**
-     * Get all schedules created by the user.
-     */
-    public function schedules()
+    public function matchedUsers()
     {
-        return $this->hasMany(Schedule::class);
+        return $this->hasManyThrough(
+            User::class,
+            UserMatch::class,
+            'user_id',
+            'id',
+            'id',
+            'matched_user_id'
+        );
     }
 
-
-    public function getBusinessNameAttribute($value)
+    public function reverseMatches()
     {
-        return json_decode($value, true) ?? [];
+        return $this->hasMany(UserMatch::class, 'matched_user_id');
     }
 
-    public function setBusinessNameAttribute($value)
+    public function subscriptions()
     {
-        $this->attributes['business_name'] = $value;
+        return $this->hasMany(Subscription::class);
     }
 
+    public function activeSubscription()
+    {
+        return $this->hasOne(Subscription::class)
+            ->where('status', 'Success')
+            ->where('end_date', '>=', now());
+    }
 }

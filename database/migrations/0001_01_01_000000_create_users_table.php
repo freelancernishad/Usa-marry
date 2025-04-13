@@ -16,7 +16,24 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('email_verification_hash')->nullable();
+            $table->string('otp')->nullable(); // Stores the hashed OTP
+            $table->timestamp('otp_expires_at')->nullable(); // Stores the expiration timestamp
             $table->string('password');
+            $table->string('phone')->nullable();
+            $table->enum('gender', ['Male', 'Female', 'Other']);
+            $table->date('dob');
+            $table->string('religion')->nullable();
+            $table->string('caste')->nullable();
+            $table->string('sub_caste')->nullable();
+            $table->string('marital_status')->nullable();
+            $table->decimal('height', 5, 2)->nullable();
+            $table->boolean('disability')->default(false);
+            $table->string('mother_tongue')->nullable();
+            $table->string('profile_created_by')->nullable();
+            $table->boolean('verified')->default(false);
+            $table->integer('profile_completion')->default(0);
+            $table->enum('account_status', ['Active', 'Suspended', 'Deleted'])->default('Active');
             $table->rememberToken();
             $table->timestamps();
         });

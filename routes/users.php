@@ -8,6 +8,7 @@ use App\Http\Controllers\UsaMarry\Api\User\Match\MatchController;
 use App\Http\Controllers\UsaMarry\Api\User\Photo\PhotoController;
 use App\Http\Controllers\UsaMarry\Api\User\Search\SearchController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ProfileController;
+use App\Http\Controllers\UsaMarry\Api\User\Auth\RegistrationController;
 use App\Http\Controllers\UsaMarry\Api\User\Subscription\SubscriptionController;
 use App\Http\Controllers\UsaMarry\Api\User\PartnerPreference\PartnerPreferenceController;
 
@@ -24,8 +25,35 @@ use App\Http\Controllers\UsaMarry\Api\User\PartnerPreference\PartnerPreferenceCo
 |
 */
 
+
+
+Route::post('register/account', [RegistrationController::class, 'accountSignup']);
+
+Route::middleware(AuthenticateUser::class)->group(function () {
+
+
+    Route::post('register/verify-otp', [RegistrationController::class, 'verifyOtp']);
+    Route::post('register/resend-otp', [RegistrationController::class, 'resendOtp']);
+
+    Route::post('register/profile', [RegistrationController::class, 'createProfile']);
+    Route::post('register/personal-info', [RegistrationController::class, 'personalInformation']);
+    Route::post('register/location', [RegistrationController::class, 'locationDetails']);
+    Route::post('register/education-career', [RegistrationController::class, 'educationCareer']);
+    Route::post('register/about', [RegistrationController::class, 'aboutMe']);
+    Route::get('register/completion', [RegistrationController::class, 'getProfileCompletion']);
+});
+
+
+
+
+
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
+
+
+
+
+
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/plans', [SubscriptionController::class, 'plans']);
 

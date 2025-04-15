@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\TokenBlacklist;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
@@ -42,25 +43,69 @@ function validateRequest(array $data, array $rules)
 }
 
 
- function updateProfileCompletion(User $user, $section)
-    {
-        $completion = $user->profile_completion;
+    // The rest of the helper methods remain the same
+function updateProfileCompletion(User $user, $section)
+{
+    $completion = $user->profile_completion;
+    Log::info('Current profile completion: ' . $completion);
+    Log::info('Section to update: ' . $section);
 
-        // Define completion percentages for each section
-        $sections = [
-            'basic_info' => 30,
-            'profile' => 40,
-            'photos' => 20,
-            'partner_preference' => 10
-        ];
+    // Define completion percentages for each section
+    $sections = [
+        'account_signup' => 10,
+        'profile_creation' => 15,
+        'personal_information' => 20,
+        'location_details' => 15,
+        'education_career' => 20,
+        'about_me' => 10,
+        'photos' => 5,
+        'partner_preference' => 5,
+    ];
 
-        if (!isset($sections[$section])) {
-            return;
-        }
+    if (!isset($sections[$section])) {
+        return;
+    }
 
-        // Only add if not already completed
-        if (($completion & $sections[$section]) === 0) {
-            $user->profile_completion += $sections[$section];
-            $user->save();
+    // Calculate the total completion value for all sections up to the current one
+    $totalCompletion = 0;
+    foreach ($sections as $key => $value) {
+        $totalCompletion += $value;
+        if ($key === $section) {
+            break;
         }
     }
+
+    // Only update if the current completion is less than the calculated total
+    if ($completion < $totalCompletion) {
+        $user->profile_completion = $totalCompletion;
+        $user->save();
+        Log::info('Updated profile completion: ' . $user->profile_completion);
+    }
+}
+
+
+
+    function getMissingSections(User $user)
+    {
+        $allSections = [
+            'account_signup' => 10,
+            'profile_creation' => 15,
+            'personal_information' => 20,
+            'location_details' => 15,
+            'education_career' => 20,
+            'about_me' => 10,
+            'photos' => 5,
+            'partner_preference' => 5,
+        ];
+
+        $missing = [];
+
+        foreach ($allSections as $section => $value) {
+            if (($user->profile_completion & $value) === 0) {
+                $missing[] = $section;
+            }
+        }
+
+        return $missing;
+    }
+

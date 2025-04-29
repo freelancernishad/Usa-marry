@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Tymon\JWTAuth\Contracts\JWTSubject;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
@@ -52,6 +53,24 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'disability' => 'boolean',
         'verified' => 'boolean',
     ];
+
+    protected $appends = ['age'];
+
+
+    public function getAgeAttribute()
+    {
+        if (!$this->dob) {
+            return null;
+        }
+
+        $dob = Carbon::parse($this->dob);
+        $now = Carbon::now();
+        $diff = $dob->diff($now);
+
+        return "{$diff->y} years, {$diff->m} months, {$diff->d} days";
+    }
+
+
 
 
     public function getJWTIdentifier()

@@ -14,8 +14,42 @@ class ProfileController extends Controller
     public function show()
     {
         $user = Auth::user()->load(['profile', 'photos', 'partnerPreference']);
-        return response()->json($user);
+    
+        $userData = $user->only([
+            'id', 'name', 'email', 'phone', 'gender', 'dob', 'religion', 'caste',
+            'sub_caste', 'marital_status', 'height', 'disability', 'mother_tongue',
+            'profile_created_by', 'verified', 'profile_completion', 'account_status',
+            'created_at', 'updated_at'
+        ]);
+    
+        $profileFields = [
+            'user_id', 'about', 'highest_degree', 'institution', 'occupation',
+            'annual_income', 'employed_in', 'father_status', 'mother_status',
+            'siblings', 'family_type', 'family_values', 'financial_status', 'diet',
+            'drink', 'smoke', 'country', 'state', 'city', 'resident_status',
+            'has_horoscope', 'rashi', 'nakshatra', 'manglik', 'show_contact', 'visible_to'
+        ];
+    
+        $profileData = [];
+    
+        if ($user->profile) {
+            $profileData = $user->profile->only($profileFields);
+        } else {
+            foreach ($profileFields as $field) {
+                $profileData[$field] = null;
+            }
+        }
+    
+        return response()->json(array_merge(
+            $userData,
+            $profileData,
+            [
+                'photos' => $user->photos ?? [],
+                'partner_preference' => $user->partnerPreference ?? null,
+            ]
+        ));
     }
+    
 
     public function updateBasicInfo(Request $request)
     {
@@ -82,14 +116,14 @@ class ProfileController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        // Update user table fields
+        // Update user basic fields
         $user->update($request->only([
             'name', 'gender', 'dob', 'phone', 'religion',
             'caste', 'sub_caste', 'marital_status', 'height',
             'disability', 'mother_tongue', 'profile_created_by'
         ]));
 
-        // Update or create profile with remaining fields
+        // Update or create the profile
         $profileData = $request->except([
             'name', 'gender', 'dob', 'phone', 'religion',
             'caste', 'sub_caste', 'marital_status', 'height',
@@ -102,7 +136,7 @@ class ProfileController extends Controller
         );
 
         updateProfileCompletion($user, 'basic_info');
-        $user->load('profile'); // Ensure profile is loaded
+        $user->load('profile'); // Reload with profile
 
         $userData = $user->only([
             'id', 'name', 'email', 'phone', 'gender', 'dob', 'religion', 'caste',
@@ -111,24 +145,34 @@ class ProfileController extends Controller
             'created_at', 'updated_at'
         ]);
 
-        $profileData = $user->profile ? $user->profile->only([
+        $profileFields = [
             'user_id', 'about', 'highest_degree', 'institution', 'occupation',
             'annual_income', 'employed_in', 'father_status', 'mother_status',
             'siblings', 'family_type', 'family_values', 'financial_status', 'diet',
             'drink', 'smoke', 'country', 'state', 'city', 'resident_status',
             'has_horoscope', 'rashi', 'nakshatra', 'manglik', 'show_contact', 'visible_to'
-        ]) : null;
+        ];
 
-        return response()->json([
-            'message' => 'Basic info updated successfully',
-            'profile_completion' => $user->profile_completion,
-            'user' => array_merge($userData, [
-            'profile' => $profileData,
-            'photos' => $user->photos ?? [],
-            'partner_preference' => $user->partnerPreference ?? null,
-            ])
-        ]);
+        $profileData = [];
+
+        if ($user->profile) {
+            $profileData = $user->profile->only($profileFields);
+        } else {
+            foreach ($profileFields as $field) {
+                $profileData[$field] = null;
+            }
+        }
+
+        return response()->json(array_merge(
+            $userData,
+            $profileData,
+            [
+                'photos' => $user->photos ?? [],
+                'partner_preference' => $user->partnerPreference ?? null,
+            ]
+        ));
     }
+
 
     public function updateProfile(Request $request)
     {

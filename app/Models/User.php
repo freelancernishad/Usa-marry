@@ -56,7 +56,6 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 
     protected $appends = ['age'];
 
-
     public function getAgeAttribute()
     {
         if (!$this->dob) {
@@ -65,11 +64,16 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 
         $dob = Carbon::parse($this->dob);
         $now = Carbon::now();
-        $diff = $dob->diff($now);
+        $days = $dob->diffInDays($now);
 
-        return "{$diff->y} years, {$diff->m} months, {$diff->d} days";
+        // Define custom rules
+        $years = floor($days / 365);
+        $remainingDays = $days % 365;
+        $months = floor($remainingDays / 30);
+        $days = $remainingDays % 30;
+
+        return "{$years} years, {$months} months, {$days} days";
     }
-
 
 
 

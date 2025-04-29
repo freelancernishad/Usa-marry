@@ -29,15 +29,15 @@ class ProfileController extends Controller
             'phone' => 'nullable|numeric|digits:10',
 
             // Religious and background information
-            'religion' => 'required|string|max:255',
-            'caste' => 'required|string|max:255',
+            'religion' => 'nullable|string|max:255',
+            'caste' => 'nullable|string|max:255',
             'sub_caste' => 'nullable|string|max:255',
-            'marital_status' => 'required|string|in:Never Married,Divorced,Widowed,Awaiting Divorce',
+            'marital_status' => 'nullable|string|in:Never Married,Divorced,Widowed,Awaiting Divorce',
 
             // Physical attributes
-            'height' => 'required|numeric|between:100,250',
+            'height' => 'nullable|numeric|between:100,250',
             'disability' => 'nullable|boolean',
-            'mother_tongue' => 'required|string|max:255',
+            'mother_tongue' => 'nullable|string|max:255',
 
             // Family information
             'father_status' => 'nullable|string|max:255',
@@ -48,21 +48,21 @@ class ProfileController extends Controller
             'financial_status' => 'nullable|string|in:Affluent,Upper Middle Class,Middle Class,Lower Middle Class',
 
             // Lifestyle
-            'diet' => 'required|string|in:Vegetarian,Eggetarian,Non-Vegetarian,Vegan',
-            'drink' => 'required|string|in:No,Occasionally,Yes',
-            'smoke' => 'required|string|in:No,Occasionally,Yes',
+            'diet' => 'nullable|string|in:Vegetarian,Eggetarian,Non-Vegetarian,Vegan',
+            'drink' => 'nullable|string|in:No,Occasionally,Yes',
+            'smoke' => 'nullable|string|in:No,Occasionally,Yes',
 
             // Education and career
-            'highest_degree' => 'required|string|max:255',
+            'highest_degree' => 'nullable|string|max:255',
             'institution' => 'nullable|string|max:255',
-            'occupation' => 'required|string|max:255',
+            'occupation' => 'nullable|string|max:255',
             'annual_income' => 'nullable|string|max:255',
             'employed_in' => 'nullable|string|in:Government,Private,Business,Self-Employed,Not Working',
 
             // Location
-            'country' => 'required|string|max:255',
-            'state' => 'required|string|max:255',
-            'city' => 'required|string|max:255',
+            'country' => 'nullable|string|max:255',
+            'state' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:255',
             'resident_status' => 'nullable|string|in:Citizen,Permanent Resident,Temporary Resident',
 
             // Horoscope

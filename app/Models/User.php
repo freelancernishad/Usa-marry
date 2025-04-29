@@ -61,19 +61,14 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         if (!$this->dob) {
             return null;
         }
-
+    
         $dob = Carbon::parse($this->dob);
         $now = Carbon::now();
-        $days = $dob->diffInDays($now);
-
-        // Define custom rules
-        $years = floor($days / 365);
-        $remainingDays = $days % 365;
-        $months = floor($remainingDays / 30);
-        $days = $remainingDays % 30;
-
-        return "{$years} years, {$months} months, {$days} days";
+        $diff = $dob->diff($now);
+    
+        return "{$diff->y} years, {$diff->m} months, {$diff->d} days";
     }
+    
 
 
 

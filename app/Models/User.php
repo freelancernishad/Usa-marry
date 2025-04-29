@@ -25,6 +25,12 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'sub_caste',
         'marital_status',
         'height',
+
+        'blood_group',
+        'disability_issue',
+        'family_location',
+        'grew_up_in',
+
         'disability',
         'mother_tongue',
         'profile_created_by',
@@ -61,14 +67,14 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         if (!$this->dob) {
             return null;
         }
-    
+
         $dob = Carbon::parse($this->dob);
         $now = Carbon::now();
         $diff = $dob->diff($now);
-    
+
         return "{$diff->y} years, {$diff->m} months, {$diff->d} days";
     }
-    
+
 
 
 

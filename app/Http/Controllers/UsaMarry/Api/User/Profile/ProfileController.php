@@ -14,7 +14,7 @@ class ProfileController extends Controller
     public function show()
     {
         $user = Auth::user()->load(['profile', 'photos', 'partnerPreference']);
-    
+
         $userData = $user->only([
             'id', 'name', 'email', 'phone', 'gender', 'dob', 'religion', 'caste',
             'sub_caste', 'marital_status', 'height', 'disability', 'mother_tongue',
@@ -22,7 +22,7 @@ class ProfileController extends Controller
             'created_at', 'updated_at'
         ]);
         $userData['age'] = $user->age;
-    
+
         $profileFields = [
             'user_id', 'about', 'highest_degree', 'institution', 'occupation',
             'annual_income', 'employed_in', 'father_status', 'mother_status',
@@ -30,9 +30,9 @@ class ProfileController extends Controller
             'drink', 'smoke', 'country', 'state', 'city', 'resident_status',
             'has_horoscope', 'rashi', 'nakshatra', 'manglik', 'show_contact', 'visible_to'
         ];
-    
+
         $profileData = [];
-    
+
         if ($user->profile) {
             $profileData = $user->profile->only($profileFields);
         } else {
@@ -40,7 +40,7 @@ class ProfileController extends Controller
                 $profileData[$field] = null;
             }
         }
-    
+
         return response()->json(array_merge(
             $userData,
             $profileData,
@@ -50,7 +50,7 @@ class ProfileController extends Controller
             ]
         ));
     }
-    
+
 
     public function updateBasicInfo(Request $request)
     {
@@ -181,26 +181,33 @@ class ProfileController extends Controller
 
         $validator = Validator::make($request->all(), [
             // User model fields
-            'name' => 'sometimes|required|string|max:255',
-            'email' => 'sometimes|required|string|email|max:255|unique:users,email,'.$user->id,
-            'phone' => 'sometimes|required|numeric|digits:10',
-            'gender' => 'sometimes|required|in:Male,Female,Other',
-            'dob' => 'sometimes|required|date|before:-18 years',
-            'religion' => 'sometimes|required|string|max:255',
-            'caste' => 'sometimes|required|string|max:255',
+            'name' => 'sometimes|nullable|string|max:255',
+            'email' => 'sometimes|nullable|string|email|max:255|unique:users,email,'.$user->id,
+            'phone' => 'sometimes|nullable|numeric|digits:10',
+            'gender' => 'sometimes|nullable|in:Male,Female,Other',
+            'dob' => 'sometimes|nullable|date|before:-18 years',
+            'religion' => 'sometimes|nullable|string|max:255',
+            'caste' => 'sometimes|nullable|string|max:255',
             'sub_caste' => 'nullable|string|max:255',
-            'marital_status' => 'sometimes|required|string|in:Never Married,Divorced,Widowed,Awaiting Divorce',
-            'height' => 'sometimes|required|numeric|between:100,250',
+            'marital_status' => 'sometimes|nullable|string|in:Never Married,Divorced,Widowed,Awaiting Divorce',
+            'height' => 'sometimes|nullable|numeric|between:100,250',
+
+            'blood_group' => 'sometimes|nullable|numeric|between:100,250',
+            'disability_issue' => 'sometimes|nullable|numeric|between:100,250',
+            'family_location' => 'sometimes|nullable|numeric|between:100,250',
+            'grew_up_in' => 'sometimes|nullable|numeric|between:100,250',
+
+
             'disability' => 'nullable|boolean',
-            'mother_tongue' => 'sometimes|required|string|max:255',
+            'mother_tongue' => 'sometimes|nullable|string|max:255',
             'profile_created_by' => 'nullable|string|in:Self,Parent,Sibling,Relative,Friend',
             'account_status' => 'sometimes|in:Active,Suspended,Deleted',
 
             // Profile model fields
             'about' => 'nullable|string|max:1000',
-            'highest_degree' => 'sometimes|required|string|max:255',
+            'highest_degree' => 'sometimes|nullable|string|max:255',
             'institution' => 'nullable|string|max:255',
-            'occupation' => 'sometimes|required|string|max:255',
+            'occupation' => 'sometimes|nullable|string|max:255',
             'annual_income' => 'nullable|string|max:255',
             'employed_in' => 'nullable|string|in:Government,Private,Business,Self-Employed,Not Working',
             'father_status' => 'nullable|string|max:255',
@@ -209,12 +216,12 @@ class ProfileController extends Controller
             'family_type' => 'nullable|string|in:Nuclear,Joint,Other',
             'family_values' => 'nullable|string|in:Traditional,Moderate,Liberal',
             'financial_status' => 'nullable|string|in:Affluent,Upper Middle Class,Middle Class,Lower Middle Class',
-            'diet' => 'sometimes|required|string|in:Vegetarian,Eggetarian,Non-Vegetarian,Vegan',
-            'drink' => 'sometimes|required|string|in:No,Occasionally,Yes',
-            'smoke' => 'sometimes|required|string|in:No,Occasionally,Yes',
-            'country' => 'sometimes|required|string|max:255',
-            'state' => 'sometimes|required|string|max:255',
-            'city' => 'sometimes|required|string|max:255',
+            'diet' => 'sometimes|nullable|string|in:Vegetarian,Eggetarian,Non-Vegetarian,Vegan',
+            'drink' => 'sometimes|nullable|string|in:No,Occasionally,Yes',
+            'smoke' => 'sometimes|nullable|string|in:No,Occasionally,Yes',
+            'country' => 'sometimes|nullable|string|max:255',
+            'state' => 'sometimes|nullable|string|max:255',
+            'city' => 'sometimes|nullable|string|max:255',
             'resident_status' => 'nullable|string|in:Citizen,Permanent Resident,Temporary Resident',
             'has_horoscope' => 'nullable|boolean',
             'rashi' => 'nullable|string|max:255',
@@ -242,7 +249,7 @@ class ProfileController extends Controller
         // Update profile fields
         $profileFields = $request->except([
             'name', 'email', 'phone', 'gender', 'dob', 'religion', 'caste',
-            'sub_caste', 'marital_status', 'height', 'disability', 'mother_tongue',
+            'sub_caste', 'marital_status', 'height', 'blood_group','disability_issue','family_location','grew_up_in', 'disability', 'mother_tongue',
             'profile_created_by', 'account_status', 'password', 'verified',
             'profile_completion', 'email_verified_at', 'email_verification_hash',
             'otp', 'otp_expires_at'

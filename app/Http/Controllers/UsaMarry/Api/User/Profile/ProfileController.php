@@ -21,6 +21,7 @@ class ProfileController extends Controller
             'profile_created_by', 'verified', 'profile_completion', 'account_status',
             'created_at', 'updated_at'
         ]);
+        $userData['age'] = $user->age;
     
         $profileFields = [
             'user_id', 'about', 'highest_degree', 'institution', 'occupation',

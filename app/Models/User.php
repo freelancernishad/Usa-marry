@@ -30,6 +30,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'disability_issue',
         'family_location',
         'grew_up_in',
+        'hobbies',
 
         'disability',
         'mother_tongue',
@@ -58,6 +59,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'dob' => 'date',
         'disability' => 'boolean',
         'verified' => 'boolean',
+        'hobbies' => 'array',
     ];
 
     protected $appends = ['age'];

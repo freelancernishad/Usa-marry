@@ -17,7 +17,11 @@ class ProfileController extends Controller
 
         $userData = $user->only([
             'id', 'name', 'email', 'phone', 'gender', 'dob', 'religion', 'caste',
-            'sub_caste', 'marital_status', 'height', 'disability', 'mother_tongue',
+            'sub_caste', 'marital_status', 'height', 'disability',       'blood_group',
+            'disability_issue',
+            'family_location',
+            'grew_up_in',
+            'hobbies', 'mother_tongue',
             'profile_created_by', 'verified', 'profile_completion', 'account_status',
             'created_at', 'updated_at'
         ]);
@@ -141,7 +145,11 @@ class ProfileController extends Controller
 
         $userData = $user->only([
             'id', 'name', 'email', 'phone', 'gender', 'dob', 'religion', 'caste',
-            'sub_caste', 'marital_status', 'height', 'disability', 'mother_tongue',
+            'sub_caste', 'marital_status', 'height', 'disability',       'blood_group',
+            'disability_issue',
+            'family_location',
+            'grew_up_in',
+            'hobbies', 'mother_tongue',
             'profile_created_by', 'verified', 'profile_completion', 'account_status',
             'created_at', 'updated_at'
         ]);
@@ -197,6 +205,11 @@ class ProfileController extends Controller
             'family_location' => 'sometimes|nullable|numeric|between:100,250',
             'grew_up_in' => 'sometimes|nullable|numeric|between:100,250',
 
+            // Add hobbies field
+            'hobbies' => 'sometimes|nullable|array', // Add validation for hobbies as an array
+            'hobbies.*' => 'string|max:255', // Each hobby should be a string with a max length of 255
+
+
 
             'disability' => 'nullable|boolean',
             'mother_tongue' => 'sometimes|nullable|string|max:255',
@@ -241,6 +254,12 @@ class ProfileController extends Controller
             'sub_caste', 'marital_status', 'height', 'disability', 'mother_tongue',
             'profile_created_by', 'account_status'
         ]);
+
+
+        // If hobbies are provided, update them in the profile
+        if ($request->has('hobbies')) {
+            $userFields['hobbies'] = $request->hobbies;
+        }
 
         if (!empty($userFields)) {
             $user->update($userFields);

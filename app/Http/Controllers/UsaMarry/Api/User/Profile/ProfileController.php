@@ -2,57 +2,24 @@
 
 namespace App\Http\Controllers\UsaMarry\Api\User\Profile;
 
-use App\Models\Profile;
 use App\Models\User;
+use App\Models\Profile;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Controllers\Controller;
 
 class ProfileController extends Controller
 {
+
     public function show()
     {
         $user = Auth::user()->load(['profile', 'photos', 'partnerPreference']);
 
-        $userData = $user->only([
-            'id', 'name', 'email', 'phone', 'gender', 'dob', 'religion', 'caste',
-            'sub_caste', 'marital_status', 'height', 'disability',       'blood_group',
-            'disability_issue',
-            'family_location',
-            'grew_up_in',
-            'hobbies', 'mother_tongue',
-            'profile_created_by', 'verified', 'profile_completion', 'account_status',
-            'created_at', 'updated_at'
-        ]);
-        $userData['age'] = $user->age;
-
-        $profileFields = [
-            'user_id', 'about', 'highest_degree', 'institution', 'occupation',
-            'annual_income', 'employed_in', 'father_status', 'mother_status',
-            'siblings', 'family_type', 'family_values', 'financial_status', 'diet',
-            'drink', 'smoke', 'country', 'state', 'city', 'resident_status',
-            'has_horoscope', 'rashi', 'nakshatra', 'manglik', 'show_contact', 'visible_to'
-        ];
-
-        $profileData = [];
-
-        if ($user->profile) {
-            $profileData = $user->profile->only($profileFields);
-        } else {
-            foreach ($profileFields as $field) {
-                $profileData[$field] = null;
-            }
-        }
-
-        return response()->json(array_merge(
-            $userData,
-            $profileData,
-            [
-                'photos' => $user->photos ?? [],
-                'partner_preference' => $user->partnerPreference ?? null,
-            ]
-        ));
+        // Using UserResource to transform the data
+        $user = new UserResource($user);
+        return response()->json($user);
     }
 
 
@@ -143,43 +110,15 @@ class ProfileController extends Controller
         updateProfileCompletion($user, 'basic_info');
         $user->load('profile'); // Reload with profile
 
-        $userData = $user->only([
-            'id', 'name', 'email', 'phone', 'gender', 'dob', 'religion', 'caste',
-            'sub_caste', 'marital_status', 'height', 'disability',       'blood_group',
-            'disability_issue',
-            'family_location',
-            'grew_up_in',
-            'hobbies', 'mother_tongue',
-            'profile_created_by', 'verified', 'profile_completion', 'account_status',
-            'created_at', 'updated_at'
+
+
+
+        return response()->json([
+            'message' => 'Basic info updated successfully',
+            'profile_completion' => $user->profile_completion,
+            'user' =>  new UserResource($user)
         ]);
 
-        $profileFields = [
-            'user_id', 'about', 'highest_degree', 'institution', 'occupation',
-            'annual_income', 'employed_in', 'father_status', 'mother_status',
-            'siblings', 'family_type', 'family_values', 'financial_status', 'diet',
-            'drink', 'smoke', 'country', 'state', 'city', 'resident_status',
-            'has_horoscope', 'rashi', 'nakshatra', 'manglik', 'show_contact', 'visible_to'
-        ];
-
-        $profileData = [];
-
-        if ($user->profile) {
-            $profileData = $user->profile->only($profileFields);
-        } else {
-            foreach ($profileFields as $field) {
-                $profileData[$field] = null;
-            }
-        }
-
-        return response()->json(array_merge(
-            $userData,
-            $profileData,
-            [
-                'photos' => $user->photos ?? [],
-                'partner_preference' => $user->partnerPreference ?? null,
-            ]
-        ));
     }
 
 
@@ -281,11 +220,13 @@ class ProfileController extends Controller
 
         updateProfileCompletion($user, 'profile');
 
+
+
         return response()->json([
             'message' => 'Profile updated successfully',
             'profile_completion' => $user->profile_completion,
-            'user' => $user,
-            'profile' => $profile
+            'user' =>  new UserResource($user)
+
         ]);
     }
 

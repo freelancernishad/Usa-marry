@@ -130,9 +130,9 @@ class ProfileController extends Controller
             // User model fields
             'name' => 'sometimes|nullable|string|max:255',
             'email' => 'sometimes|nullable|string|email|max:255|unique:users,email,'.$user->id,
-            'phone' => 'sometimes|nullable|numeric|digits:10',
+            'phone' => 'sometimes|nullable|numeric',
             'gender' => 'sometimes|nullable|in:Male,Female,Other',
-            'dob' => 'sometimes|nullable|date|before:-18 years',
+            'dob' => 'sometimes|nullable|date',
             'religion' => 'sometimes|nullable|string|max:255',
             'caste' => 'sometimes|nullable|string|max:255',
             'sub_caste' => 'nullable|string|max:255',
@@ -153,7 +153,7 @@ class ProfileController extends Controller
             'disability' => 'nullable|boolean',
             'mother_tongue' => 'sometimes|nullable|string|max:255',
             'profile_created_by' => 'nullable|string|in:Self,Parent,Sibling,Relative,Friend',
-            'account_status' => 'sometimes|in:Active,Suspended,Deleted',
+            // 'account_status' => 'sometimes|in:Active,Suspended,Deleted',
 
             // Profile model fields
             'about' => 'nullable|string|max:1000',
@@ -191,7 +191,7 @@ class ProfileController extends Controller
         $userFields = $request->only([
             'name', 'email', 'phone', 'gender', 'dob', 'religion', 'caste',
             'sub_caste', 'marital_status', 'height', 'disability', 'mother_tongue',
-            'profile_created_by', 'account_status'
+            'profile_created_by',
         ]);
 
 

@@ -31,8 +31,8 @@ class ProfileController extends Controller
             // Required personal details
             'name' => 'nullable|string|max:255',
             'gender' => 'nullable|in:Male,Female,Other',
-            'dob' => 'nullable|date|before:-18 years',
-            'phone' => 'nullable|numeric|digits:10',
+            'dob' => 'nullable|date',
+            'phone' => 'nullable|numeric',
 
             // Religious and background information
             'religion' => 'nullable|string|max:255',
@@ -85,7 +85,7 @@ class ProfileController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json(['errors' => $validator->errors()], 400);
         }
 
         // Update user basic fields
@@ -184,7 +184,7 @@ class ProfileController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json($validator->errors(), 422);
+            return response()->json(['errors' => $validator->errors()], 400);
         }
 
         // Update user fields

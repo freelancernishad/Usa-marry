@@ -139,7 +139,7 @@ class ProfileController extends Controller
             'marital_status' => 'sometimes|nullable|string|in:Never Married,Divorced,Widowed,Awaiting Divorce',
             'height' => 'sometimes|nullable|numeric|between:100,250',
 
-            'blood_group' => 'sometimes|nullable|numeric|between:100,250',
+            'blood_group' => 'sometimes|nullable|string|in:A+,A-,B+,B-,O+,O-,AB+,AB-',
             'disability_issue' => 'sometimes|nullable|numeric|between:100,250',
             'family_location' => 'sometimes|nullable|numeric|between:100,250',
             'grew_up_in' => 'sometimes|nullable|numeric|between:100,250',

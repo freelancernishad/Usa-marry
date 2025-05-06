@@ -87,6 +87,15 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+
+
+
+        if($request->access_token){
+
+            return handleGoogleAuth($request);
+        }
+
+
         $credentials = $request->only('email', 'password');
 
         try {

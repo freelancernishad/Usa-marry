@@ -13,7 +13,6 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 function handleGoogleAuth(Request $request)
 {
-    // Validate the access token
     $validator = Validator::make($request->all(), [
         'access_token' => 'required|string',
     ]);
@@ -23,7 +22,6 @@ function handleGoogleAuth(Request $request)
     }
 
     try {
-        // Fetch user data from Google API
         $response = Http::get('https://www.googleapis.com/oauth2/v3/userinfo', [
             'access_token' => $request->access_token,
         ]);
@@ -39,39 +37,40 @@ function handleGoogleAuth(Request $request)
         $user = User::where('email', $userData['email'])->first();
 
         if (!$user) {
-            // Register the user if they don't exist
             $user = User::create([
                 'name' => $userData['name'] ?? explode('@', $userData['email'])[0],
                 'email' => $userData['email'],
-                'password' => Hash::make(Str::random(16)), // Generate a random password
+                'password' => Hash::make(Str::random(16)),
                 'email_verified_at' => now(),
             ]);
-        }else{
-            $user->update(['email_verified_at'=> now()]);
+        } else {
+            $user->update(['email_verified_at' => now()]);
         }
 
-        // Authenticate the user
         Auth::login($user);
 
-        // Custom payload data
-        $payload = [
-            'email' => $user->email,
-            'name' => $user->name,
-            'category' => $user->category ?? 'default', // Assuming category might not be set for Google users
-            'email_verified' => $user->hasVerifiedEmail(),
-        ];
-
         try {
-            // Generate a JWT token with custom claims
             $token = JWTAuth::fromUser($user, ['guard' => 'user']);
         } catch (JWTException $e) {
             return response()->json(['error' => 'Could not create token'], 500);
         }
 
         return response()->json([
-            'token' => $token,
-            'user' => $payload,
-        ], 200);
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'gender' => $user->gender,
+                'dob' => $user->dob,
+                'phone' => $user->phone,
+                'email_verified' => $user->hasVerifiedEmail(),
+            ],
+            'profile_completion' => $user->profile_completion,
+            'message' => 'Login successful',
+        ]);
+
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
@@ -80,3 +79,4 @@ function handleGoogleAuth(Request $request)
         ], 500);
     }
 }
+

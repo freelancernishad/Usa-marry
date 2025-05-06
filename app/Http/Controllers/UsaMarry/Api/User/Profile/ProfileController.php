@@ -140,9 +140,9 @@ class ProfileController extends Controller
             'height' => 'sometimes|nullable|numeric|between:100,250',
 
             'blood_group' => 'sometimes|nullable|string|in:A+,A-,B+,B-,O+,O-,AB+,AB-',
-            'disability_issue' => 'sometimes|nullable|numeric|between:100,250',
-            'family_location' => 'sometimes|nullable|numeric|between:100,250',
-            'grew_up_in' => 'sometimes|nullable|numeric|between:100,250',
+            'disability_issue' => 'sometimes|nullable|string|max:255',
+            'family_location' => 'sometimes|nullable|string|max:255',
+            'grew_up_in' => 'sometimes|nullable|string|max:255',
 
             // Add hobbies field
             'hobbies' => 'sometimes|nullable|array', // Add validation for hobbies as an array

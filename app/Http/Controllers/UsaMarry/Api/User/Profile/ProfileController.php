@@ -190,7 +190,7 @@ class ProfileController extends Controller
         // Update user fields
         $userFields = $request->only([
             'name', 'email', 'phone', 'gender', 'dob', 'religion', 'caste',
-            'sub_caste', 'marital_status', 'height', 'disability', 'mother_tongue',
+            'sub_caste', 'marital_status', 'height', 'blood_group','disability_issue','family_location','grew_up_in', 'disability', 'mother_tongue',
             'profile_created_by',
         ]);
 

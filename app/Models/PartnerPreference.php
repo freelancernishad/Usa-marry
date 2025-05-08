@@ -23,6 +23,16 @@ class PartnerPreference extends Model
         'country',
     ];
 
+    protected $casts = [
+        'marital_status' => 'array',
+        'religion' => 'array',
+        'caste' => 'array',
+        'education' => 'array',
+        'occupation' => 'array',
+        'country' => 'array',
+    ];
+
+
     public function user()
     {
         return $this->belongsTo(User::class);

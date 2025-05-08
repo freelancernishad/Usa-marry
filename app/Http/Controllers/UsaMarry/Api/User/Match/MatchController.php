@@ -67,30 +67,30 @@ class MatchController extends Controller
 
             // Religion filter (required)
             if ($prefs->religion) {
-                $query->where('religion', $prefs->religion);
+                $query->whereIn('religion', $prefs->religion); // Handling array filter
 
                 // Caste filter (optional in relaxed mode)
                 if ($strictMode && $prefs->caste) {
-                    $query->where('caste', $prefs->caste);
+                    $query->whereIn('caste', $prefs->caste); // Handling array filter
                 }
             }
 
             // Other filters only in strict mode
             if ($strictMode) {
                 if ($prefs->marital_status) {
-                    $query->where('marital_status', $prefs->marital_status);
+                    $query->whereIn('marital_status', $prefs->marital_status); // Handling array filter
                 }
 
                 if ($prefs->education) {
-                    $query->whereHas('profile', fn($q) => $q->where('highest_degree', $prefs->education));
+                    $query->whereHas('profile', fn($q) => $q->whereIn('highest_degree', $prefs->education)); // Handling array filter
                 }
 
                 if ($prefs->occupation) {
-                    $query->whereHas('profile', fn($q) => $q->where('occupation', $prefs->occupation));
+                    $query->whereHas('profile', fn($q) => $q->whereIn('occupation', $prefs->occupation)); // Handling array filter
                 }
 
                 if ($prefs->country) {
-                    $query->whereHas('profile', fn($q) => $q->where('country', $prefs->country));
+                    $query->whereHas('profile', fn($q) => $q->whereIn('country', $prefs->country)); // Handling array filter
                 }
             }
         }
@@ -102,14 +102,14 @@ class MatchController extends Controller
         // Calculate match score and order by it
         $query->selectRaw('users.*,
             CASE
-                WHEN religion = ? THEN 20 ELSE 0 END +
-            -- Add other scoring criteria here
+                WHEN religion IN (?) THEN 20 ELSE 0 END + -- Add other scoring criteria here
             profile_completion * 0.1 AS match_score',
-            [$user->partnerPreference->religion ?? '']
+            [$user->partnerPreference->religion ?? []]
         )->orderByDesc('match_score');
 
         return $query;
     }
+
 
 
 

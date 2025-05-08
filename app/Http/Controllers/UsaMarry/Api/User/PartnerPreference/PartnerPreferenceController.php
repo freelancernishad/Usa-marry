@@ -24,12 +24,24 @@ class PartnerPreferenceController extends Controller
             'age_max' => 'nullable|integer|min:18|max:99|gte:age_min',
             'height_min' => 'nullable|numeric|between:100,250',
             'height_max' => 'nullable|numeric|between:100,250|gte:height_min',
-            'marital_status' => 'nullable|string|max:255',
-            'religion' => 'nullable|string|max:255',
-            'caste' => 'nullable|string|max:255',
-            'education' => 'nullable|string|max:255',
-            'occupation' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
+
+            'marital_status' => 'nullable|array',
+            'marital_status.*' => 'string|max:255',
+
+            'religion' => 'nullable|array',
+            'religion.*' => 'string|max:255',
+
+            'caste' => 'nullable|array',
+            'caste.*' => 'string|max:255',
+
+            'education' => 'nullable|array',
+            'education.*' => 'string|max:255',
+
+            'occupation' => 'nullable|array',
+            'occupation.*' => 'string|max:255',
+
+            'country' => 'nullable|array',
+            'country.*' => 'string|max:255',
         ]);
 
         $preference = $user->partnerPreference()->updateOrCreate(
@@ -45,4 +57,5 @@ class PartnerPreferenceController extends Controller
             'profile_completion' => $user->profile_completion
         ]);
     }
+
 }

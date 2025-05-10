@@ -16,7 +16,7 @@ class ProfileResource extends JsonResource
     {
         // Fetch user-related data
         $userData = $this->user->only([ // Assuming 'user' relationship is loaded
-            'id', 'name', 'email', 'phone', 'gender', 'dob', 'religion', 'caste',
+            'id', 'name', 'email', 'phone','profile_picture', 'gender', 'dob', 'religion', 'caste',
             'sub_caste', 'marital_status', 'height', 'disability', 'blood_group',
             'disability_issue', 'family_location', 'grew_up_in', 'hobbies', 'mother_tongue',
             'profile_created_by', 'verified', 'profile_completion', 'account_status',

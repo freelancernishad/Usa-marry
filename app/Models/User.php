@@ -62,7 +62,13 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'hobbies' => 'array',
     ];
 
-    protected $appends = ['age'];
+    protected $appends = ['age', 'profile_picture'];
+
+    public function getProfilePictureAttribute()
+    {
+        return $this->primaryPhoto ? url("files/".$this->primaryPhoto->path) : null;
+    }
+
 
     public function getAgeAttribute()
     {

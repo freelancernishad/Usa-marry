@@ -96,6 +96,22 @@ class ApiResponse
             return $responseData;
         }
 
+
+                   // Check if the response contains a token
+
+        // Check if the response has exactly 4 elements
+        if (count($responseData) >= 4) {
+            // Remove 'success' and 'message' keys if they exist
+            $filteredData = array_filter($responseData, function ($key) {
+                return !in_array($key, ['success', 'message']);
+            }, ARRAY_FILTER_USE_KEY);
+
+            return $filteredData;
+        }
+
+
+
+
         if (isset($responseData['success'], $responseData['message']) && count($responseData) === 2) {
             return [];
         }

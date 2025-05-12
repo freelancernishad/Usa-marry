@@ -92,7 +92,7 @@ class ApiResponse
             return $responseData;
         }
 
-        if (isset($responseData['token']) || isset($responseData['id'])) {
+        if (isset($responseData['token']) || isset($responseData['access_token']) || isset($responseData['id'])) {
             return $responseData;
         }
 

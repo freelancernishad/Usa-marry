@@ -66,7 +66,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 
     public function getProfilePictureAttribute()
     {
-        return $this->primaryPhoto ? url("files/".$this->primaryPhoto->path) : null;
+        return $this->primaryPhoto ? $this->primaryPhoto->path : null;
     }
 
 

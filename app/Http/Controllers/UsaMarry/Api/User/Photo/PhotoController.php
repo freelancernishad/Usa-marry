@@ -72,8 +72,6 @@ class PhotoController extends Controller
     public function destroy(Photo $photo)
     {
         $user = Auth::guard('api')->user() ?? Auth::user();
-        Log::info($photo);
-        Log::info($user);
         if ($photo->user_id != $user?->id) {
             return response()->json([
             'message' => "Unauthorized: User ID mismatch. photo_user_id: {$photo->user_id}, request_user_id: {$user?->id}"

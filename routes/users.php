@@ -77,7 +77,7 @@ Route::middleware(AuthenticateUser::class)->group(function () {
         Route::get('/', [PhotoController::class, 'index']);
         Route::post('/', [PhotoController::class, 'store']);
         Route::put('/{photo}/primary', [PhotoController::class, 'setPrimary']);
-        Route::delete('delete/{photo}', [PhotoController::class, 'destroy']);
+        Route::delete('/{photo}', [PhotoController::class, 'destroy']);
     });
 
     // Partner Preference routes

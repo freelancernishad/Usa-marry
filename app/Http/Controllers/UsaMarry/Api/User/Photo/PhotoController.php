@@ -70,7 +70,8 @@ class PhotoController extends Controller
 
     public function destroy(Photo $photo)
     {
-        if ($photo->user_id !== Auth::id()) {
+        $user = Auth::guard('api')->user() ?? Auth::user();
+        if ($photo->user_id !== $user?->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

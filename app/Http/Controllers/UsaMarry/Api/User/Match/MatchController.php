@@ -30,85 +30,84 @@ class MatchController extends Controller
         return response()->json($matches);
     }
 
-    private function findPotentialMatches(User $user, bool $strictMode = true)
-    {
-        $oppositeGender = $user->gender === 'Male' ? 'Female' : 'Male';
+   private function findPotentialMatches(User $user, bool $strictMode = true)
+{
+    $oppositeGender = $user->gender === 'Male' ? 'Female' : 'Male';
 
-        $query = User::where('gender', $oppositeGender)
-            ->where('account_status', 'Active')
-            ->where('id', '!=', $user->id);
+    $query = User::query()
+        ->where('gender', $oppositeGender)
+        ->where('account_status', 'Active')
+        ->where('id', '!=', $user->id);
 
-        // Apply partner preferences if they exist
-        if ($user->partnerPreference) {
-            $prefs = $user->partnerPreference;
+    if ($user->partnerPreference) {
+        $prefs = $user->partnerPreference;
 
-            // Age filter (less strict in relaxed mode)
-            if ($prefs->age_min || $prefs->age_max) {
-                $minAge = $prefs->age_min ?? 18;
-                $maxAge = $prefs->age_max ?? 99;
+        // Age filter
+        if ($prefs->age_min || $prefs->age_max) {
+            $minAge = $prefs->age_min ?? 18;
+            $maxAge = $prefs->age_max ?? 99;
 
-                if ($strictMode) {
-                    $query->whereRaw("TIMESTAMPDIFF(YEAR, dob, CURDATE()) BETWEEN ? AND ?", [$minAge, $maxAge]);
-                } else {
-                    // Allow 5 years flexibility in relaxed mode
-                    $query->whereRaw(
-                        "TIMESTAMPDIFF(YEAR, dob, CURDATE()) BETWEEN ? AND ?",
-                        [max(18, $minAge - 5), $maxAge + 5]
-                    );
-                }
-            }
-
-            // Height filter (optional in relaxed mode)
-            if ($strictMode && ($prefs->height_min || $prefs->height_max)) {
-                $minHeight = $prefs->height_min ?? 100;
-                $maxHeight = $prefs->height_max ?? 250;
-                $query->whereBetween('height', [$minHeight, $maxHeight]);
-            }
-
-            // Religion filter (required)
-            if ($prefs->religion) {
-                $query->whereIn('religion', $prefs->religion); // Handling array filter
-
-                // Caste filter (optional in relaxed mode)
-                if ($strictMode && $prefs->caste) {
-                    $query->whereIn('caste', $prefs->caste); // Handling array filter
-                }
-            }
-
-            // Other filters only in strict mode
             if ($strictMode) {
-                if ($prefs->marital_status) {
-                    $query->whereIn('marital_status', $prefs->marital_status); // Handling array filter
-                }
-
-                if ($prefs->education) {
-                    $query->whereHas('profile', fn($q) => $q->whereIn('highest_degree', $prefs->education)); // Handling array filter
-                }
-
-                if ($prefs->occupation) {
-                    $query->whereHas('profile', fn($q) => $q->whereIn('occupation', $prefs->occupation)); // Handling array filter
-                }
-
-                if ($prefs->country) {
-                    $query->whereHas('profile', fn($q) => $q->whereIn('country', $prefs->country)); // Handling array filter
-                }
+                $query->whereRaw("TIMESTAMPDIFF(YEAR, dob, CURDATE()) BETWEEN ? AND ?", [$minAge, $maxAge]);
+            } else {
+                $query->whereRaw(
+                    "TIMESTAMPDIFF(YEAR, dob, CURDATE()) BETWEEN ? AND ?",
+                    [max(18, $minAge - 5), $maxAge + 5]
+                );
             }
         }
 
-        // Exclude already matched/rejected users
-        $existingMatches = $user->matches()->pluck('matched_user_id');
-        $query->whereNotIn('id', $existingMatches);
+        // Height filter
+        if ($strictMode && ($prefs->height_min || $prefs->height_max)) {
+            $minHeight = $prefs->height_min ?? 100;
+            $maxHeight = $prefs->height_max ?? 250;
+            $query->whereBetween('height', [$minHeight, $maxHeight]);
+        }
 
-        // Calculate match score and order by it
-        $query->selectRaw('users.*,
-            CASE
-                WHEN religion IN (?) THEN 20 ELSE 0 END + -- Add other scoring criteria here
-            profile_completion * 0.1 AS match_score',
-            [$user->partnerPreference->religion ?? []]
-        )->orderByDesc('match_score');
+        // Religion filter
+        if ($prefs->religion && is_array($prefs->religion)) {
+            $query->whereIn('religion', $prefs->religion);
 
-        return $query;
+            // Caste filter
+            if ($strictMode && $prefs->caste && is_array($prefs->caste)) {
+                $query->whereIn('caste', $prefs->caste);
+            }
+        }
+
+        if ($strictMode) {
+            if ($prefs->marital_status && is_array($prefs->marital_status)) {
+                $query->whereIn('marital_status', $prefs->marital_status);
+            }
+
+            if ($prefs->education && is_array($prefs->education)) {
+                $query->whereHas('profile', fn($q) => $q->whereIn('highest_degree', $prefs->education));
+            }
+
+            if ($prefs->occupation && is_array($prefs->occupation)) {
+                $query->whereHas('profile', fn($q) => $q->whereIn('occupation', $prefs->occupation));
+            }
+
+            if ($prefs->country && is_array($prefs->country)) {
+                $query->whereHas('profile', fn($q) => $q->whereIn('country', $prefs->country));
+            }
+        }
     }
+
+    // Exclude already matched/rejected users
+    $existingMatches = $user->matches()->pluck('matched_user_id');
+    $query->whereNotIn('id', $existingMatches);
+
+    // Calculate match score
+    $religions = $user->partnerPreference->religion ?? [];
+    $query->select('users.*')
+        ->selectRaw(
+            "(CASE WHEN religion IN (" . implode(',', array_fill(0, count($religions), '?')) . ") THEN 20 ELSE 0 END + profile_completion * 0.1) AS match_score",
+            $religions
+        )
+        ->orderByDesc('match_score');
+
+    return $query;
+}
 
 
 
@@ -128,7 +127,7 @@ class MatchController extends Controller
         $user = Auth::user();
 
         // Check if this is a valid potential match
-      return  $isValidMatch = $this->findPotentialMatches($user)
+        $isValidMatch = $this->findPotentialMatches($user)
             ->where('id', $matchedUser->id)
             ->exists();
 

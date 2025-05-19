@@ -214,12 +214,11 @@ class ProfileController extends Controller
         ]);
 
 
-        if (!array_key_exists('has_horoscope', $profileFields)) {
-            $profileFields['has_horoscope'] = 0;
-        }
-        if (!array_key_exists('show_contact', $profileFields)) {
-            $profileFields['show_contact'] = 0;
-        }
+        // Set defaults if not provided or blank
+        $profileFields['has_horoscope'] = $request->filled('has_horoscope') ? $request->has_horoscope : 0;
+        $profileFields['show_contact'] = $request->filled('show_contact') ? $request->show_contact : 0;
+        $profileFields['visible_to'] = $request->filled('visible_to') ? $request->visible_to : 'My Matches';
+
 
 
         $profile = $user->profile()->updateOrCreate(

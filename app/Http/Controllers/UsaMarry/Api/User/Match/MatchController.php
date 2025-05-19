@@ -113,12 +113,22 @@ class MatchController extends Controller
 
 
 
-    public function showMatch(User $matchedUser)
+    public function showMatch($user)
     {
+
+
+         $matchedUser = User::where('id', $user)
+            ->where('account_status', 'Active')
+            ->first();
+        // if (!$matchedUser->id) {
+        //     return response()->json(['message' => 'User not found'], 404);
+        // }
+
+
         $user = Auth::user();
 
         // Check if this is a valid potential match
-        $isValidMatch = $this->findPotentialMatches($user)
+      return  $isValidMatch = $this->findPotentialMatches($user)
             ->where('id', $matchedUser->id)
             ->exists();
 

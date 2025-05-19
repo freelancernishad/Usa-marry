@@ -175,11 +175,11 @@ class ProfileController extends Controller
             'state' => 'sometimes|nullable|string|max:255',
             'city' => 'sometimes|nullable|string|max:255',
             'resident_status' => 'nullable|string|in:Citizen,Permanent Resident,Temporary Resident',
-            'has_horoscope' => 'nullable|boolean',
+
             'rashi' => 'nullable|string|max:255',
             'nakshatra' => 'nullable|string|max:255',
             'manglik' => 'nullable|string|in:Yes,No,Partial',
-            'show_contact' => 'nullable|boolean',
+
             'visible_to' => 'nullable|string|in:All,My Community,My Matches',
         ]);
 
@@ -212,6 +212,15 @@ class ProfileController extends Controller
             'profile_completion', 'email_verified_at', 'email_verification_hash',
             'otp', 'otp_expires_at'
         ]);
+
+
+        if (!array_key_exists('has_horoscope', $profileFields)) {
+            $profileFields['has_horoscope'] = 0;
+        }
+        if (!array_key_exists('show_contact', $profileFields)) {
+            $profileFields['show_contact'] = 0;
+        }
+
 
         $profile = $user->profile()->updateOrCreate(
             ['user_id' => $user->id],

@@ -93,6 +93,16 @@ Route::middleware(AuthenticateUser::class)->group(function () {
         Route::post('/{user}/interest', [MatchController::class, 'expressInterest']);
         Route::post('/{match}/accept', [MatchController::class, 'acceptMatch']);
         Route::post('/{match}/reject', [MatchController::class, 'rejectMatch']);
+
+
+        Route::get('/profile/new', [MatchController::class, 'newMatches']);
+        Route::get('/profile/history', [MatchController::class, 'matchHistory']);
+        Route::get('/profile/today', [MatchController::class, 'todaysMatches']);
+        Route::get('/profile/mine', [MatchController::class, 'myMatches']);
+        Route::get('/profile/near-me', [MatchController::class, 'nearMe']);
+        Route::get('/profile/more', [MatchController::class, 'moreMatches']);
+
+
     });
 
     // Subscription routes

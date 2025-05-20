@@ -324,4 +324,107 @@ class MatchController extends Controller
 
         return response()->json(['message' => 'Match rejected successfully']);
     }
+
+
+    // New Matches, Match History, Today Matches, My Match, Near Me, More Match
+
+
+// ✅ 1. New Matches
+public function newMatches(Request $request)
+{
+    $user = Auth::user();
+    $perPage = $request->per_page ?? 10;
+
+    $matches = $this->findPotentialMatches($user,false)
+        ->where('created_at', '>=', now()->subDays(3)) // Example condition for "new"
+        ->where('id', '!=', $user->id)
+        ->paginate($perPage);
+
+    return response()->json($matches);
+}
+
+
+
+// ✅ 2. Match History (still uses UserMatch and matchedUser)
+public function matchHistory(Request $request)
+{
+    $user = Auth::user();
+    $perPage = $request->per_page ?? 10;
+
+    $history = UserMatch::with(['matchedUser.profile', 'matchedUser.photos'])
+        ->where(function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhere('matched_user_id', $user->id);
+        })
+        ->latest()
+        ->paginate($perPage);
+
+    return response()->json($history);
+}
+
+
+// ✅ 3. Today Matches
+public function todaysMatches(Request $request)
+{
+    $user = Auth::user();
+    $perPage = $request->per_page ?? 10;
+    $today = now()->toDateString();
+
+    $matches = $this->findPotentialMatches($user,false)
+        ->whereDate('created_at', $today)
+        ->where('id', '!=', $user->id)
+        ->paginate($perPage);
+
+    return response()->json($matches);
+}
+
+
+
+// ✅ 4. My Matches
+public function myMatches(Request $request)
+{
+    $user = Auth::user();
+    $perPage = $request->per_page ?? 10;
+
+    $matches = $this->findPotentialMatches($user,false)
+        ->paginate($perPage);
+
+    return response()->json($matches);
+}
+
+
+
+// ✅ 5. Near Me
+public function nearMe(Request $request)
+{
+    $user = Auth::user();
+    $perPage = $request->per_page ?? 10;
+    $location = $user->profile;
+
+    $matches = $this->findPotentialMatches($user,false)
+        ->whereHas('profile', function ($q) use ($location) {
+            $q->where('city', $location->city ?? '')
+              ->orWhere('state', $location->state ?? '')
+              ->orWhere('country', $location->country ?? '');
+        })
+        ->paginate($perPage);
+
+    return response()->json($matches);
+}
+
+
+// ✅ 6. More Matches
+public function moreMatches(Request $request)
+{
+    $perPage = $request->per_page ?? 10;
+
+    $user = Auth::user();
+    $matches = $this->findPotentialMatches($user,false)->paginate($perPage);
+
+    return response()->json($matches);
+}
+
+
+
+
 }

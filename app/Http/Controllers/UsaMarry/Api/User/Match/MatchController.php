@@ -35,6 +35,7 @@ class MatchController extends Controller
     $oppositeGender = $user->gender === 'Male' ? 'Female' : 'Male';
 
     $query = User::query()
+    ->with('photos')
         ->where('gender', $oppositeGender)
         ->where('account_status', 'Active')
         ->where('id', '!=', $user->id);

@@ -112,5 +112,5 @@ Route::middleware(AuthenticateUser::class)->group(function () {
     });
 
     // Search routes
-    Route::get('/search', [SearchController::class, 'search']);
 });
+Route::get('/search', [SearchController::class, 'search']);

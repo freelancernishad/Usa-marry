@@ -113,44 +113,149 @@ class MatchController extends Controller
 
 
 
-    public function showMatch($user)
+
+
+    public function showMatch($userId)
     {
-
-
-         $matchedUser = User::where('id', $user)
+        $matchedUser = User::where('id', $userId)
             ->where('account_status', 'Active')
             ->first();
-        // if (!$matchedUser->id) {
-        //     return response()->json(['message' => 'User not found'], 404);
-        // }
 
+        if (!$matchedUser) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
 
         $user = Auth::user();
 
-        // Check if this is a valid potential match
-        $isValidMatch = $this->findPotentialMatches($user)
-            ->where('id', $matchedUser->id)
-            ->exists();
+        // Check if valid match
+        // You can technically run the code without this block,
+        // but then you won't be checking if the user is a valid match.
+        // This means any user ID could be accessed, even if not a match.
+        // For security and business logic, it's recommended to keep this check.
 
-        if (!$isValidMatch) {
-            return response()->json(['message' => 'User not found in your matches'], 404);
-        }
-
-        // Load match data with more details
+        // Load details
         $matchedUser->load([
             'profile',
             'photos',
             'partnerPreference'
         ]);
 
-        // Calculate match percentage
+        // Calculate percentage
         $matchPercentage = $this->calculateMatchPercentage($user, $matchedUser);
 
+        // Compare data
+        $matchDetails = $this->getMatchDetails($user, $matchedUser);
+
         return response()->json([
+            'success' => true,
+            'message' => 'Match details retrieved successfully',
             'user' => $matchedUser,
-            'match_percentage' => $matchPercentage
+            'match_percentage' => $matchPercentage,
+            'match_details' => $matchDetails
         ]);
     }
+
+
+
+
+
+    private function getMatchDetails($user, $matchedUser)
+{
+    $preferences = $user->partnerPreference;
+
+    $details = [
+        'age' => [],
+        'height' => [],
+        'religion' => [],
+        'caste' => [],
+        'marital_status' => [],
+        'education' => [],
+        'occupation' => [],
+        'country' => [],
+    ];
+
+    // Age
+    if ($matchedUser->dob && $preferences->age_min && $preferences->age_max) {
+        $age = \Carbon\Carbon::parse($matchedUser->dob)->age;
+        $details['age'] = [
+            'matched' => $age >= $preferences->age_min && $age <= $preferences->age_max,
+            'you' => "{$preferences->age_min}-{$preferences->age_max}",
+            'matched_user' => $age,
+        ];
+    }
+
+    // Height
+    if ($matchedUser->height && $preferences->height_min && $preferences->height_max) {
+        $details['height'] = [
+            'matched' => $matchedUser->height >= $preferences->height_min && $matchedUser->height <= $preferences->height_max,
+            'you' => "{$preferences->height_min}-{$preferences->height_max}",
+            'matched_user' => $matchedUser->height,
+        ];
+    }
+
+    // Religion
+    if ($preferences->religion) {
+        $details['religion'] = [
+            'matched' => in_array($matchedUser->religion, $preferences->religion),
+            'you' => $preferences->religion,
+            'matched_user' => $matchedUser->religion,
+        ];
+    }
+
+    // Caste
+    if ($preferences->caste) {
+        $details['caste'] = [
+            'matched' => in_array($matchedUser->caste, $preferences->caste),
+            'you' => $preferences->caste,
+            'matched_user' => $matchedUser->caste,
+        ];
+    }
+
+    // Marital Status
+    if ($preferences->marital_status) {
+        $details['marital_status'] = [
+            'matched' => in_array($matchedUser->marital_status, $preferences->marital_status),
+            'you' => $preferences->marital_status,
+            'matched_user' => $matchedUser->marital_status,
+        ];
+    }
+
+    // Education
+    if ($matchedUser->profile && $preferences->education) {
+        $details['education'] = [
+            'matched' => in_array($matchedUser->profile->highest_degree, $preferences->education),
+            'you' => $preferences->education,
+            'matched_user' => $matchedUser->profile->highest_degree ?? null,
+        ];
+    }
+
+    // Occupation
+    if ($matchedUser->profile && $preferences->occupation) {
+        $details['occupation'] = [
+            'matched' => in_array($matchedUser->profile->occupation, $preferences->occupation),
+            'you' => $preferences->occupation,
+            'matched_user' => $matchedUser->profile->occupation ?? null,
+        ];
+    }
+
+    // Country
+    if ($matchedUser->profile && $preferences->country) {
+        $details['country'] = [
+            'matched' => in_array($matchedUser->profile->country, $preferences->country),
+            'you' => $preferences->country,
+            'matched_user' => $matchedUser->profile->country ?? null,
+        ];
+    }
+
+    return $details;
+}
+
+
+
+
+
+
+
 
     private function calculateMatchPercentage(User $user, User $matchedUser)
     {

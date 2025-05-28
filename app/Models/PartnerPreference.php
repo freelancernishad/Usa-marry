@@ -21,6 +21,10 @@ class PartnerPreference extends Model
         'education',
         'occupation',
         'country',
+        'family_type',
+        'state',
+        'city',
+        'mother_tongue',
     ];
 
     protected $casts = [
@@ -30,8 +34,11 @@ class PartnerPreference extends Model
         'education' => 'array',
         'occupation' => 'array',
         'country' => 'array',
+        'family_type' => 'array',
+        'state' => 'array',
+        'city' => 'array',
+        'mother_tongue' => 'array',
     ];
-
 
     public function user()
     {

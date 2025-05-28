@@ -76,6 +76,12 @@ class MatchController extends Controller
             }
         }
 
+
+
+
+
+
+
         if ($strictMode) {
             if ($prefs->marital_status && is_array($prefs->marital_status)) {
                 $query->whereIn('marital_status', $prefs->marital_status);
@@ -92,6 +98,32 @@ class MatchController extends Controller
             if ($prefs->country && is_array($prefs->country)) {
                 $query->whereHas('profile', fn($q) => $q->whereIn('country', $prefs->country));
             }
+
+
+
+
+            // ✅ Family type filter (Always apply)
+            if ($prefs->family_type && is_array($prefs->family_type)) {
+                $query->whereHas('profile', fn($q) => $q->whereIn('family_type', $prefs->family_type));
+            }
+
+            // ✅ State filter (Always apply)
+            if ($prefs->state && is_array($prefs->state)) {
+                $query->whereHas('profile', fn($q) => $q->whereIn('state', $prefs->state));
+            }
+
+            // ✅ City filter (Always apply)
+            if ($prefs->city && is_array($prefs->city)) {
+                $query->whereHas('profile', fn($q) => $q->whereIn('city', $prefs->city));
+            }
+
+            // ✅ Mother tongue filter (Always apply)
+            if ($prefs->mother_tongue && is_array($prefs->mother_tongue)) {
+                $query->whereHas('profile', fn($q) => $q->whereIn('mother_tongue', $prefs->mother_tongue));
+            }
+
+
+
         }
     }
 
@@ -165,8 +197,7 @@ class MatchController extends Controller
 
 
 
-
-    private function getMatchDetails($user, $matchedUser)
+private function getMatchDetails($user, $matchedUser)
 {
     $preferences = $user->partnerPreference;
 
@@ -179,6 +210,10 @@ class MatchController extends Controller
         'education' => [],
         'occupation' => [],
         'country' => [],
+        'family_type' => [],
+        'state' => [],
+        'city' => [],
+        'mother_tongue' => [],
     ];
 
     // Age
@@ -251,6 +286,42 @@ class MatchController extends Controller
             'matched' => in_array($matchedUser->profile->country, $preferences->country),
             'you' => $preferences->country,
             'matched_user' => $matchedUser->profile->country ?? null,
+        ];
+    }
+
+    // ✅ Family Type
+    if ($matchedUser->profile && $preferences->family_type) {
+        $details['family_type'] = [
+            'matched' => in_array($matchedUser->profile->family_type, $preferences->family_type),
+            'you' => $preferences->family_type,
+            'matched_user' => $matchedUser->profile->family_type ?? null,
+        ];
+    }
+
+    // ✅ State
+    if ($matchedUser->profile && $preferences->state) {
+        $details['state'] = [
+            'matched' => in_array($matchedUser->profile->state, $preferences->state),
+            'you' => $preferences->state,
+            'matched_user' => $matchedUser->profile->state ?? null,
+        ];
+    }
+
+    // ✅ City
+    if ($matchedUser->profile && $preferences->city) {
+        $details['city'] = [
+            'matched' => in_array($matchedUser->profile->city, $preferences->city),
+            'you' => $preferences->city,
+            'matched_user' => $matchedUser->profile->city ?? null,
+        ];
+    }
+
+    // ✅ Mother Tongue
+    if ($matchedUser->profile && $preferences->mother_tongue) {
+        $details['mother_tongue'] = [
+            'matched' => in_array($matchedUser->profile->mother_tongue, $preferences->mother_tongue),
+            'you' => $preferences->mother_tongue,
+            'matched_user' => $matchedUser->profile->mother_tongue ?? null,
         ];
     }
 

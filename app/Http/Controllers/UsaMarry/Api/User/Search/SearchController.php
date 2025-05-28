@@ -14,8 +14,14 @@ class SearchController extends Controller
         $user = Auth::user();
         $perPage = $request->per_page ?? 10;
 
-        // Start with opposite gender
-        $oppositeGender = $user->gender === 'Male' ? 'Female' : 'Male';
+        if ($user) {
+            // Start with opposite gender for authenticated user
+            $oppositeGender = $user->gender === 'Male' ? 'Female' : 'Male';
+        } else {
+            // Use gender from request for guest user, default to 'Female' if not provided
+            $oppositeGender = $request->gender ?? 'Female';
+            $user = (object) ['id' => 0];
+        }
 
         $query = User::where('gender', $oppositeGender)
             ->where('account_status', 'Active')

@@ -5,8 +5,9 @@ namespace App\Http\Controllers\UsaMarry\Api\User\Match;
 use App\Models\User;
 use App\Models\UserMatch;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
+use Illuminate\Support\Facades\Auth;
 
 class MatchController extends Controller
 {
@@ -143,8 +144,14 @@ class MatchController extends Controller
         // Calculate percentage
         $matchPercentage = $this->calculateMatchPercentage($user, $matchedUser);
 
+
         // Compare data
         $matchDetails = $this->getMatchDetails($user, $matchedUser);
+
+
+        $matchedUser = new UserResource($matchedUser);
+
+
 
         return response()->json([
             'success' => true,

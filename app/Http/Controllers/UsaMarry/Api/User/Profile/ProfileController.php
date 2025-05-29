@@ -136,7 +136,7 @@ class ProfileController extends Controller
             'religion' => 'sometimes|nullable|string|max:255',
             'caste' => 'sometimes|nullable|string|max:255',
             'sub_caste' => 'nullable|string|max:255',
-            'marital_status' => 'sometimes|nullable|string|in:Never Married,Divorced,Widowed,Awaiting Divorce',
+            'marital_status' => 'sometimes|nullable|string',
             'height' => 'sometimes|nullable|numeric|between:100,250',
 
             'blood_group' => 'sometimes|nullable|string|in:A+,A-,B+,B-,O+,O-,AB+,AB-',
@@ -161,7 +161,7 @@ class ProfileController extends Controller
             'institution' => 'nullable|string|max:255',
             'occupation' => 'sometimes|nullable|string|max:255',
             'annual_income' => 'nullable|string|max:255',
-            'employed_in' => 'nullable|string|in:Government,Private,Business,Self-Employed,Not Working',
+            'employed_in' => 'nullable|string',
             'father_status' => 'nullable|string|max:255',
             'mother_status' => 'nullable|string|max:255',
             'siblings' => 'nullable|integer|min:0',

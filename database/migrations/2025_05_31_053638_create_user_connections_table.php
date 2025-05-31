@@ -15,7 +15,14 @@ public function up()
         $table->id();
         $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
         $table->foreignId('connected_user_id')->constrained('users')->onDelete('cascade');
-        $table->enum('status', ['pending', 'accepted', 'disconnected'])->default('pending');
+        $table->enum('status', [
+            'pending',
+            'accepted',
+            'disconnected',
+            'blocked',
+            'rejected',
+            'cancelled'
+        ])->default('pending');
         $table->timestamps();
 
         $table->unique(['user_id', 'connected_user_id']);

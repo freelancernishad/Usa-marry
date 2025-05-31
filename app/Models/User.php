@@ -185,17 +185,30 @@ public function connectWithUser($connectedUserId)
                                 ->where('connected_user_id', $connectedUserId)
                                 ->first();
 
-    // If a connection exists, handle different statuses
     if ($existingConnection) {
-        if ($existingConnection->status == 'pending') {
-            return response()->json(['message' => 'Connection request is already pending.'], 400);
-        } elseif ($existingConnection->status == 'accepted') {
-            return response()->json(['message' => 'You are already connected.'], 400);
-        } elseif ($existingConnection->status == 'disconnected') {
-            // Optionally: handle reconnecting a disconnected user
-            $existingConnection->status = 'pending'; // Re-send the request
-            $existingConnection->save();
-            return response()->json(['message' => 'Connection request has been re-sent.'], 200);
+        switch ($existingConnection->status) {
+            case 'pending':
+                return response()->json(['message' => 'Connection request is already pending.'], 400);
+            case 'accepted':
+                return response()->json(['message' => 'You are already connected.'], 400);
+            case 'disconnected':
+                $existingConnection->status = 'pending'; // Re-send the request
+                $existingConnection->save();
+                return response()->json(['message' => 'Connection request has been re-sent.'], 200);
+            case 'blocked':
+                return response()->json(['message' => 'You have blocked this user or have been blocked.'], 400);
+            case 'rejected':
+                // Optionally allow re-sending after rejection
+                $existingConnection->status = 'pending';
+                $existingConnection->save();
+                return response()->json(['message' => 'Connection request has been re-sent after rejection.'], 200);
+            case 'cancelled':
+                // Optionally allow re-sending after cancellation
+                $existingConnection->status = 'pending';
+                $existingConnection->save();
+                return response()->json(['message' => 'Connection request has been re-sent after cancellation.'], 200);
+            default:
+                return response()->json(['message' => 'Unknown connection status.'], 400);
         }
     }
 

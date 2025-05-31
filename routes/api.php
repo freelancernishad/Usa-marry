@@ -41,6 +41,11 @@ if (file_exists($stripeRoutes = __DIR__.'/Gateways/stripe.php')) {
 }
 
 
+if (file_exists($userConnectionRoutes = __DIR__.'/userConnectionRoutes.php')) {
+    require $userConnectionRoutes;
+}
+
+
 
 Route::get('/server-status', [ServerStatusController::class, 'checkStatus']);
 

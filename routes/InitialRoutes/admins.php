@@ -20,18 +20,6 @@ use App\Http\Controllers\Api\Admin\DashboardMetrics\AdminDashboardController;
 use App\Http\Controllers\Api\Admin\SocialMedia\AdminSocialMediaLinkController;
 use App\Http\Controllers\Api\Admin\SupportTicket\AdminSupportTicketApiController;
 
-Route::prefix('auth/admin')->group(function () {
-    Route::post('login', [AdminAuthController::class, 'login'])->name('admin.login');
-    Route::post('register', [AdminAuthController::class, 'register']);
-
-    Route::middleware(AuthenticateAdmin::class)->group(function () { // Applying admin middleware
-        Route::post('logout', [AdminAuthController::class, 'logout']);
-        Route::get('me', [AdminAuthController::class, 'me']);
-        Route::post('/change-password', [AdminAuthController::class, 'changePassword']);
-        Route::get('check-token', [AdminAuthController::class, 'checkToken']);
-
-    });
-});
 
 Route::prefix('admin')->group(function () {
     Route::middleware(AuthenticateAdmin::class)->group(function () { // Applying admin middleware

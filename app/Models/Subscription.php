@@ -11,7 +11,7 @@ class Subscription extends Model
 
     protected $fillable = [
         'user_id',
-        'plan_name',
+        'plan_id',  // Store plan_id instead of plan_name
         'start_date',
         'end_date',
         'amount',
@@ -25,6 +25,12 @@ class Subscription extends Model
         'end_date' => 'date',
         'amount' => 'decimal:2',
     ];
+
+    // Relationship to the Plan model
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class);
+    }
 
     public function user()
     {

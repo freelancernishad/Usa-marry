@@ -13,6 +13,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
+
+    use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response;
+use Stripe\Webhook;
+use Stripe\Checkout\Session as CheckoutSession;
+
 class SubscriptionController extends Controller
 {
     public function __construct()
@@ -98,6 +104,64 @@ class SubscriptionController extends Controller
             'url' => $checkoutSession->url
         ]);
     }
+
+
+
+
+public function webhook(Request $request)
+{
+
+
+
+    $endpointSecret = env('STRIPE_WEBHOOK_SECRET');
+
+    $payload = $request->getContent();
+    $sigHeader = $request->server('HTTP_STRIPE_SIGNATURE');
+
+    try {
+        $event = Webhook::constructEvent($payload, $sigHeader, $endpointSecret);
+    } catch (\UnexpectedValueException $e) {
+        // Invalid payload
+        return response('Invalid payload', 400);
+    } catch (\Stripe\Exception\SignatureVerificationException $e) {
+        // Invalid signature
+        return response('Invalid signature', 400);
+    }
+
+
+   Log::info('Stripe Webhook Event Received', [
+        'type' => $event->type,
+        'data' => $event->data->object,
+    ]);
+    // Handle the event
+    switch ($event->type) {
+        case 'checkout.session.completed':
+            $session = $event->data->object;
+
+            // Get the subscription ID from metadata
+            $subscriptionId = $session->metadata->subscription_id ?? null;
+
+            if ($subscriptionId) {
+                $subscription = Subscription::find($subscriptionId);
+
+                if ($subscription && $subscription->status !== 'Active') {
+                    $subscription->status = 'Active';
+                    $subscription->save();
+                }
+            }
+
+            break;
+
+        // Add more Stripe event cases if needed (e.g., payment_failed, subscription_canceled)
+    }
+
+    return response('Webhook handled', 200);
+}
+
+
+
+
+
 
 
     // Confirm Stripe Payment and update subscription status

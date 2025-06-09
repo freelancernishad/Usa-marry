@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Gateway\Stripe\StripeController;
 use App\Http\Controllers\Api\Global\StripeSubscriptionController;
 use App\Http\Controllers\Api\Gateway\Stripe\StripeWebhookReCallController;
+use App\Http\Controllers\UsaMarry\Api\User\Subscription\SubscriptionController;
 
 
 
@@ -40,3 +41,4 @@ Route::get('get-stripe-invoice/{customerId}', [StripeWebhookReCallController::cl
 Route::get('send-stripe-webhook/{invoiceId}', [StripeWebhookReCallController::class, 'testWebhook']);
 
 
+Route::post('/subscribe/plan/webhook', [SubscriptionController::class, 'webhook'])->name('subscribe.webhook');

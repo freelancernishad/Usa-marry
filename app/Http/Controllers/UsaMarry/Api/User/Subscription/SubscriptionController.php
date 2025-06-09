@@ -155,7 +155,7 @@ public function webhook(Request $request)
         // Add more Stripe event cases if needed (e.g., payment_failed, subscription_canceled)
     }
 
-    return response('Webhook handled', 200);
+    return response()->json(['status' => 'success'], Response::HTTP_OK);
 }
 
 

@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\AuthenticateUser;
 use App\Http\Controllers\UsaMarry\Api\User\Auth\AuthController;
+use App\Http\Controllers\UsaMarry\Api\Admin\Plans\PlanController;
 use App\Http\Controllers\UsaMarry\Api\User\Match\MatchController;
 use App\Http\Controllers\UsaMarry\Api\User\Photo\PhotoController;
 use App\Http\Controllers\UsaMarry\Api\User\Search\SearchController;
@@ -56,6 +57,7 @@ Route::post('/register', [AuthController::class, 'register']);
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/plans', [SubscriptionController::class, 'plans']);
+  Route::get('plan/{id}', [PlanController::class, 'show']); // Get single plan by ID
 
 // Authenticated routes
 Route::middleware(AuthenticateUser::class)->group(function () {

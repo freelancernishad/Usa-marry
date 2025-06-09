@@ -36,6 +36,8 @@ class SubscriptionController extends Controller
         ]);
     }
 
+
+
      // Handle the subscription request
     public function subscribe(Request $request)
     {

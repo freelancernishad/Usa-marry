@@ -144,8 +144,8 @@ public function webhook(Request $request)
             if ($subscriptionId) {
                 $subscription = Subscription::find($subscriptionId);
 
-                if ($subscription && $subscription->status !== 'Active') {
-                    $subscription->status = 'Active';
+                if ($subscription && $subscription->status !== 'Success') {
+                    $subscription->status = 'Success';
                     $subscription->save();
                 }
             }

@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\AuthenticateAdmin;
 use App\Http\Controllers\Api\Auth\Admin\AdminAuthController;
 use App\Http\Controllers\UsaMarry\Api\Admin\Plans\PlanController;
+use App\Http\Controllers\Api\Admin\Blogs\Articles\ArticlesController;
+use App\Http\Controllers\Api\Admin\Blogs\Category\CategoryController;
 
 Route::prefix('auth/admin')->group(function () {
     Route::post('login', [AdminAuthController::class, 'login'])->name('admin.login');
@@ -30,6 +32,39 @@ Route::prefix('admin')->group(function () {
             Route::put('{id}', [PlanController::class, 'update']); // Update existing plan
             Route::delete('{id}', [PlanController::class, 'destroy']); // Delete a plan
         });
+
+
+
+
+        // Admin routes for blog categories
+        Route::group(['prefix' => 'blogs/categories',], function () {
+            Route::get('/', [CategoryController::class, 'index']);
+            Route::post('/', [CategoryController::class, 'store']);
+            Route::get('/{id}', [CategoryController::class, 'show']);
+            Route::put('/{id}', [CategoryController::class, 'update']);
+            Route::delete('/{id}', [CategoryController::class, 'destroy']);
+            Route::get('/all/list', [CategoryController::class, 'list']);
+            Route::put('/reassign-update/{id}', [CategoryController::class, 'reassignAndUpdateParent']);
+        });
+
+
+
+        Route::prefix('blogs/articles')->group(function () {
+            Route::get('/', [ArticlesController::class, 'index']);
+            Route::post('/', [ArticlesController::class, 'store']);
+            Route::get('{id}', [ArticlesController::class, 'show']);
+            Route::post('{id}', [ArticlesController::class, 'update']);
+            Route::delete('{id}', [ArticlesController::class, 'destroy']);
+
+            // Add or remove categories to/from articles
+            Route::post('{id}/add-category', [ArticlesController::class, 'addCategory']);
+            Route::post('{id}/remove-category', [ArticlesController::class, 'removeCategory']);
+
+            Route::get('/by-category/with-child-articles', [ArticlesController::class, 'getArticlesByCategory']);
+
+        });
+
+
 
 
     });

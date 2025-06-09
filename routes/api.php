@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Server\ServerStatusController;
 use App\Http\Controllers\Api\User\Package\UserPackageController;
+use App\Http\Controllers\Api\Admin\Blogs\Articles\ArticlesController;
+use App\Http\Controllers\Api\Admin\Blogs\Category\CategoryController;
 use App\Http\Controllers\Api\User\PackageAddon\UserPackageAddonController;
 
 // Load InitialRoutes
@@ -64,3 +66,27 @@ Route::prefix('global/')->group(function () {
     Route::get('package-addons/', [UserPackageAddonController::class, 'index']); // List all addons
     Route::get('package-addons/{id}', [UserPackageAddonController::class, 'show']); // Get a specific addon
 });
+
+
+
+
+
+        // Admin routes for blog categories
+        Route::group(['prefix' => 'blogs/categories',], function () {
+            Route::get('/', [CategoryController::class, 'index']);
+            Route::get('/{id}', [CategoryController::class, 'show']);
+            Route::get('/all/list', [CategoryController::class, 'list']);
+
+        });
+
+
+
+        Route::prefix('blogs/articles')->group(function () {
+            Route::get('/', [ArticlesController::class, 'index']);
+            Route::get('{id}', [ArticlesController::class, 'show']);
+            Route::get('/by-category/with-child-articles', [ArticlesController::class, 'getArticlesByCategory']);
+
+        });
+
+
+

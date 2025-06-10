@@ -391,6 +391,36 @@ public function getDisconnectedUsers()
 
 
 
+    public function isSubscribedToPlan($planId)
+    {
+        return $this->subscriptions()
+            ->where('plan_id', $planId)
+            ->where('status', 'active')
+            ->exists();
+    }
+
+    public function hasActiveSubscription()
+    {
+        return $this->activeSubscription()->exists();
+    }
+
+
+
+
+    public function getFeatureLimit(string $key): ?int
+    {
+        $subscription = $this->activeSubscription()->with('plan')->first();
+
+        if (!$subscription || !$subscription->plan) {
+            return null;
+        }
+
+        $feature = collect($subscription->plan->features)
+            ->firstWhere('key', $key);
+
+        return $feature['value'] ?? null;
+    }
+
 
 
 }

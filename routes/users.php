@@ -8,6 +8,7 @@ use App\Http\Controllers\UsaMarry\Api\Admin\Plans\PlanController;
 use App\Http\Controllers\UsaMarry\Api\User\Match\MatchController;
 use App\Http\Controllers\UsaMarry\Api\User\Photo\PhotoController;
 use App\Http\Controllers\UsaMarry\Api\User\Search\SearchController;
+use App\Http\Controllers\UsaMarry\Api\User\Profile\ContactController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ProfileController;
 use App\Http\Controllers\UsaMarry\Api\User\Auth\RegistrationController;
 use App\Http\Controllers\UsaMarry\Api\User\Subscription\SubscriptionController;
@@ -73,6 +74,7 @@ Route::middleware(AuthenticateUser::class)->group(function () {
         Route::put('/basic', [ProfileController::class, 'updateBasicInfo']);
         Route::put('/', [ProfileController::class, 'updateProfile']);
     });
+    Route::get('/contacts/{contactId}', [ContactController::class, 'showContact']);
 
     // Photo routes
     Route::prefix('photos')->group(function () {

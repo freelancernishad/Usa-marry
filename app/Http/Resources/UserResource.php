@@ -14,7 +14,30 @@ class UserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        // Fetch user-related data
+        $isOwner = $request->user() && $request->user()->id === $this->id;
+
+        // Masking helpers
+        $maskEmail = function ($email) {
+            $parts = explode('@', $email);
+            if (count($parts) !== 2) return null;
+            $name = $parts[0];
+            $domain = $parts[1];
+
+            return substr($name, 0, 1) . str_repeat('*', strlen($name) - 1) .
+                '@' .
+                substr($domain, 0, 1) . str_repeat('*', strlen($domain) - 2) . substr($domain, -1);
+        };
+
+        $maskPhone = function ($phone) {
+            return substr($phone, 0, 2) . str_repeat('*', strlen($phone) - 4) . substr($phone, -2);
+        };
+
+        $maskAddress = function ($value) {
+            if (!$value) return null;
+            return substr($value, 0, 1) . str_repeat('*', max(strlen($value) - 2, 0)) . substr($value, -1);
+        };
+
+        // Base user data
         $userData = $this->only([
             'id', 'name', 'email', 'phone','profile_picture', 'gender', 'dob', 'religion', 'caste',
             'sub_caste', 'marital_status', 'height', 'disability', 'blood_group',
@@ -23,10 +46,17 @@ class UserResource extends JsonResource
             'created_at', 'updated_at'
         ]);
 
-        // Add the user's age to the response
+        // Mask sensitive data if not the owner
+        if (!$isOwner) {
+            $userData['email'] = $userData['email'] ? $maskEmail($userData['email']) : null;
+            $userData['phone'] = $userData['phone'] ? $maskPhone($userData['phone']) : null;
+            $userData['family_location'] = $userData['family_location'] ? $maskAddress($userData['family_location']) : null;
+        }
+
+        // Age
         $userData['age'] = $this->age;
 
-        // Define profile-related fields
+        // Profile fields
         $profileFields = [
             'user_id', 'about', 'highest_degree', 'institution', 'occupation',
             'annual_income', 'employed_in', 'father_status', 'mother_status',
@@ -35,8 +65,23 @@ class UserResource extends JsonResource
             'has_horoscope', 'rashi', 'nakshatra', 'manglik', 'show_contact', 'visible_to'
         ];
 
-        // Fetch the profile data or set null for missing profile
         $profileData = $this->profile ? $this->profile->only($profileFields) : array_fill_keys($profileFields, null);
+
+        // Mask address fields in profile if not owner
+        if (!$isOwner) {
+            foreach (['country', 'state', 'city'] as $field) {
+                if (!empty($profileData[$field])) {
+                    $profileData[$field] = $maskAddress($profileData[$field]);
+                }
+            }
+        }
+
+
+            // Load activeSubscription only if it's the owner
+             $userData['active_subscription'] = $this->activeSubscription
+                ? new SubscriptionResource($this->activeSubscription)
+                : null;
+
 
         return array_merge(
             $userData,

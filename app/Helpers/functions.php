@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use App\Models\User;
+use App\Models\ContactView;
 use App\Models\TokenBlacklist;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;

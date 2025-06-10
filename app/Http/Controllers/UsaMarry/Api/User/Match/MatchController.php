@@ -523,7 +523,7 @@ public function newMatches(Request $request)
         ->where('created_at', '>=', now()->subDays(3)) // Example condition for "new"
         ->where('id', '!=', $user->id)
         ->paginate($perPage);
-
+    $matches = UserResource::collection($matches);
     return response()->json($matches);
 }
 
@@ -542,7 +542,7 @@ public function matchHistory(Request $request)
         })
         ->latest()
         ->paginate($perPage);
-
+    $history = UserResource::collection($history);
     return response()->json($history);
 }
 
@@ -558,6 +558,7 @@ public function todaysMatches(Request $request)
         ->whereDate('created_at', $today)
         ->where('id', '!=', $user->id)
         ->paginate($perPage);
+    $matches = UserResource::collection($matches);
 
     return response()->json($matches);
 }
@@ -573,6 +574,7 @@ public function myMatches(Request $request)
     $matches = $this->findPotentialMatches($user,false)
         ->paginate($perPage);
 
+    $matches = UserResource::collection($matches);
     return response()->json($matches);
 }
 
@@ -593,6 +595,7 @@ public function nearMe(Request $request)
         })
         ->paginate($perPage);
 
+    $matches = UserResource::collection($matches);
     return response()->json($matches);
 }
 
@@ -604,7 +607,7 @@ public function moreMatches(Request $request)
 
     $user = Auth::user();
     $matches = $this->findPotentialMatches($user,false)->paginate($perPage);
-
+    $matches = UserResource::collection($matches);
     return response()->json($matches);
 }
 

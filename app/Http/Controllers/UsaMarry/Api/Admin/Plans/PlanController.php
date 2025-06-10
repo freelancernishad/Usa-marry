@@ -5,13 +5,14 @@ namespace App\Http\Controllers\UsaMarry\Api\Admin\Plans;
 use App\Models\Plan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
 
 class PlanController extends Controller
 {
     // Fetch all plans (list of plans)
     public function index()
     {
-        $plans = Plan::all(); // Get all plans from the database
+        $plans = Plan::orderBy('created_at', 'desc')->get(); // Get all plans ordered by latest
         return response()->json([
             'plans' => $plans
         ]);
@@ -31,30 +32,38 @@ class PlanController extends Controller
 
     // Create a new plan
     public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string',
-            'duration' => 'required|string',
-            'original_price' => 'required|numeric',
-            'discount_percentage' => 'required|numeric|min:0|max:100',
-            'features' => 'required|array',
-        ]);
+{
+    $validator = Validator::make($request->all(), [
+        'name' => 'required|string',
+        'duration' => 'required|string',
+        'original_price' => 'required|numeric',
+        'monthly_price' => 'nullable|numeric',
+        'discount_percentage' => 'required|numeric|min:0|max:100',
+        'features' => 'required|array',
+        'features.*.key' => 'required|string|exists:features,key',
+        'features.*.value' => 'required|string',
+        'features.*.amount' => 'nullable|numeric',
+    ]);
 
-        // Create a new plan
-        $plan = Plan::create([
-            'name' => $request->name,
-            'duration' => $request->duration,
-            'original_price' => $request->original_price,
-            'monthly_price' => $request->monthly_price,
-            'discount_percentage' => $request->discount_percentage,
-            'features' => $request->features, // Store features as a JSON array
-        ]);
-
-        return response()->json([
-            'message' => 'Plan created successfully',
-            'plan' => $plan
-        ], 201);
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
     }
+
+    $plan = Plan::create([
+        'name' => $request->name,
+        'duration' => $request->duration,
+        'original_price' => $request->original_price,
+        'monthly_price' => $request->monthly_price,
+        'discount_percentage' => $request->discount_percentage,
+        'features' => $request->features, // stored as JSON array
+    ]);
+
+    return response()->json([
+        'message' => 'Plan created successfully',
+        'plan' => $plan,
+    ], 201);
+}
+
 
     // Update an existing plan
     public function update(Request $request, $id)

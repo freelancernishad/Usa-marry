@@ -18,12 +18,14 @@ class Subscription extends Model
         'payment_method',
         'transaction_id',
         'status',
+        'plan_features',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
         'amount' => 'decimal:2',
+        'plan_features' => 'array',
     ];
 
     // Relationship to the Plan model

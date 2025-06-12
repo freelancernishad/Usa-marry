@@ -85,6 +85,7 @@ class SubscriptionController extends Controller
             'payment_method' => 'Stripe Checkout',
             'transaction_id' => $transaction_id,  // Store the generated transaction_id
             'status' => 'Pending', // Set status to "Pending" until payment is confirmed
+            'plan_features' => $plan->features,
         ]);
 
 

@@ -60,7 +60,20 @@ class SubscriptionController extends Controller
         $transaction_id = Str::uuid(); // You can use uniqid() or a custom method here
 
         // Calculate the subscription's end date based on the plan's duration
-        $endDate = $plan->duration === 'Lifetime' ? null : now()->addMonths($plan->duration);
+        // If duration is numeric (e.g., 3), subtract that many months from now; if 'Lifetime', set null
+        // Handle duration like '3 months', '6 months', '1 year', or 'Lifetime'
+        if (is_numeric($plan->duration)) {
+            $endDate = now()->addMonths((int)$plan->duration);
+        } elseif (preg_match('/^(\d+)\s*(month|months)$/i', $plan->duration, $matches)) {
+            $endDate = now()->addMonths((int)$matches[1]);
+        } elseif (preg_match('/^(\d+)\s*(year|years)$/i', $plan->duration, $matches)) {
+            $endDate = now()->addYears((int)$matches[1]);
+        } elseif (strtolower($plan->duration) === 'lifetime') {
+            $endDate = null;
+        } else {
+            // Default: treat as 1 month if not numeric or 'lifetime'
+            $endDate = now()->addMonth();
+        }
 
         // Create a new subscription (but don't confirm payment yet)
         $subscription = Subscription::create([

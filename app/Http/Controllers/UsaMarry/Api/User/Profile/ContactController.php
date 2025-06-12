@@ -31,7 +31,7 @@ public function showContact($contactId)
 
     return response()->json([
         'message' => $result['message'],
-        'connection_status' => $connectionResponse->getData()->message ?? null,
+        'connection_status' => $connectionResponse->message ?? null,
         'contact' => [
             'name'             => $contact->name,
             'email'            => $contact->email,

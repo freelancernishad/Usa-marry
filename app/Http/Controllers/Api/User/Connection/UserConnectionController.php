@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Api\User\Connection;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\UserConnection;
+use App\Helpers\NotificationHelper;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use App\Models\UserConnection;
 
 class UserConnectionController extends Controller
 {
@@ -25,31 +26,53 @@ class UserConnectionController extends Controller
     }
 
     // Accept a connection request
-    public function acceptConnection($connectedUserId, Request $request)
-    {
-        $user = $request->user();
+public function acceptConnection($connectedUserId, Request $request)
+{
+    $user = $request->user();
 
-        // Prevent accepting your own connection request
-        if ($user->id === (int)$connectedUserId) {
-            return response()->json(['message' => 'You cannot accept your own connection request.'], 400);
-        }
-
-        // Find the pending connection where the current user is the recipient
-        $connection = UserConnection::where('user_id', $connectedUserId)
-            ->where('connected_user_id', $user->id)
-            ->where('status', 'pending')
-            ->first();
-
-        if ($connection) {
-            // Accept the connection
-            UserConnection::where('id', $connection->id)
-                ->update(['status' => 'accepted']);
-
-            return response()->json(['message' => 'Connection accepted.']);
-        }
-
-        return response()->json(['message' => 'Connection request not found or already accepted.'], 404);
+    // Prevent accepting your own connection request
+    if ($user->id === (int)$connectedUserId) {
+        return response()->json(['message' => 'You cannot accept your own connection request.'], 400);
     }
+
+    // Find the pending connection where the current user is the recipient
+    $connection = UserConnection::where('user_id', $connectedUserId)
+        ->where('connected_user_id', $user->id)
+        ->where('status', 'pending')
+        ->first();
+
+    if ($connection) {
+        // Accept the connection
+        $connection->status = 'accepted';
+        $connection->save();
+
+        $otherUser = User::find($connectedUserId);
+
+        if ($otherUser) {
+            // Notify the other user (who sent the request)
+            NotificationHelper::sendUserNotification(
+                $otherUser,
+                "{$user->name} has accepted your connection request.",
+                'Connection Accepted',
+                'User',
+                $user->id
+            );
+
+            // Notify current user (who accepted)
+            NotificationHelper::sendUserNotification(
+                $user,
+                "You have accepted the connection request from {$otherUser->name}.",
+                'Connection Accepted',
+                'User',
+                $otherUser->id
+            );
+        }
+
+        return response()->json(['message' => 'Connection accepted.']);
+    }
+
+    return response()->json(['message' => 'Connection request not found or already accepted.'], 404);
+}
 
     // Disconnect from a user (remove the connection)
     public function disconnectFromUser($connectedUserId, Request $request)

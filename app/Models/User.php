@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use App\Helpers\NotificationHelper;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -172,71 +173,168 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         return $this->hasMany(UserConnection::class, 'connected_user_id'); // 'connected_user_id' is the foreign key in the UserConnection model
     }
 
-    // Method to initiate a connection request to another user (like sending a friend request)
 public function connectWithUser($connectedUserId)
 {
-    // Check if the user is trying to send a request to themselves
     if ($this->id == $connectedUserId) {
         return response()->json(['message' => 'You cannot send a connection request to yourself.'], 400);
     }
 
-    // Check if the connection already exists
+    $connectedUser = User::find($connectedUserId);
+    if (!$connectedUser) {
+        return response()->json(['message' => 'User not found.'], 404);
+    }
+
     $existingConnection = $this->connections()
-                                ->where('connected_user_id', $connectedUserId)
-                                ->first();
+                               ->where('connected_user_id', $connectedUserId)
+                               ->first();
 
     if ($existingConnection) {
         switch ($existingConnection->status) {
             case 'pending':
                 return response()->json(['message' => 'Connection request is already pending.'], 400);
+
             case 'accepted':
                 return response()->json(['message' => 'You are already connected.'], 400);
+
             case 'disconnected':
-                $existingConnection->status = 'pending'; // Re-send the request
+                $existingConnection->status = 'pending';
                 $existingConnection->save();
+
+                // Notify both users
+                NotificationHelper::sendUserNotification(
+                    $connectedUser,
+                    "{$this->name} has sent you a connection request again.",
+                    'Connection Request Re-sent',
+                    'User',
+                    $this->id
+                );
+
+                NotificationHelper::sendUserNotification(
+                    $this,
+                    "You have re-sent a connection request to {$connectedUser->name}.",
+                    'Connection Request Re-sent',
+                    'User',
+                    $connectedUser->id
+                );
+
                 return response()->json(['message' => 'Connection request has been re-sent.'], 200);
+
             case 'blocked':
                 return response()->json(['message' => 'You have blocked this user or have been blocked.'], 400);
+
             case 'rejected':
-                // Optionally allow re-sending after rejection
                 $existingConnection->status = 'pending';
                 $existingConnection->save();
+
+                NotificationHelper::sendUserNotification(
+                    $connectedUser,
+                    "{$this->name} has sent you a connection request after rejection.",
+                    'Connection Request Re-sent',
+                    'User',
+                    $this->id
+                );
+
+                NotificationHelper::sendUserNotification(
+                    $this,
+                    "You have re-sent a connection request to {$connectedUser->name} after rejection.",
+                    'Connection Request Re-sent',
+                    'User',
+                    $connectedUser->id
+                );
+
                 return response()->json(['message' => 'Connection request has been re-sent after rejection.'], 200);
+
             case 'cancelled':
-                // Optionally allow re-sending after cancellation
                 $existingConnection->status = 'pending';
                 $existingConnection->save();
+
+                NotificationHelper::sendUserNotification(
+                    $connectedUser,
+                    "{$this->name} has sent you a connection request after cancellation.",
+                    'Connection Request Re-sent',
+                    'User',
+                    $this->id
+                );
+
+                NotificationHelper::sendUserNotification(
+                    $this,
+                    "You have re-sent a connection request to {$connectedUser->name} after cancellation.",
+                    'Connection Request Re-sent',
+                    'User',
+                    $connectedUser->id
+                );
+
                 return response()->json(['message' => 'Connection request has been re-sent after cancellation.'], 200);
+
             default:
                 return response()->json(['message' => 'Unknown connection status.'], 400);
         }
     }
 
-    // If no existing connection, create a new connection request
-    return $this->connections()->create([
+    // Create new connection request
+    $this->connections()->create([
         'connected_user_id' => $connectedUserId,
-        'status' => 'pending', // Default status is 'pending'
+        'status' => 'pending',
     ]);
+
+    // Notify receiver
+    NotificationHelper::sendUserNotification(
+        $connectedUser,
+        "{$this->name} has sent you a connection request.",
+        'New Connection Request',
+        'User',
+        $this->id
+    );
+
+    // Notify sender
+    NotificationHelper::sendUserNotification(
+        $this,
+        "You have sent a connection request to {$connectedUser->name}.",
+        'Connection Request Sent',
+        'User',
+        $connectedUser->id
+    );
+
+    return response()->json(['message' => 'Connection request sent successfully.'], 201);
 }
 
 
+   public function disconnectFromUser($connectedUserId)
+{
+    $connection = $this->connections()
+        ->where('connected_user_id', $connectedUserId)
+        ->first();
 
-    // Method to disconnect from a user (remove connection)
-    public function disconnectFromUser($connectedUserId)
-    {
-        $connection = $this->connections()
-            ->where('user_id', $connectedUserId)
-            ->first();
+    if ($connection) {
+        $connection->status = 'disconnected';
+        $connection->save();
 
-        if ($connection) {
-            $connection->status = 'disconnected'; // Change status to disconnected
-            $connection->save();
-            return $connection;
+        $otherUser = User::find($connectedUserId);
+        if ($otherUser) {
+            // Notify the other user
+            NotificationHelper::sendUserNotification(
+                $otherUser,
+                "{$this->name} has disconnected from you.",
+                'Connection Disconnected',
+                'User',
+                $this->id
+            );
+
+            // Notify yourself
+            NotificationHelper::sendUserNotification(
+                $this,
+                "You have disconnected from {$otherUser->name}.",
+                'Connection Disconnected',
+                'User',
+                $otherUser->id
+            );
         }
 
-        return null; // Connection not found
+        return $connection;
     }
 
+    return null;
+}
 
     // Get the list of all accepted connections for this user
     public function getConnections()

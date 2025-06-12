@@ -61,7 +61,7 @@ public function acceptConnection($connectedUserId, Request $request)
             // Notify current user (who accepted)
             NotificationHelper::sendUserNotification(
                 $user,
-                "You have accepted the connection request from {$otherUser->name}.",
+                "You have successfully accepted the connection request from {$otherUser->name}. You are now connected.",
                 'Connection Accepted',
                 'User',
                 $otherUser->id

@@ -7,6 +7,7 @@ use App\Http\Controllers\UsaMarry\Api\User\Auth\AuthController;
 use App\Http\Controllers\UsaMarry\Api\Admin\Plans\PlanController;
 use App\Http\Controllers\UsaMarry\Api\User\Match\MatchController;
 use App\Http\Controllers\UsaMarry\Api\User\Photo\PhotoController;
+use App\Http\Controllers\Api\Notifications\NotificationController;
 use App\Http\Controllers\UsaMarry\Api\User\Search\SearchController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ContactController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ProfileController;
@@ -114,6 +115,15 @@ Route::middleware(AuthenticateUser::class)->group(function () {
         Route::get('/', [SubscriptionController::class, 'mySubscription']);
         Route::post('/subscribe', [SubscriptionController::class, 'subscribe']);
     });
+
+
+    
+        // Get notifications for the authenticated user or admin
+        Route::get('user/notifications', [NotificationController::class, 'index']);
+
+        // Mark a notification as read
+        Route::post('user/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
+
 
     // Search routes
 });

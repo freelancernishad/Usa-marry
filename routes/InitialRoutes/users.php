@@ -55,11 +55,6 @@ Route::prefix('user')->group(function () {
 
 
 
-        // Get notifications for the authenticated user or admin
-        Route::get('/notifications', [NotificationController::class, 'index']);
-
-        // Mark a notification as read
-        Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
 
 
 

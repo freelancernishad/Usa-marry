@@ -129,10 +129,10 @@
             </tr>
         </table>
 
-        @if (is_array($formatted_plan_features) && count($formatted_plan_features))
+        @if (is_array($subscription->formatted_plan_features) && count($subscription->formatted_plan_features))
             <h3 style="margin-top: 30px;">Included Features:</h3>
             <ul>
-                @foreach ($formatted_plan_features as $feature)
+                @foreach ($subscription->formatted_plan_features as $feature)
                     <li>{{ $feature }}</li>
                 @endforeach
             </ul>

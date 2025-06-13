@@ -2,32 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Plan Purchase Invoice</title>
+    <title>Subscription Invoice - UsaMarry</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f3f4f6;
+            font-family: 'Poppins', sans-serif;
+            background-color: #fdf2f8;
             margin: 0;
             padding: 30px;
         }
         .invoice-box {
             background: #ffffff;
-            max-width: 700px;
+            max-width: 720px;
             margin: auto;
-            padding: 30px 40px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-            border: 1px solid #e5e7eb;
+            padding: 40px 50px;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.08);
+            border: 1px solid #f3dce4;
         }
         h1 {
-            color: #1f2937;
+            color: #be123c;
             text-align: center;
-            margin-bottom: 20px;
-            font-size: 28px;
+            margin-bottom: 28px;
+            font-size: 30px;
+            font-weight: 600;
         }
         p {
             font-size: 16px;
             color: #374151;
+            margin-bottom: 8px;
         }
         table {
             width: 100%;
@@ -35,45 +38,54 @@
             margin-top: 25px;
         }
         th, td {
-            padding: 12px 15px;
+            padding: 14px 18px;
             text-align: left;
-            border: 1px solid #d1d5db;
+            border: 1px solid #f3dce4;
             font-size: 15px;
         }
         th {
-            background-color: #f9fafb;
-            color: #111827;
-            font-weight: 600;
+            background-color: #fef2f2;
+            color: #b91c1c;
+            font-weight: 500;
         }
         .total {
             font-weight: 700;
-            background-color: #e0f2fe;
-            color: #0284c7;
+            background-color: #ffe4e6;
+            color: #9f1239;
         }
         .footer {
-            margin-top: 30px;
+            margin-top: 35px;
             text-align: center;
             font-size: 14px;
             color: #6b7280;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 15px;
+            border-top: 1px solid #f3dce4;
+            padding-top: 18px;
         }
         .btn {
             display: inline-block;
-            background-color: #3b82f6;
+            background-color: #f43f5e;
             color: white;
-            padding: 12px 24px;
-            margin-top: 25px;
-            border-radius: 6px;
+            padding: 12px 30px;
+            margin-top: 30px;
+            border-radius: 8px;
             text-decoration: none;
-            text-align: center;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
         }
         .btn:hover {
-            background-color: #2563eb;
+            background-color: #e11d48;
         }
         ul {
             margin: 0;
-            padding-left: 20px;
+            padding-left: 22px;
+            color: #374151;
+        }
+        ul li {
+            margin-bottom: 6px;
+        }
+        .highlight {
+            font-weight: 600;
+            color: #111827;
         }
     </style>
 </head>
@@ -81,8 +93,8 @@
     <div class="invoice-box">
         <h1>Subscription Invoice</h1>
 
-        <p>Hi {{ $user->name ?? 'User' }},</p>
-        <p>Thank you for purchasing the <strong>{{ $planName }}</strong> plan. Here are your subscription details:</p>
+        <p>Hello <span class="highlight">{{ $user->name ?? 'User' }}</span>,</p>
+        <p>Thank you for purchasing the <strong>{{ $planName }}</strong> plan. Here’s a summary of your subscription:</p>
 
         <table>
             <tr>
@@ -103,9 +115,9 @@
                     <td>{{ $subscription->coupon_code }}</td>
                 </tr>
             @endif
-            <tr>
+            <tr class="total">
                 <th>Final Amount</th>
-                <td><strong>৳{{ number_format($subscription->final_amount, 2) }}</strong></td>
+                <td>৳{{ number_format($subscription->final_amount, 2) }}</td>
             </tr>
             <tr>
                 <th>Payment Method</th>
@@ -130,7 +142,7 @@
         </table>
 
         @if (is_array($subscription->formatted_plan_features) && count($subscription->formatted_plan_features))
-            <h3 style="margin-top: 30px;">Included Features:</h3>
+            <h3 style="margin-top: 30px; color: #9f1239;">Included Features</h3>
             <ul>
                 @foreach ($subscription->formatted_plan_features as $feature)
                     <li>{{ $feature }}</li>
@@ -139,11 +151,11 @@
         @endif
 
         <div style="text-align: center;">
-            <a href="{{ url('/') }}" class="btn">Go to Dashboard</a>
+            <a href="{{ url('/') }}" class="btn">Back to Dashboard</a>
         </div>
 
         <div class="footer">
-            &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
+            &copy; {{ date('Y') }} <strong>{{ config('app.name') }}</strong>. All rights reserved.
         </div>
     </div>
 </body>

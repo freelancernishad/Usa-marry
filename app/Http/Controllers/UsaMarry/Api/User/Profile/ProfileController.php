@@ -4,7 +4,9 @@ namespace App\Http\Controllers\UsaMarry\Api\User\Profile;
 
 use App\Models\User;
 use App\Models\Profile;
+use App\Models\ContactView;
 use Illuminate\Http\Request;
+use App\Models\UserConnection;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
@@ -237,6 +239,58 @@ class ProfileController extends Controller
 
         ]);
     }
+
+public function profileOverview()
+{
+    $user = Auth::user();
+
+    // Invitations
+    $pendingInvitations = UserConnection::where('user_id', $user->id)
+        ->where('status', 'pending')->count();
+
+    $acceptedInvitations = UserConnection::where(function ($query) use ($user) {
+        $query->where('user_id', $user->id);
+            //   ->orWhere('connected_user_id', $user->id);
+    })->where('status', 'accepted')->count();
+
+    // Contacts Viewed
+    $contactsViewedCount = ContactView::where('user_id', $user->id)->count();
+
+    // Unique Profile Visitors
+    $recentVisitorCount = \App\Models\ProfileVisit::where('visited_id', $user->id)
+        ->distinct('visitor_id')
+        ->count('visitor_id');
+
+    // Subscription Info
+    $subscription = $user->activeSubscription;
+    $totalViewContactLimit = 0;
+
+    if ($subscription && is_array($subscription->plan_features)) {
+        $feature = collect($subscription->plan_features)->firstWhere('key', 'view_contact');
+        $totalViewContactLimit = isset($feature['value']) ? (int) $feature['value'] : 0;
+    }
+
+    $remainingBalance = max(0, $totalViewContactLimit - $contactsViewedCount);
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Profile overview fetched successfully',
+        'basic_stats' => [
+            'pending_invitations' => $pendingInvitations,
+            'accepted_invitations' => $acceptedInvitations,
+            'recent_visitors' => $recentVisitorCount,
+        ],
+        'premium_stats' => [
+            'contacts_viewed' => $contactsViewedCount,
+            'contact_view_limit' => $totalViewContactLimit,
+            'contact_view_balance' => $remainingBalance,
+            'chats_initiated' => 0,
+        ],
+    ]);
+}
+
+
+
 
 
 }

@@ -158,6 +158,23 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
             ->where('end_date', '>=', now());
     }
 
+public function getContactViewBalanceAttribute()
+{
+    $subscription = $this->activeSubscription;
+
+    if (!$subscription || !is_array($subscription->plan_features)) {
+        return 0;
+    }
+
+    $viewContactFeature = collect($subscription->plan_features)
+        ->firstWhere('key', 'view_contact');
+
+    $allowed = isset($viewContactFeature['value']) ? (int) $viewContactFeature['value'] : 0;
+
+    $used = \App\Models\ContactView::where('user_id', $this->id)->count();
+
+    return max(0, $allowed - $used);
+}
 
 
 

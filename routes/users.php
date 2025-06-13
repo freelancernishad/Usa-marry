@@ -72,6 +72,7 @@ Route::middleware(AuthenticateUser::class)->group(function () {
 
     // Profile routes
     Route::prefix('profile')->group(function () {
+        Route::get('/overview', [ProfileController::class, 'profileOverview']);
         Route::get('/', [ProfileController::class, 'show']);
         Route::put('/basic', [ProfileController::class, 'updateBasicInfo']);
         Route::put('/', [ProfileController::class, 'updateProfile']);

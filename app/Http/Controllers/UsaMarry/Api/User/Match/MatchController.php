@@ -4,6 +4,7 @@ namespace App\Http\Controllers\UsaMarry\Api\User\Match;
 
 use App\Models\User;
 use App\Models\UserMatch;
+use App\Models\ProfileVisit;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
@@ -165,6 +166,15 @@ class MatchController extends Controller
         // but then you won't be checking if the user is a valid match.
         // This means any user ID could be accessed, even if not a match.
         // For security and business logic, it's recommended to keep this check.
+
+    // ✅ Log the visit
+    if ($user->id !== $matchedUser->id) {
+        ProfileVisit::create([
+            'visitor_id' => $user->id,
+            'visited_id' => $matchedUser->id,
+        ]);
+    }
+
 
         // Load details
         $matchedUser->load([

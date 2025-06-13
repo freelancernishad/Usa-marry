@@ -170,10 +170,7 @@
             </ul>
         @endif
 
-        <!-- CTA -->
-        <div style="text-align: center;">
-            <a href="{{ url('/') }}" class="btn btn-danger text-white">Back to Dashboard</a>
-        </div>
+
 
         <!-- Footer -->
         <div class="footer">

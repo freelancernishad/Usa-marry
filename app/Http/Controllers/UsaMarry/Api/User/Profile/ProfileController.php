@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Resources\SubscriptionResource;
 
 class ProfileController extends Controller
 {
@@ -242,7 +243,7 @@ class ProfileController extends Controller
 
 public function profileOverview()
 {
-    $user = Auth::user();
+    $user = Auth::user()->load('activeSubscription.plan');
 
     // Invitations
     $pendingInvitations = UserConnection::where('user_id', $user->id)
@@ -250,7 +251,7 @@ public function profileOverview()
 
     $acceptedInvitations = UserConnection::where(function ($query) use ($user) {
         $query->where('user_id', $user->id);
-            //   ->orWhere('connected_user_id', $user->id);
+        // ->orWhere('connected_user_id', $user->id);
     })->where('status', 'accepted')->count();
 
     // Contacts Viewed
@@ -286,8 +287,20 @@ public function profileOverview()
             'contact_view_balance' => $remainingBalance,
             'chats_initiated' => 0,
         ],
+        
+        'user' =>  [
+            'id' => $user->id,
+            'name' => $user->name,
+            'profile_picture' => $user->profile_picture,
+            'country' => $user->profile->country,
+            'state' => $user->profile->state,    
+            'city' => $user->profile->city,  
+            'subscription' =>  new SubscriptionResource($user->activeSubscription) ?? null, 
+        ], 
+        // 'subscription' => $subscription, 
     ]);
 }
+
 
 
 

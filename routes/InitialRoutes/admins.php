@@ -43,12 +43,7 @@ Route::prefix('admin')->group(function () {
             Route::delete('/{user}', [UserController::class, 'destroy']); // Delete user
         });
 
-        Route::prefix('coupons')->group(function () {
-            Route::get('/', [CouponController::class, 'index']);
-            Route::post('/', [CouponController::class, 'store']);
-            Route::post('/{id}', [CouponController::class, 'update']);
-            Route::delete('/{id}', [CouponController::class, 'destroy']);
-        });
+
 
         Route::prefix('transitions')->group(function () {
             Route::get('/transaction-history', [AdminPaymentController::class, 'getAllTransactionHistory'])

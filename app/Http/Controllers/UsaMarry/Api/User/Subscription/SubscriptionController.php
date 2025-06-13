@@ -3,20 +3,21 @@
 namespace App\Http\Controllers\UsaMarry\Api\User\Subscription;
 
 use Stripe\Stripe;
+use Stripe\Webhook;
 use App\Models\Plan;
+use App\Models\Coupon;
 use Stripe\PaymentIntent;
 use Illuminate\Support\Str;
 use App\Models\Subscription;
 use Illuminate\Http\Request;
 use Stripe\Checkout\Session;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 
 
     use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
-use Stripe\Webhook;
 use Stripe\Checkout\Session as CheckoutSession;
 
 class SubscriptionController extends Controller
@@ -39,87 +40,126 @@ class SubscriptionController extends Controller
 
 
      // Handle the subscription request
-    public function subscribe(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'plan_id' => 'required|exists:plans,id',
-            'success_url' => 'required',
-            'cancel_url' => 'required',
-        ]);
+public function subscribe(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'plan_id' => 'required|exists:plans,id',
+        'success_url' => 'required',
+        'cancel_url' => 'required',
+        'coupon_code' => 'nullable|string',
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+    $user = Auth::user();
+    $plan = Plan::findOrFail($request->plan_id);
+    $transaction_id = Str::uuid();
+
+    // Calculate end date
+    if (is_numeric($plan->duration)) {
+        $endDate = now()->addMonths((int)$plan->duration);
+    } elseif (preg_match('/^(\d+)\s*(month|months)$/i', $plan->duration, $matches)) {
+        $endDate = now()->addMonths((int)$matches[1]);
+    } elseif (preg_match('/^(\d+)\s*(year|years)$/i', $plan->duration, $matches)) {
+        $endDate = now()->addYears((int)$matches[1]);
+    } elseif (strtolower($plan->duration) === 'lifetime') {
+        $endDate = null;
+    } else {
+        $endDate = now()->addMonth();
+    }
+
+    $originalAmount = $plan->discounted_price;
+    $discountAmount = 0;
+    $discountPercent = 0;
+    $couponCode = null;
+    $finalAmount = $originalAmount;
+
+    // Coupon logic
+    if ($request->filled('coupon_code')) {
+        $coupon = Coupon::where('code', $request->coupon_code)
+            ->where('is_active', true)
+            ->where(function ($query) {
+            $now = now();
+            $query->where(function ($q) use ($now) {
+                $q->whereNull('valid_from')->orWhere('valid_from', '<=', $now);
+            })->where(function ($q) use ($now) {
+                $q->whereNull('valid_until')->orWhere('valid_until', '>=', $now);
+            });
+            })
+            ->first();
+
+        if (
+            !$coupon ||
+            (!is_null($coupon->valid_from) && now()->lt($coupon->valid_from)) ||
+            (!is_null($coupon->valid_until) && now()->gt($coupon->valid_until))
+        ) {
+            return response()->json(['errors' => ['coupon_code' => ['Invalid or expired coupon code.']]], 400);
         }
 
-        $user = Auth::user();
-
-        // Fetch the plan from the database
-        $plan = Plan::findOrFail($request->plan_id);
-
-        // Generate a unique transaction_id (UUID or any custom logic)
-        $transaction_id = Str::uuid(); // You can use uniqid() or a custom method here
-
-        // Calculate the subscription's end date based on the plan's duration
-        // If duration is numeric (e.g., 3), subtract that many months from now; if 'Lifetime', set null
-        // Handle duration like '3 months', '6 months', '1 year', or 'Lifetime'
-        if (is_numeric($plan->duration)) {
-            $endDate = now()->addMonths((int)$plan->duration);
-        } elseif (preg_match('/^(\d+)\s*(month|months)$/i', $plan->duration, $matches)) {
-            $endDate = now()->addMonths((int)$matches[1]);
-        } elseif (preg_match('/^(\d+)\s*(year|years)$/i', $plan->duration, $matches)) {
-            $endDate = now()->addYears((int)$matches[1]);
-        } elseif (strtolower($plan->duration) === 'lifetime') {
-            $endDate = null;
-        } else {
-            // Default: treat as 1 month if not numeric or 'lifetime'
-            $endDate = now()->addMonth();
-        }
-
-        // Create a new subscription (but don't confirm payment yet)
-        $subscription = Subscription::create([
-            'user_id' => $user->id,
-            'plan_id' => $plan->id,
-            'start_date' => now(),
-            'end_date' => $endDate,
-            'amount' => $plan->discounted_price,
-            'payment_method' => 'Stripe Checkout',
-            'transaction_id' => $transaction_id,  // Store the generated transaction_id
-            'status' => 'Pending', // Set status to "Pending" until payment is confirmed
-            'plan_features' => $plan->features,
+        $couponCode = $coupon->code;
+        Log::info('Coupon applied', [
+            'coupon_code' => $couponCode,
+            'coupon_type' => $coupon->type,
+            'value' => $coupon->value,
         ]);
 
+   
+        if ($coupon->type == 'percentage') {
+            $discountPercent = $coupon->value;
+            $discountAmount = ($originalAmount * $discountPercent) / 100;
+        } elseif ($coupon->type == 'fixed') {
+            $discountAmount = $coupon->value;
+            $discountPercent = ($discountAmount / $originalAmount) * 100;
+        }
 
-        $success_url = $request->success_url;
-        $cancel_url = $request->cancel_url;
+        $finalAmount = max($originalAmount - $discountAmount, 0);
+    }
 
-        $checkoutSession = \Stripe\Checkout\Session::create([
-            'payment_method_types' => ['card'],
-            'line_items' => [
-            [
-                'price_data' => [
+    // Create subscription
+    $subscription = Subscription::create([
+        'user_id' => $user->id,
+        'plan_id' => $plan->id,
+        'start_date' => now(),
+        'end_date' => $endDate,
+        'original_amount' => $originalAmount,
+        'final_amount' => $finalAmount,
+        'amount' => $finalAmount,
+        'payment_method' => 'Stripe Checkout',
+        'transaction_id' => $transaction_id,
+        'status' => 'Pending',
+        'plan_features' => $plan->features,
+        'coupon_code' => $couponCode,
+        'discount_amount' => $discountAmount,
+        'discount_percent' => $discountPercent,
+    ]);
+
+    // Stripe Checkout
+    $checkoutSession = \Stripe\Checkout\Session::create([
+        'payment_method_types' => ['card'],
+        'line_items' => [[
+            'price_data' => [
                 'currency' => 'usd',
                 'product_data' => [
                     'name' => $plan->name,
                 ],
-                'unit_amount' => $plan->discounted_price * 100,
-                ],
-                'quantity' => 1,
+                'unit_amount' => $finalAmount * 100,
             ],
-            ],
-            'mode' => 'payment',
-            'success_url' => $success_url . '?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url' => $cancel_url . '?session_id={CHECKOUT_SESSION_ID}',
-            'metadata' => [
-                'subscription_id' => $subscription->id, // Store the subscription ID in metadata
-            ],
+            'quantity' => 1,
+        ]],
+        'mode' => 'payment',
+        'success_url' => $request->success_url . '?session_id={CHECKOUT_SESSION_ID}',
+        'cancel_url' => $request->cancel_url . '?session_id={CHECKOUT_SESSION_ID}',
+        'metadata' => [
+            'subscription_id' => $subscription->id,
+        ],
+    ]);
 
-        ]);
-
-        // Return the checkout session URL
-        return response()->json([
-            'url' => $checkoutSession->url
-        ]);
-    }
+    return response()->json([
+        'url' => $checkoutSession->url
+    ]);
+}
 
 
 

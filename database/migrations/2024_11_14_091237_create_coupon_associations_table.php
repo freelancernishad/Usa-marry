@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('coupon_id');
             $table->unsignedBigInteger('item_id'); // This will store the ID of the user, package, or service
-            $table->enum('item_type', ['user', 'package', 'service']); // The type of item (user, package, or service)
+            $table->enum('item_type', ['user', 'package', 'service', 'plan']); // The type of item (user, package, service, or plan)
             $table->timestamps();
 
             // Foreign key constraints

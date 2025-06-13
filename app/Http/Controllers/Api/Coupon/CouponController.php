@@ -26,7 +26,7 @@ class CouponController extends Controller
             'is_active' => 'required|boolean',
             'associations' => 'nullable|array',
             'associations.*.item_id' => 'required_with:associations|integer',
-            'associations.*.item_type' => 'required_with:associations|in:user,package,service',
+            'associations.*.item_type' => 'required_with:associations|in:user,package,service,plan',
         ]);
 
         if ($validator->fails()) {
@@ -74,7 +74,7 @@ class CouponController extends Controller
             'is_active' => 'boolean',
             'associations' => 'nullable|array',
             'associations.*.item_id' => 'required_with:associations|integer',
-            'associations.*.item_type' => 'required_with:associations|in:user,package,service',
+            'associations.*.item_type' => 'required_with:associations|in:user,package,service,plan',
         ]);
 
         if ($validator->fails()) {
@@ -121,6 +121,7 @@ class CouponController extends Controller
             'user_id' => 'nullable|exists:users,id',
             'package_id' => 'nullable|exists:packages,id',
             'service_id' => 'nullable|exists:services,id',
+            'plan_id' => 'nullable|exists:plans,id',
         ]);
 
         if ($validator->fails()) {
@@ -149,6 +150,9 @@ class CouponController extends Controller
                 }
                 if (isset($validated['service_id'])) {
                     $query->where('item_id', $validated['service_id'])->where('item_type', 'service');
+                }
+                if (isset($validated['plan_id'])) {
+                    $query->where('item_id', $validated['plan_id'])->where('item_type', 'plan');
                 }
             })
             ->exists();
@@ -186,7 +190,7 @@ class CouponController extends Controller
             'coupon_code' => 'required|string|exists:coupons,code',
             'user_id' => 'nullable|exists:users,id',
             'item_id' => 'nullable|integer',
-            'item_type' => 'nullable|in:user,package,service',
+            'item_type' => 'nullable|in:user,package,service,plan',
             'product_amount' => 'required|numeric|min:0',
         ]);
 

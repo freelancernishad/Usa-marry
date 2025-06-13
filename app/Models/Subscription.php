@@ -14,6 +14,11 @@ class Subscription extends Model
         'plan_id',  // Store plan_id instead of plan_name
         'start_date',
         'end_date',
+        'original_amount',
+        'final_amount',
+        'coupon_code',
+        'discount_amount',
+        'discount_percent',
         'amount',
         'payment_method',
         'transaction_id',

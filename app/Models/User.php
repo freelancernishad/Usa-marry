@@ -70,6 +70,10 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         return $this->primaryPhoto ? $this->primaryPhoto->path : null;
     }
 
+    public function profileVisit()
+    {
+        return $this->hasOne(ProfileVisit::class, 'visitor_id')->latestOfMany();
+    }
 
     public function getAgeAttribute()
     {

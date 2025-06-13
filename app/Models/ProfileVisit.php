@@ -17,4 +17,6 @@ class ProfileVisit extends Model
     {
         return $this->belongsTo(User::class, 'visited_id');
     }
+
+
 }

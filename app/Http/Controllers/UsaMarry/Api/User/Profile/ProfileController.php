@@ -301,6 +301,63 @@ public function profileOverview()
     ]);
 }
 
+public function recentStatsOverview()
+{
+    $user = Auth::user();
+
+    // 1. Recent received connection requests (latest 10)
+    $receivedRequests = \App\Models\UserConnection::with('sender.profile')
+        ->where('connected_user_id', $user->id)
+        ->where('status', 'pending')
+        ->latest()
+        ->take(10)
+        ->get()
+        ->map(function ($req) {
+            return [
+                'id' => $req->id,
+                'sender_id' => $req->user_id,
+                'name' => optional($req->sender)->name,
+                'age' => optional($req->sender)->age,
+                'country' => optional($req->sender->profile)->country,
+                'state' => optional($req->sender->profile)->state,
+                'city' => optional($req->sender->profile)->city,
+                'marital_status' => optional($req->sender)->marital_status,
+                'profile_picture' => optional($req->sender)->profile_picture,
+                'sent_at' => $req->created_at->diffForHumans(),
+            ];
+        });
+
+    // 2. Recent profile visitors (latest 6 distinct visitors)
+    $visitorIds = \App\Models\ProfileVisit::where('visited_id', $user->id)
+        ->latest()
+        ->pluck('visitor_id')
+        ->unique()
+        ->take(6);
+
+    $visitors = \App\Models\User::with('profile')
+        ->whereIn('id', $visitorIds)
+        ->get()
+        ->map(function ($visitor) {
+            return [
+                'visitor_id' => $visitor->id,
+                'name' => $visitor->name,
+                'age' => optional($visitor)->age,
+                'country' => optional($visitor->profile)->country,
+                'state' => optional($visitor->profile)->state,
+                'city' => optional($visitor->profile)->city,
+                'marital_status' => optional($visitor)->marital_status,
+                'profile_picture' => optional($visitor)->profile_picture,
+                'visited_at' => optional($visitor->profileVisit)?->created_at?->diffForHumans(), // optional if you later build visit relationship
+            ];
+        });
+
+    return response()->json([
+        'status' => true,
+        'message' => 'Recent data fetched successfully',
+        'recent_received_requests' => $receivedRequests,
+        'recent_visitors' => $visitors,
+    ]);
+}
 
 
 

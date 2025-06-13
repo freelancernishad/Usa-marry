@@ -4,41 +4,40 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Models\UserConnection;
+use App\Models\ContactView;
 
 class ProfileResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(Request $request): array
     {
-        $isOwner = $request->user() && $request->user()->id === $this->user->id;
+        $authUser = $request->user();
+        $user = $this->user;
+        $isOwner = $authUser && $authUser->id === $user->id;
+
+        // Check if contact view already exists
+        $contactViewed = false;
+
+        if ($authUser && $authUser->id !== $user->id) {
+            $contactViewed = ContactView::where('user_id', $authUser->id)
+                ->where('contact_user_id', $user->id)
+                ->exists();
+        }
+
+        // Check if authenticated user has sent a connection request
+        $connectionRequestSent = false;
+        if ($authUser && $authUser->id !== $user->id) {
+            $connectionRequestSent = UserConnection::where('user_id', $authUser->id)
+                ->where('connected_user_id', $user->id)
+                ->exists();
+        }
 
         // Masking functions
-        $maskEmail = function ($email) {
-            $parts = explode('@', $email);
-            if (count($parts) !== 2) return null;
-            $name = $parts[0];
-            $domain = $parts[1];
+        $maskEmail = fn($email) => $email ? (substr($email, 0, 1) . str_repeat('*', strpos($email, '@') - 1) . substr($email, strpos($email, '@'))) : null;
+        $maskPhone = fn($phone) => $phone ? (substr($phone, 0, 2) . str_repeat('*', strlen($phone) - 4) . substr($phone, -2)) : null;
+        $maskAddress = fn($val) => $val ? (substr($val, 0, 1) . str_repeat('*', max(strlen($val) - 2, 0)) . substr($val, -1)) : null;
 
-            return substr($name, 0, 1) . str_repeat('*', strlen($name) - 1) .
-                '@' .
-                substr($domain, 0, 1) . str_repeat('*', strlen($domain) - 2) . substr($domain, -1);
-        };
-
-        $maskPhone = function ($phone) {
-            return substr($phone, 0, 2) . str_repeat('*', strlen($phone) - 4) . substr($phone, -2);
-        };
-
-        $maskAddress = function ($value) {
-            if (!$value) return null;
-            return substr($value, 0, 1) . str_repeat('*', max(strlen($value) - 2, 0)) . substr($value, -1);
-        };
-
-        $user = $this->user;
-
+        // Main user info
         $userData = $user->only([
             'id', 'name', 'email', 'phone', 'profile_picture', 'gender', 'dob', 'religion', 'caste',
             'sub_caste', 'marital_status', 'height', 'disability', 'blood_group',
@@ -47,14 +46,13 @@ class ProfileResource extends JsonResource
             'created_at', 'updated_at'
         ]);
 
-        // Mask sensitive data if not owner
-        if (!$isOwner) {
-            $userData['email'] = $userData['email'] ? $maskEmail($userData['email']) : null;
-            $userData['phone'] = $userData['phone'] ? $maskPhone($userData['phone']) : null;
-            $userData['family_location'] = $userData['family_location'] ? $maskAddress($userData['family_location']) : null;
+        // Mask if not owner and not viewed
+        if (!$isOwner && !$contactViewed) {
+            $userData['email'] = $maskEmail($userData['email']);
+            $userData['phone'] = $maskPhone($userData['phone']);
+            $userData['family_location'] = $maskAddress($userData['family_location']);
         }
 
-        // Add computed age
         $userData['age'] = $user->age;
 
         // Profile fields
@@ -68,21 +66,16 @@ class ProfileResource extends JsonResource
 
         $profileData = $this->only($profileFields);
 
-        // Mask address fields in profile if not owner
-        if (!$isOwner) {
+        if (!$isOwner && !$contactViewed) {
             foreach (['country', 'state', 'city'] as $field) {
-                if (!empty($profileData[$field])) {
-                    $profileData[$field] = $maskAddress($profileData[$field]);
-                }
+                $profileData[$field] = $maskAddress($profileData[$field]);
             }
         }
 
-            // Load activeSubscription only if it's the owner
-
-            $userData['active_subscription'] = $user->activeSubscription
-                ? new SubscriptionResource($user->activeSubscription)
-                : null;
-      
+        // Subscription only for owner
+        $userData['active_subscription'] = $isOwner && $user->activeSubscription
+            ? new SubscriptionResource($user->activeSubscription)
+            : null;
 
         return array_merge(
             $userData,
@@ -90,6 +83,8 @@ class ProfileResource extends JsonResource
             [
                 'photos' => $this->photos ?? [],
                 'partner_preference' => $this->partnerPreference ?? null,
+                'connection_request_sent' => $connectionRequestSent,
+                'contact_viewed' => $contactViewed, // ✅ New column
             ]
         );
     }

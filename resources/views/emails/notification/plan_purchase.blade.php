@@ -172,7 +172,7 @@
 
         <!-- CTA -->
         <div style="text-align: center;">
-            <a href="{{ url('/') }}" class="btn btn-danger">Back to Dashboard</a>
+            <a href="{{ url('/') }}" class="btn btn-danger text-white">Back to Dashboard</a>
         </div>
 
         <!-- Footer -->

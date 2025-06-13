@@ -25,11 +25,12 @@ class ProfileResource extends JsonResource
         }
 
         // Check if authenticated user has sent a connection request
-        $connectionRequestSent = false;
+        $connectionRequestStatus = null;
         if ($authUser && $authUser->id !== $user->id) {
-            $connectionRequestSent = UserConnection::where('user_id', $authUser->id)
-                ->where('connected_user_id', $user->id)
-                ->exists();
+            $connection = UserConnection::where('user_id', $authUser->id)
+            ->where('connected_user_id', $user->id)
+            ->first();
+            $connectionRequestStatus = $connection ? $connection->status : null;
         }
 
         // Masking functions
@@ -83,7 +84,7 @@ class ProfileResource extends JsonResource
             [
                 'photos' => $this->photos ?? [],
                 'partner_preference' => $this->partnerPreference ?? null,
-                'connection_request_sent' => $connectionRequestSent,
+                'connection_request_Status' => $connectionRequestStatus,
                 'contact_viewed' => $contactViewed, // ✅ New column
             ]
         );

@@ -23,11 +23,14 @@ class UserResource extends JsonResource
         }
 
         // Check if connection request sent
-        $connectionRequestSent = false;
+
+
+        $connectionRequestStatus = null;
         if ($authUser && $authUser->id !== $this->id) {
-            $connectionRequestSent = UserConnection::where('user_id', $authUser->id)
-                ->where('connected_user_id', $this->id)
-                ->exists();
+            $connection = UserConnection::where('user_id', $authUser->id)
+            ->where('connected_user_id', $this->id)
+            ->first();
+            $connectionRequestStatus = $connection ? $connection->status : null;
         }
 
         // Masking helpers
@@ -87,7 +90,7 @@ class UserResource extends JsonResource
             [
                 'photos' => $this->photos ?? [],
                 'partner_preference' => $this->partnerPreference ?? null,
-                'connection_request_sent' => $connectionRequestSent,
+                'connection_request_Status' => $connectionRequestStatus,
                 'contact_viewed' => $contactViewed, // ✅ new flag
             ]
         );

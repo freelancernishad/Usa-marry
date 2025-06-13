@@ -105,7 +105,7 @@
             <tr>
                 <td style="vertical-align: middle;">
                     <img src="https://usamarry.com/_next/image?url=%2Fusa-marry-logo.png&w=384&q=75" alt="{{ config('app.name') }} Logo" style="height: 40px; vertical-align: middle; margin-right: 10px;">
-                    <span style="font-size: 20px; font-weight: 600; color: #be123c;">{{ config('app.name') }}</span>
+                    <span style="font-size: 20px; font-weight: 600; color: #be123c;"></span>
                 </td>
                 <td style="text-align: right; font-size: 14px; color: #6b7280;">
                     <strong>Date:</strong> {{ now()->format('F d, Y') }}<br>
@@ -140,7 +140,7 @@
         <table>
             <tr>
                 <th>Description</th>
-                <th>Amount (৳)</th>
+                <th>Amount</th>
             </tr>
             <tr>
                 <td>Original Amount</td>
@@ -152,7 +152,7 @@
             </tr>
             <tr class="total-row">
                 <td>Total Paid</td>
-                <td>৳{{ number_format($subscription->final_amount, 2) }}</td>
+                <td>{{ number_format($subscription->final_amount, 2) }}</td>
             </tr>
             <tr>
                 <td>Payment Method</td>
@@ -172,7 +172,7 @@
 
         <!-- CTA -->
         <div style="text-align: center;">
-            <a href="{{ url('/') }}" class="btn">Back to Dashboard</a>
+            <a href="{{ url('/') }}" class="btn btn-danger">Back to Dashboard</a>
         </div>
 
         <!-- Footer -->

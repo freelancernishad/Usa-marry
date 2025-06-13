@@ -88,6 +88,24 @@ public function acceptConnection($connectedUserId, Request $request)
         return response()->json(['message' => 'Connection not found.'], 404);
     }
 
+    // Disconnect from a user (remove the connection)
+    public function cancelFromUser($connectedUserId, Request $request)
+    {
+        $user = $request->user();
+
+        // Find the connection where the authenticated user connected to $connectedUserId
+        $connection = $user->connections()
+            ->where('connected_user_id', $connectedUserId)
+            ->first();
+
+        if ($connection) {
+            $connection->delete();  // Delete the connection record
+            return response()->json(['message' => 'Disconnected from user.']);
+        }
+
+        return response()->json(['message' => 'Connection not found.'], 404);
+    }
+
     // Get the list of all accepted connections for the current user
     public function getConnections(Request $request)
     {

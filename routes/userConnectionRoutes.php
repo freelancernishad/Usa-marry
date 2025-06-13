@@ -16,6 +16,9 @@ Route::middleware(AuthenticateUser::class)->prefix('user')->group(function () {
     // Disconnect from a user (remove the connection)
     Route::post('/connection/{connectedUserId}/disconnect', [UserConnectionController::class, 'disconnectFromUser']);
 
+    // Cancel from a user (remove the connection)
+    Route::post('/connection/{connectedUserId}/cancel', [UserConnectionController::class, 'cancelFromUser']);
+
     // Get all accepted connections
     Route::get('/connections', [UserConnectionController::class, 'getConnections']);
 

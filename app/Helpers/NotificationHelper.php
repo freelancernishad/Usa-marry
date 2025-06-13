@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\Notification;
+use App\Models\Subscription;
 use Illuminate\Support\Facades\Mail;
 
 class NotificationHelper
@@ -38,4 +39,61 @@ class NotificationHelper
             }
         });
     }
+
+    /**
+     * Send notification for plan purchase event
+     *
+     * @param  $user
+     * @param  $planName
+     * @param  $amount
+     * @param  $relatedModel (optional)
+     * @param  $relatedModelId (optional)
+     * @return void
+     */
+  public static function sendPlanPurchaseNotification($user, $planName, $amount, $relatedModel = null, $relatedModelId = null)
+    {
+        $subject = 'Plan Purchase Confirmation';
+
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'plan_purchase',
+            'message' => "You have purchased the {$planName} plan for ৳{$amount}.",
+            'related_model' => $relatedModel,
+            'related_model_id' => $relatedModelId,
+            'is_read' => false,
+        ]);
+
+        Mail::to($user->email)->send(new class($subject, $user, $planName, $amount, $relatedModelId) extends \Illuminate\Mail\Mailable {
+            public $subjectLine;
+            public $user;
+            public $planName;
+            public $amount;
+            public $relatedModelId;
+
+            public function __construct($subjectLine, $user, $planName, $amount, $relatedModelId)
+            {
+                $this->subjectLine = $subjectLine;
+                $this->user = $user;
+                $this->planName = $planName;
+                $this->amount = $amount;
+                $this->relatedModelId = $relatedModelId;
+            }
+
+            public function build()
+            {
+                // Subscription ডেটা এখান থেকে লোড করবো
+                $subscription = Subscription::find($this->relatedModelId);
+
+                return $this->view('emails.notification.plan_purchase')
+                    ->with([
+                        'user' => $this->user,
+                        'planName' => $this->planName,
+                        'amount' => $this->amount,
+                        'subscription' => $subscription,
+                    ])
+                    ->subject($this->subjectLine);
+            }
+        });
+    }
+
 }

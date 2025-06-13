@@ -11,10 +11,11 @@ use Illuminate\Support\Str;
 use App\Models\Subscription;
 use Illuminate\Http\Request;
 use Stripe\Checkout\Session;
-use App\Http\Controllers\Controller;
+use App\Helpers\NotificationHelper;
 
 
     use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
@@ -203,6 +204,17 @@ public function webhook(Request $request)
                 if ($subscription && $subscription->status !== 'Success') {
                     $subscription->status = 'Success';
                     $subscription->save();
+
+                                    // Load user and plan info for notification
+                    $user = $subscription->user; // assuming Subscription model has user relationship
+                    $planName = $subscription->plan->name ?? 'Your Plan'; // assuming subscription->plan relationship exists
+                    $amount = $subscription->amount ?? 0; // or get from subscription or session object
+
+                    if ($user) {
+                        NotificationHelper::sendPlanPurchaseNotification($user, $planName, $amount, 'subscriptions', $subscription->id);
+                    }
+
+
                 }
             }
 

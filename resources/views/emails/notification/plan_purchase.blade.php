@@ -93,7 +93,7 @@
                 <th>Original Amount</th>
                 <td>৳{{ number_format($subscription->original_amount, 2) }}</td>
             </tr>
-            @if ($subscription->discount_amount > 0)
+            @if (!empty($subscription->discount_amount) && $subscription->discount_amount > 0)
                 <tr>
                     <th>Discount</th>
                     <td>৳{{ number_format($subscription->discount_amount, 2) }} ({{ $subscription->discount_percent }}%)</td>
@@ -121,11 +121,11 @@
             </tr>
             <tr>
                 <th>Start Date</th>
-                <td>{{ $subscription->start_date->format('F j, Y') }}</td>
+                <td>{{ \Carbon\Carbon::parse($subscription->start_date)->format('F j, Y') }}</td>
             </tr>
             <tr>
                 <th>End Date</th>
-                <td>{{ $subscription->end_date->format('F j, Y') }}</td>
+                <td>{{ \Carbon\Carbon::parse($subscription->end_date)->format('F j, Y') }}</td>
             </tr>
         </table>
 

@@ -100,7 +100,7 @@ public function acceptConnection($connectedUserId, Request $request)
 
         if ($connection) {
             $connection->delete();  // Delete the connection record
-            return response()->json(['message' => 'Disconnected from user.']);
+            return response()->json(['message' => 'Cancel from user.']);
         }
 
         return response()->json(['message' => 'Connection not found.'], 404);

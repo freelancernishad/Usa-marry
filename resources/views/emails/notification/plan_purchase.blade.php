@@ -23,37 +23,6 @@
             border: 1px solid #f3dce4;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #fce7f3;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-
-        .header .logo {
-            display: flex;
-            align-items: center;
-        }
-
-        .logo img {
-            height: 40px;
-            margin-right: 12px;
-        }
-
-        .logo-text {
-            font-size: 20px;
-            font-weight: 600;
-            color: #be123c;
-        }
-
-        .header .invoice-meta {
-            text-align: right;
-            font-size: 14px;
-            color: #6b7280;
-        }
-
         .section-title {
             font-size: 18px;
             margin-bottom: 10px;
@@ -61,21 +30,6 @@
             color: #9f1239;
             border-bottom: 1px solid #f3dce4;
             padding-bottom: 5px;
-        }
-
-        .info-grid {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-        }
-
-        .info-box {
-            width: 48%;
-        }
-
-        .info-box p {
-            margin: 4px 0;
-            font-size: 15px;
         }
 
         table {
@@ -136,39 +90,52 @@
         .btn:hover {
             background-color: #e11d48;
         }
+
+        .info-table td {
+            border: none;
+            padding: 4px 0;
+        }
     </style>
 </head>
 <body>
     <div class="invoice-box">
-        <div class="header">
-            <div class="logo">
-                <img src="{{ asset('logo.png') }}" alt="{{ config('app.name') }} Logo">
-                <div class="logo-text">{{ config('app.name') }}</div>
-            </div>
-            <div class="invoice-meta">
-                <strong>Date:</strong> {{ now()->format('F d, Y') }}<br>
-                <strong>Invoice ID:</strong> {{ $subscription->transaction_id }}
-            </div>
-        </div>
 
-        <div class="info-grid">
-            <div class="info-box">
-                <h3 class="section-title">Billed To</h3>
-                <p><strong>{{ $user->name ?? 'User' }}</strong></p>
-                @if (!empty($user->email)) <p>{{ $user->email }}</p> @endif
-                @if (!empty($user->phone)) <p>{{ $user->phone }}</p> @endif
-            </div>
-            <div class="info-box">
-                <h3 class="section-title">Plan Info</h3>
-                <p><strong>Plan:</strong> {{ $planName }}</p>
-                <p><strong>Status:</strong> {{ ucfirst($subscription->status) }}</p>
-                <p><strong>Duration:</strong> 
-                    {{ \Carbon\Carbon::parse($subscription->start_date)->format('F j, Y') }} to 
-                    {{ \Carbon\Carbon::parse($subscription->end_date)->format('F j, Y') }}
-                </p>
-            </div>
-        </div>
+        <!-- HEADER using TABLE -->
+        <table style="width: 100%; border-bottom: 2px solid #fce7f3; margin-bottom: 30px;">
+            <tr>
+                <td style="vertical-align: middle;">
+                    <img src="https://usamarry.com/_next/image?url=%2Fusa-marry-logo.png&w=384&q=75" alt="{{ config('app.name') }} Logo" style="height: 40px; vertical-align: middle; margin-right: 10px;">
+                    <span style="font-size: 20px; font-weight: 600; color: #be123c;">{{ config('app.name') }}</span>
+                </td>
+                <td style="text-align: right; font-size: 14px; color: #6b7280;">
+                    <strong>Date:</strong> {{ now()->format('F d, Y') }}<br>
+                    <strong>Invoice ID:</strong> {{ $subscription->transaction_id }}
+                </td>
+            </tr>
+        </table>
 
+        <!-- Billed To & Plan Info -->
+        <table class="info-table" style="width: 100%; margin-bottom: 30px;">
+            <tr>
+                <td style="width: 50%;">
+                    <h3 class="section-title">Billed To</h3>
+                    <p><strong>{{ $user->name ?? 'User' }}</strong></p>
+                    @if (!empty($user->email)) <p>{{ $user->email }}</p> @endif
+                    @if (!empty($user->phone)) <p>{{ $user->phone }}</p> @endif
+                </td>
+                <td style="width: 50%;">
+                    <h3 class="section-title">Plan Info</h3>
+                    <p><strong>Plan:</strong> {{ $planName }}</p>
+                    <p><strong>Status:</strong> {{ ucfirst($subscription->status) }}</p>
+                    <p><strong>Duration:</strong>
+                        {{ \Carbon\Carbon::parse($subscription->start_date)->format('F j, Y') }} to
+                        {{ \Carbon\Carbon::parse($subscription->end_date)->format('F j, Y') }}
+                    </p>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Payment Summary -->
         <h3 class="section-title">Payment Summary</h3>
         <table>
             <tr>
@@ -180,12 +147,8 @@
                 <td>{{ number_format($subscription->original_amount, 2) }}</td>
             </tr>
             <tr>
-                <td>Discount ({{ $subscription->discount_percent ?? 0 }}%)</td>
+                <td>Discount</td>
                 <td>-{{ number_format($subscription->discount_amount ?? 0, 2) }}</td>
-            </tr>
-            <tr>
-                <td>Coupon Code</td>
-                <td>{{ $subscription->coupon_code ?? 'N/A' }}</td>
             </tr>
             <tr class="total-row">
                 <td>Total Paid</td>
@@ -197,6 +160,7 @@
             </tr>
         </table>
 
+        <!-- Included Features -->
         @if (is_array($subscription->formatted_plan_features) && count($subscription->formatted_plan_features))
             <h3 class="section-title">Included Features</h3>
             <ul>
@@ -206,13 +170,16 @@
             </ul>
         @endif
 
+        <!-- CTA -->
         <div style="text-align: center;">
             <a href="{{ url('/') }}" class="btn">Back to Dashboard</a>
         </div>
 
+        <!-- Footer -->
         <div class="footer">
             &copy; {{ date('Y') }} {{ config('app.name') }}. All rights reserved.
         </div>
+
     </div>
 </body>
 </html>

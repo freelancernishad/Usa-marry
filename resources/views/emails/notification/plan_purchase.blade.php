@@ -128,7 +128,7 @@
                 <td>{{ \Carbon\Carbon::parse($subscription->end_date)->format('F j, Y') }}</td>
             </tr>
         </table>
-
+{{-- 
         @if (is_array($subscription->plan_features) && count($subscription->plan_features))
             <h3 style="margin-top: 30px;">Included Features:</h3>
             <ul>
@@ -136,7 +136,7 @@
                     <li>{{ $feature }}</li>
                 @endforeach
             </ul>
-        @endif
+        @endif --}}
 
         <div style="text-align: center;">
             <a href="{{ url('/') }}" class="btn">Go to Dashboard</a>

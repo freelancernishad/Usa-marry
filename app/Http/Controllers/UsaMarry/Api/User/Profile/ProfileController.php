@@ -273,6 +273,12 @@ public function profileOverview()
 
     $remainingBalance = max(0, $totalViewContactLimit - $contactsViewedCount);
 
+    // Contact View Usage Percentage
+    $contactViewUsagePercentage = 0;
+    if ($totalViewContactLimit > 0) {
+        $contactViewUsagePercentage = round(($contactsViewedCount / $totalViewContactLimit) * 100, 2);
+    }
+
     return response()->json([
         'status' => true,
         'message' => 'Profile overview fetched successfully',
@@ -285,21 +291,21 @@ public function profileOverview()
             'contacts_viewed' => $contactsViewedCount,
             'contact_view_limit' => $totalViewContactLimit,
             'contact_view_balance' => $remainingBalance,
+             'usage_percentage' => $contactViewUsagePercentage,
             'chats_initiated' => 0,
         ],
-        
         'user' =>  [
             'id' => $user->id,
             'name' => $user->name,
             'profile_picture' => $user->profile_picture,
-            'country' => $user->profile->country,
-            'state' => $user->profile->state,    
-            'city' => $user->profile->city,  
-            'subscription' =>  new SubscriptionResource($user->activeSubscription) ?? null, 
-        ], 
-        // 'subscription' => $subscription, 
+            'country' => optional($user->profile)->country,
+            'state' => optional($user->profile)->state,
+            'city' => optional($user->profile)->city,
+            'subscription' => new \App\Http\Resources\SubscriptionResource($user->activeSubscription) ?? null,
+        ],
     ]);
 }
+
 
 public function recentStatsOverview()
 {

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Feature;
 
 class Subscription extends Model
 {
@@ -33,14 +34,48 @@ class Subscription extends Model
         'plan_features' => 'array',
     ];
 
-    // Relationship to the Plan model
+    // Automatically append formatted_plan_features to JSON responses
+    protected $appends = ['formatted_plan_features'];
+    protected $hidden = ['plan_features'];
+
+    /**
+     * Relationship to the Plan model
+     */
     public function plan()
     {
         return $this->belongsTo(Plan::class);
     }
 
+    /**
+     * Relationship to the User model
+     */
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Accessor to return formatted plan features
+     *
+     * @return array
+     */
+    public function getFormattedPlanFeaturesAttribute()
+    {
+        if (empty($this->plan_features) || !is_array($this->plan_features)) {
+            return [];
+        }
+
+        return collect($this->plan_features)->map(function ($item) {
+            $feature = Feature::where('key', $item['key'])->first();
+
+            if (!$feature) {
+                return $item['value'] ?? '';
+            }
+
+            $data = $item;
+            unset($data['key']);
+
+            return $feature->render($data);
+        })->filter()->all();
     }
 }

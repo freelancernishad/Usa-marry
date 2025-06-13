@@ -32,10 +32,20 @@
             margin-bottom: 30px;
         }
 
-        .header h1 {
-            font-size: 28px;
+        .header .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 40px;
+            margin-right: 12px;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
             color: #be123c;
-            margin: 0;
         }
 
         .header .invoice-meta {
@@ -131,7 +141,10 @@
 <body>
     <div class="invoice-box">
         <div class="header">
-            <h1>Invoice</h1>
+            <div class="logo">
+                <img src="{{ asset('logo.png') }}" alt="{{ config('app.name') }} Logo">
+                <div class="logo-text">{{ config('app.name') }}</div>
+            </div>
             <div class="invoice-meta">
                 <strong>Date:</strong> {{ now()->format('F d, Y') }}<br>
                 <strong>Invoice ID:</strong> {{ $subscription->transaction_id }}
@@ -166,16 +179,14 @@
                 <td>Original Amount</td>
                 <td>{{ number_format($subscription->original_amount, 2) }}</td>
             </tr>
-            @if (!empty($subscription->discount_amount) && $subscription->discount_amount > 0)
-                <tr>
-                    <td>Discount ({{ $subscription->discount_percent }}%)</td>
-                    <td>-{{ number_format($subscription->discount_amount, 2) }}</td>
-                </tr>
-                <tr>
-                    <td>Coupon Code</td>
-                    <td>{{ $subscription->coupon_code }}</td>
-                </tr>
-            @endif
+            <tr>
+                <td>Discount ({{ $subscription->discount_percent ?? 0 }}%)</td>
+                <td>-{{ number_format($subscription->discount_amount ?? 0, 2) }}</td>
+            </tr>
+            <tr>
+                <td>Coupon Code</td>
+                <td>{{ $subscription->coupon_code ?? 'N/A' }}</td>
+            </tr>
             <tr class="total-row">
                 <td>Total Paid</td>
                 <td>৳{{ number_format($subscription->final_amount, 2) }}</td>

@@ -61,6 +61,7 @@ public function myViewedContacts(Request $request)
         return [
             'id'               => $view->contact->id ?? null,
             'name'             => $view->contact->name ?? null,
+            'profile_picture'             => $view->contact->profile_picture ?? null,
             'email'            => $view->contact->email ?? null,
             'phone'            => $view->contact->phone ?? null,
             'family_location'  => $view->contact->family_location ?? null,

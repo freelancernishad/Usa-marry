@@ -112,3 +112,29 @@ function getMissingSections(User $user)
     return $missing;
 }
 
+function getNextMissingSection(User $user)
+{
+    $allSections = [
+        'account_signup' => 10,
+        'profile_creation' => 15,
+        'personal_information' => 20,
+        'location_details' => 15,
+        'education_career' => 20,
+        'about_me' => 10,
+        'photos' => 5,
+        'partner_preference' => 5,
+    ];
+
+    $completion = $user->profile_completion;
+    $completedTotal = 0;
+
+    foreach ($allSections as $section => $value) {
+        $completedTotal += $value;
+
+        if ($completion < $completedTotal) {
+            return $section; // first missing = next missing
+        }
+    }
+
+    return null; // all completed
+}

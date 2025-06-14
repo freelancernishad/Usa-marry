@@ -79,6 +79,8 @@ Route::middleware(AuthenticateUser::class)->group(function () {
         Route::put('/', [ProfileController::class, 'updateProfile']);
     });
     Route::get('/contacts/{contactId}', [ContactController::class, 'showContact']);
+    Route::get('/my/contact/views/list', [ContactController::class, 'myViewedContacts']);
+
 
     // Photo routes
     Route::prefix('photos')->group(function () {
@@ -120,7 +122,7 @@ Route::middleware(AuthenticateUser::class)->group(function () {
     });
 
 
-    
+
         // Get notifications for the authenticated user or admin
         Route::get('user/notifications', [NotificationController::class, 'index']);
 

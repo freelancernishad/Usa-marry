@@ -300,7 +300,7 @@ class RegistrationController extends Controller
             'profile_completion' => $user->profile_completion,
             'is_complete' => $user->profile_completion >= 100,
             'missing_sections' => getMissingSections($user),
-            'next_sections' => getNextMissingSection($user)
+            'next_section' => getNextMissingSection($user)
         ]);
     }
 

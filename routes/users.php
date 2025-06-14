@@ -13,6 +13,7 @@ use App\Http\Controllers\UsaMarry\Api\User\Search\SearchController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ContactController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ProfileController;
 use App\Http\Controllers\UsaMarry\Api\User\Auth\RegistrationController;
+use App\Http\Controllers\UsaMarry\Api\User\Profile\ProfileVisitController;
 use App\Http\Controllers\UsaMarry\Api\User\Subscription\SubscriptionController;
 use App\Http\Controllers\UsaMarry\Api\User\PartnerPreference\PartnerPreferenceController;
 
@@ -80,6 +81,9 @@ Route::middleware(AuthenticateUser::class)->group(function () {
     });
     Route::get('/contacts/{contactId}', [ContactController::class, 'showContact']);
     Route::get('/my/contact/views/list', [ContactController::class, 'myViewedContacts']);
+
+    // routes/api.php
+    Route::get('/profile-visitors', [ProfileVisitController::class, 'visitors']);
 
 
     // Photo routes

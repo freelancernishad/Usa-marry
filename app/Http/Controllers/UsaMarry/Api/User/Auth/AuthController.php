@@ -39,7 +39,7 @@ class AuthController extends Controller
             'gender' => $request->gender,
             'dob' => $request->dob,
             'phone' => $request->phone,
-            'profile_completion' => 20, // Basic info completed
+            'profile_completion' => 10, // Basic info completed
         ]);
 
         // Generate a JWT token for the newly created user

@@ -37,7 +37,7 @@ class RegistrationController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'profile_completion' => 20, // Basic info completed
+            'profile_completion' => 10, // Basic info completed
         ]);
 
         // Generate JWT token
@@ -295,6 +295,8 @@ class RegistrationController extends Controller
         $user = Auth::user();
 
         return response()->json([
+            'message' => 'Profile completion status retrieved successfully',
+            'status' => 'success',
             'profile_completion' => $user->profile_completion,
             'is_complete' => $user->profile_completion >= 100,
             'missing_sections' => getMissingSections($user)

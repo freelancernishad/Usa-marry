@@ -48,8 +48,7 @@ function validateRequest(array $data, array $rules)
 function updateProfileCompletion(User $user, $section)
 {
     $completion = $user->profile_completion;
-    Log::info('Current profile completion: ' . $completion);
-    Log::info('Section to update: ' . $section);
+
 
     // Define completion percentages for each section
     $sections = [
@@ -80,33 +79,36 @@ function updateProfileCompletion(User $user, $section)
     if ($completion < $totalCompletion) {
         $user->profile_completion = $totalCompletion;
         $user->save();
-        Log::info('Updated profile completion: ' . $user->profile_completion);
+
     }
 }
 
 
+function getMissingSections(User $user)
+{
+    $allSections = [
+        'account_signup' => 10,
+        'profile_creation' => 15,
+        'personal_information' => 20,
+        'location_details' => 15,
+        'education_career' => 20,
+        'about_me' => 10,
+        'photos' => 5,
+        'partner_preference' => 5,
+    ];
 
-    function getMissingSections(User $user)
-    {
-        $allSections = [
-            'account_signup' => 10,
-            'profile_creation' => 15,
-            'personal_information' => 20,
-            'location_details' => 15,
-            'education_career' => 20,
-            'about_me' => 10,
-            'photos' => 5,
-            'partner_preference' => 5,
-        ];
+    $missing = [];
+    $completion = $user->profile_completion;
+    $completedTotal = 0;
 
-        $missing = [];
+    foreach ($allSections as $section => $value) {
+        $completedTotal += $value;
 
-        foreach ($allSections as $section => $value) {
-            if (($user->profile_completion & $value) === 0) {
-                $missing[] = $section;
-            }
+        if ($completion < $completedTotal) {
+            $missing[] = $section;
         }
-
-        return $missing;
     }
+
+    return $missing;
+}
 

@@ -42,6 +42,7 @@ function handleGoogleAuth(Request $request)
                 'email' => $userData['email'],
                 'password' => Hash::make(Str::random(16)),
                 'email_verified_at' => now(),
+                'profile_completion' => 10,
             ]);
         } else {
             $user->update(['email_verified_at' => now()]);

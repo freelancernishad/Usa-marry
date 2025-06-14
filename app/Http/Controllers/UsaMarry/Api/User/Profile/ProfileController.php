@@ -184,6 +184,10 @@ class ProfileController extends Controller
             'manglik' => 'nullable|string|in:Yes,No,Partial',
 
             'visible_to' => 'nullable|string|in:All,My Community,My Matches',
+
+
+           'update_step' => 'nullable|string|in:account_signup,profile_creation,personal_information,location_details,education_career,about_me,photos,partner_preference'
+
         ]);
 
         if ($validator->fails()) {
@@ -229,7 +233,7 @@ class ProfileController extends Controller
             $profileFields
         );
 
-        updateProfileCompletion($user, 'profile');
+        updateProfileCompletion($user, $request->update_step ?? 'profile_creation');
 
 
 

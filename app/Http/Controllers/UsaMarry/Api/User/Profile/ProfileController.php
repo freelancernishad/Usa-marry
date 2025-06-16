@@ -253,6 +253,7 @@ public function profileOverview()
     $pendingInvitations = UserConnection::where('user_id', $user->id)
         ->where('status', 'pending')->count();
 
+
     $acceptedInvitations = UserConnection::where(function ($query) use ($user) {
         $query->where('user_id', $user->id);
         // ->orWhere('connected_user_id', $user->id);
@@ -266,6 +267,7 @@ public function profileOverview()
         ->distinct('visitor_id')
         ->count('visitor_id');
 
+
     // Subscription Info
     $subscription = $user->activeSubscription;
     $totalViewContactLimit = 0;
@@ -276,6 +278,7 @@ public function profileOverview()
     }
 
     $remainingBalance = max(0, $totalViewContactLimit - $contactsViewedCount);
+
 
     // Contact View Usage Percentage
     $contactViewUsagePercentage = 0;
@@ -305,7 +308,9 @@ public function profileOverview()
             'country' => optional($user->profile)->country,
             'state' => optional($user->profile)->state,
             'city' => optional($user->profile)->city,
-            'subscription' => new \App\Http\Resources\SubscriptionResource($user->activeSubscription) ?? null,
+            'subscription' =>  $user->activeSubscription
+            ? new \App\Http\Resources\SubscriptionResource($user->activeSubscription)
+            : null,
         ],
     ]);
 }

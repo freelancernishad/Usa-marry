@@ -358,19 +358,20 @@ public function connectWithUser($connectedUserId)
 }
 
 
-   public function rejectConnectionRequest($UserId)
+  public function rejectConnectionRequest($requesterId)
 {
-    $connection = $this->connections()
-        ->where('user_id', $UserId)
+    // The current user is the one who received the request
+    $connection = UserConnection::where('user_id', $requesterId)
+        ->where('connected_user_id', $this->id)
         ->first();
 
     if ($connection) {
         $connection->status = 'rejected';
         $connection->save();
 
-        $otherUser = User::find($UserId);
+        $otherUser = User::find($requesterId);
         if ($otherUser) {
-            // Notify the other user
+            // Notify the requester (other user)
             NotificationHelper::sendUserNotification(
                 $otherUser,
                 "{$this->name} has rejected your connection request.",

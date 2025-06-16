@@ -358,17 +358,17 @@ public function connectWithUser($connectedUserId)
 }
 
 
-   public function rejectConnectionRequest($connectedUserId)
+   public function rejectConnectionRequest($UserId)
 {
     $connection = $this->connections()
-        ->where('connected_user_id', $connectedUserId)
+        ->where('user_id', $UserId)
         ->first();
 
     if ($connection) {
         $connection->status = 'rejected';
         $connection->save();
 
-        $otherUser = User::find($connectedUserId);
+        $otherUser = User::find($UserId);
         if ($otherUser) {
             // Notify the other user
             NotificationHelper::sendUserNotification(

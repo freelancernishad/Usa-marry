@@ -21,7 +21,7 @@ class ProfileVisitController extends Controller
 
         // transform result with hours ago
         $visits->getCollection()->transform(function ($visit) {
-            $profile = optional($visit->visitor->profile);
+            $userData = optional($visit->visitor);
 
             return [
                 'id' => $visit->visitor->id ?? null,
@@ -30,15 +30,15 @@ class ProfileVisitController extends Controller
                 'visited_hours_ago' => \Carbon\Carbon::parse($visit->created_at)->diffInHours(now()) . ' hours ago',
 
                 // Additional profile info
-                'age' => $profile->age ?? '',
-                'height' => $profile->height ?? '',
-                'caste' => $profile->caste ?? '',
-                'religion' => $profile->religion ?? '',
-                'highest_degree' => $profile->highest_degree ?? '',
-                'occupation' => $profile->occupation ?? '',
+                'age' => $userData->age ?? '',
+                'height' => $userData->height ?? '',
+                'caste' => $userData->caste ?? '',
+                'religion' => $userData->religion ?? '',
+                'highest_degree' => $userData->profile->highest_degree ?? '',
+                'occupation' => $userData->profile->occupation ?? '',
             ];
         });
-        
+
         return response()->json($visits);
     }
 }

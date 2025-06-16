@@ -404,8 +404,10 @@ public function getPendingConnections()
                 $matchedUser = $connection->sender; // If current user is the receiver, the sender is the matched user
             }
 
+
+
             // Use UserResource for connection_user to format the matched user
-            $connection->connection_user = new \App\Http\Resources\UserResource($matchedUser);
+            $connection->connection_user = $matchedUser;
 
             // Remove sender and receiver from the result
             unset($connection->sender, $connection->receiver);

@@ -121,8 +121,8 @@ public function acceptConnection($connectedUserId, Request $request)
     // Get the list of all pending connections
     public function getPendingConnections(Request $request)
     {
-        $user = $request->user();
-        $pendingConnections = $user->getPendingConnections();
+         $user = $request->user();
+       return $pendingConnections = $user->getPendingConnections();
 
         return response()->json($pendingConnections);
     }

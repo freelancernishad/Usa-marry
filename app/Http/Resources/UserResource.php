@@ -11,8 +11,8 @@ class UserResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
-        $authUser = $request->user();
-        $isOwner = $authUser && $authUser->id === $this->id;
+         $authUser = $request->user();
+        $isOwner = $authUser && $authUser->id == $this->id;
 
         // Check if contact has been viewed
         $contactViewed = false;

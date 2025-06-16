@@ -386,35 +386,42 @@ public function connectWithUser($connectedUserId)
 
     // Get the list of all pending connections (requests sent or received) for this user
 // app/Models/User.php
-
 public function getPendingConnections()
 {
     return UserConnection::where(function ($query) {
-            $query->where('user_id', $this->id); // Current user is the sender
-                //   ->orWhere('connected_user_id', $this->id); // Current user is the recipient
+            $query->where('user_id', $this->id);
+                // ->orWhere('connected_user_id', $this->id);
         })
-        ->where('status', 'pending') // Only get pending connections
-        ->with(['sender', 'receiver']) // Eager load sender and receiver details
+        ->where('status', 'pending')
+        ->with(['sender.profile', 'receiver.profile']) // Eager load nested profile
         ->get()
         ->map(function ($connection) {
             // Determine the other user in the connection
-            if ($connection->user_id == $this->id) {
-                $matchedUser = $connection->receiver; // If current user is the sender, the receiver is the matched user
-            } else {
-                $matchedUser = $connection->sender; // If current user is the receiver, the sender is the matched user
-            }
+            $matchedUser = $connection->user_id == $this->id
+                ? $connection->receiver
+                : $connection->sender;
 
+       
 
+            $connection->connection_user = [
+                'id' => $matchedUser->id ?? null,
+                'name' => $matchedUser->name ?? '',
+                'profile_picture' => $matchedUser->profile_picture ?? '',
+                'age' => $matchedUser->age ?? '',
+                'height' => $matchedUser->height ?? '',
+                'caste' => $matchedUser->caste ?? '',
+                'religion' => $matchedUser->religion ?? '',
+                'highest_degree' => $matchedUser->profile->highest_degree ?? '',
+                'occupation' => $matchedUser->profile->occupation ?? '',
+            ];
 
-            // Use UserResource for connection_user to format the matched user
-            $connection->connection_user = $matchedUser;
-
-            // Remove sender and receiver from the result
+            // Remove full sender and receiver objects
             unset($connection->sender, $connection->receiver);
 
             return $connection;
         });
 }
+
 
 
 

@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\UsaMarry\Api\User\Profile;
 
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Models\ProfileVisit;
 use Carbon\Carbon;
+use App\Models\ProfileVisit;
+use Illuminate\Http\Request;
+use App\Models\UserConnection;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class ProfileVisitController extends Controller
 {
@@ -20,8 +21,19 @@ class ProfileVisitController extends Controller
             ->paginate(10);
 
         // transform result with hours ago
-        $visits->getCollection()->transform(function ($visit) {
+        $visits->getCollection()->transform(function ($visit,$user) {
             $userData = optional($visit->visitor);
+
+
+                    // Check if authenticated user has sent a connection request
+        $connectionRequestStatus = null;
+     
+            $connection = UserConnection::where('user_id', $user->id)
+            ->where('connected_user_id', $visit->visitor->id)
+            ->first();
+            $connectionRequestStatus = $connection ? $connection->status : null;
+   
+
 
             return [
                 'id' => $visit->visitor->id ?? null,
@@ -36,6 +48,7 @@ class ProfileVisitController extends Controller
                 'religion' => $userData->religion ?? '',
                 'highest_degree' => $userData->profile->highest_degree ?? '',
                 'occupation' => $userData->profile->occupation ?? '',
+                'connection_request_Status' => $connectionRequestStatus,
             ];
         });
 

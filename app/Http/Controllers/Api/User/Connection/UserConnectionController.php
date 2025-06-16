@@ -89,6 +89,20 @@ public function acceptConnection($connectedUserId, Request $request)
     }
 
     // Disconnect from a user (remove the connection)
+    public function rejectConnectionRequest($connectedUserId, Request $request)
+    {
+        $user = $request->user();
+
+        $connection = $user->rejectConnectionRequest($connectedUserId);
+
+        if ($connection) {
+            return response()->json(['message' => 'Rejected from user.']);
+        }
+
+        return response()->json(['message' => 'Connection not found.'], 404);
+    }
+
+    // Disconnect from a user (remove the connection)
     public function cancelFromUser($connectedUserId, Request $request)
     {
         $user = $request->user();

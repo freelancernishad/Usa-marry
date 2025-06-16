@@ -357,6 +357,46 @@ public function connectWithUser($connectedUserId)
     return null;
 }
 
+
+   public function rejectConnectionRequest($connectedUserId)
+{
+    $connection = $this->connections()
+        ->where('connected_user_id', $connectedUserId)
+        ->first();
+
+    if ($connection) {
+        $connection->status = 'rejected';
+        $connection->save();
+
+        $otherUser = User::find($connectedUserId);
+        if ($otherUser) {
+            // Notify the other user
+            NotificationHelper::sendUserNotification(
+                $otherUser,
+                "{$this->name} has rejected your connection request.",
+                'Connection Rejected',
+                'User',
+                $this->id
+            );
+
+            // Notify yourself
+            NotificationHelper::sendUserNotification(
+                $this,
+                "You have rejected the connection request from {$otherUser->name}.",
+                'Connection Rejected',
+                'User',
+                $otherUser->id
+            );
+        }
+
+        return $connection;
+    }
+
+    return null;
+}
+
+
+
     // Get the list of all accepted connections for this user
     public function getConnections()
     {

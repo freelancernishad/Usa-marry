@@ -148,62 +148,54 @@ class MatchController extends Controller
 
 
 
+public function showMatch($userId)
+{
+    $user = Auth::user();
 
-    public function showMatch($userId)
-    {
-        $matchedUser = User::where('id', $userId)
-            ->where('account_status', 'Active')
-            ->first();
+    // ✅ Check if authenticated user has filled partner preference
+    if (!$user->partnerPreference) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Please complete your partner preference before viewing matches.',
+        ], 400);
+    }
 
-        if (!$matchedUser) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
+    // ✅ Find matched user
+    $matchedUser = User::where('id', $userId)
+        ->where('account_status', 'Active')
+        ->first();
 
-        $user = Auth::user();
+    if (!$matchedUser) {
+        return response()->json(['message' => 'User not found'], 404);
+    }
 
-        // Check if valid match
-        // You can technically run the code without this block,
-        // but then you won't be checking if the user is a valid match.
-        // This means any user ID could be accessed, even if not a match.
-        // For security and business logic, it's recommended to keep this check.
-
-    // ✅ Log the visit
+    // ✅ Log profile visit if it's not self
     if ($user->id !== $matchedUser->id) {
-        ProfileVisit::create([
+        \App\Models\ProfileVisit::create([
             'visitor_id' => $user->id,
             'visited_id' => $matchedUser->id,
         ]);
     }
 
+    // ✅ Load related data
+    $matchedUser->load([
+        'profile',
+        'photos',
+        'partnerPreference',
+    ]);
 
-        // Load details
-        $matchedUser->load([
-            'profile',
-            'photos',
-            'partnerPreference'
-        ]);
+    // ✅ Match calculation and details
+    $matchPercentage = $this->calculateMatchPercentage($user, $matchedUser);
+    $matchDetails = $this->getMatchDetails($user, $matchedUser);
 
-        // Calculate percentage
-        $matchPercentage = $this->calculateMatchPercentage($user, $matchedUser);
-
-
-        // Compare data
-        $matchDetails = $this->getMatchDetails($user, $matchedUser);
-
-
-        $matchedUser = new UserResource($matchedUser);
-
-
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Match details retrieved successfully',
-            'user' => $matchedUser,
-            'match_percentage' => $matchPercentage,
-            'match_details' => $matchDetails
-        ]);
-    }
-
+    return response()->json([
+        'success' => true,
+        'message' => 'Match details retrieved successfully',
+        'user' => new \App\Http\Resources\UserResource($matchedUser),
+        'match_percentage' => $matchPercentage,
+        'match_details' => $matchDetails,
+    ]);
+}
 
 
 

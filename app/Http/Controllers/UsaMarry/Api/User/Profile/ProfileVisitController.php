@@ -21,7 +21,7 @@ class ProfileVisitController extends Controller
             ->paginate(10);
 
         // transform result with hours ago
-        $visits->getCollection()->transform(function ($visit,$user) {
+        $visits->getCollection()->transform(function ($visit) use ($user) {
             $userData = optional($visit->visitor);
 
 

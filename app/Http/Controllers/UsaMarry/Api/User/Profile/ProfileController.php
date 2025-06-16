@@ -352,10 +352,10 @@ public function recentStatsOverview()
     $visitors = \App\Models\User::with('profile')
         ->whereIn('id', $visitorIds)
         ->get()
-        ->map(function ($visitor,$user) {
+        ->map(function ($visitor,) use ($user) {
 
-        $connectionRequestStatus = null;
-     
+
+            $connectionRequestStatus = null;
             $connection = UserConnection::where('user_id', $user->id)
             ->where('connected_user_id', $visitor->id)
             ->first();

@@ -198,134 +198,56 @@ public function showMatch($userId)
 }
 
 
-
 private function getMatchDetails($user, $matchedUser)
 {
     $preferences = $user->partnerPreference;
 
-    $details = [
-        'age' => [],
-        'height' => [],
-        'religion' => [],
-        'caste' => [],
-        'marital_status' => [],
-        'education' => [],
-        'occupation' => [],
-        'country' => [],
-        'family_type' => [],
-        'state' => [],
-        'city' => [],
-        'mother_tongue' => [],
-    ];
+    $details = [];
 
     // Age
-    if ($matchedUser->dob && $preferences->age_min && $preferences->age_max) {
-        $age = \Carbon\Carbon::parse($matchedUser->dob)->age;
-        $details['age'] = [
-            'matched' => $age >= $preferences->age_min && $age <= $preferences->age_max,
-            'you' => "{$preferences->age_min}-{$preferences->age_max}",
-            'matched_user' => $age,
-        ];
-    }
+    $age = $matchedUser->dob ? \Carbon\Carbon::parse($matchedUser->dob)->age : null;
+    $details['age'] = [
+        'matched' => $age && $preferences->age_min && $preferences->age_max
+            ? ($age >= $preferences->age_min && $age <= $preferences->age_max)
+            : false,
+        'you' => ($preferences->age_min && $preferences->age_max)
+            ? "{$preferences->age_min}-{$preferences->age_max}"
+            : 'not_provided',
+        'matched_user' => $age ?? 'not_provided',
+    ];
 
     // Height
-    if ($matchedUser->height && $preferences->height_min && $preferences->height_max) {
-        $details['height'] = [
-            'matched' => $matchedUser->height >= $preferences->height_min && $matchedUser->height <= $preferences->height_max,
-            'you' => "{$preferences->height_min}-{$preferences->height_max}",
-            'matched_user' => $matchedUser->height,
-        ];
-    }
+    $details['height'] = [
+        'matched' => $matchedUser->height && $preferences->height_min && $preferences->height_max
+            ? ($matchedUser->height >= $preferences->height_min && $matchedUser->height <= $preferences->height_max)
+            : false,
+        'you' => ($preferences->height_min && $preferences->height_max)
+            ? "{$preferences->height_min}-{$preferences->height_max}"
+            : 'not_provided',
+        'matched_user' => $matchedUser->height ?? 'not_provided',
+    ];
 
-    // Religion
-    if ($preferences->religion) {
-        $details['religion'] = [
-            'matched' => in_array($matchedUser->religion, $preferences->religion),
-            'you' => $preferences->religion,
-            'matched_user' => $matchedUser->religion,
+    // Helper function
+    $multiCheck = function ($value, $preference) {
+        return [
+            'matched' => ($value && is_array($preference)) ? in_array($value, $preference) : false,
+            'you' => $preference ?: ['not_provided'],
+            'matched_user' => $value ?? 'not_provided',
         ];
-    }
+    };
 
-    // Caste
-    if ($preferences->caste) {
-        $details['caste'] = [
-            'matched' => in_array($matchedUser->caste, $preferences->caste),
-            'you' => $preferences->caste,
-            'matched_user' => $matchedUser->caste,
-        ];
-    }
+    $profile = $matchedUser->profile;
 
-    // Marital Status
-    if ($preferences->marital_status) {
-        $details['marital_status'] = [
-            'matched' => in_array($matchedUser->marital_status, $preferences->marital_status),
-            'you' => $preferences->marital_status,
-            'matched_user' => $matchedUser->marital_status,
-        ];
-    }
-
-    // Education
-    if ($matchedUser->profile && $preferences->education) {
-        $details['education'] = [
-            'matched' => in_array($matchedUser->profile->highest_degree, $preferences->education),
-            'you' => $preferences->education,
-            'matched_user' => $matchedUser->profile->highest_degree ?? null,
-        ];
-    }
-
-    // Occupation
-    if ($matchedUser->profile && $preferences->occupation) {
-        $details['occupation'] = [
-            'matched' => in_array($matchedUser->profile->occupation, $preferences->occupation),
-            'you' => $preferences->occupation,
-            'matched_user' => $matchedUser->profile->occupation ?? null,
-        ];
-    }
-
-    // Country
-    if ($matchedUser->profile && $preferences->country) {
-        $details['country'] = [
-            'matched' => in_array($matchedUser->profile->country, $preferences->country),
-            'you' => $preferences->country,
-            'matched_user' => $matchedUser->profile->country ?? null,
-        ];
-    }
-
-    // ✅ Family Type
-    if ($matchedUser->profile && $preferences->family_type) {
-        $details['family_type'] = [
-            'matched' => in_array($matchedUser->profile->family_type, $preferences->family_type),
-            'you' => $preferences->family_type,
-            'matched_user' => $matchedUser->profile->family_type ?? null,
-        ];
-    }
-
-    // ✅ State
-    if ($matchedUser->profile && $preferences->state) {
-        $details['state'] = [
-            'matched' => in_array($matchedUser->profile->state, $preferences->state),
-            'you' => $preferences->state,
-            'matched_user' => $matchedUser->profile->state ?? null,
-        ];
-    }
-
-    // ✅ City
-    if ($matchedUser->profile && $preferences->city) {
-        $details['city'] = [
-            'matched' => in_array($matchedUser->profile->city, $preferences->city),
-            'you' => $preferences->city,
-            'matched_user' => $matchedUser->profile->city ?? null,
-        ];
-    }
-
-    // ✅ Mother Tongue
-    if ($matchedUser->profile && $preferences->mother_tongue) {
-        $details['mother_tongue'] = [
-            'matched' => in_array($matchedUser->profile->mother_tongue, $preferences->mother_tongue),
-            'you' => $preferences->mother_tongue,
-            'matched_user' => $matchedUser->profile->mother_tongue ?? null,
-        ];
-    }
+    $details['religion'] = $multiCheck($matchedUser->religion ?? null, $preferences->religion ?? []);
+    $details['caste'] = $multiCheck($matchedUser->caste ?? null, $preferences->caste ?? []);
+    $details['marital_status'] = $multiCheck($matchedUser->marital_status ?? null, $preferences->marital_status ?? []);
+    $details['education'] = $multiCheck($profile->highest_degree ?? null, $preferences->education ?? []);
+    $details['occupation'] = $multiCheck($profile->occupation ?? null, $preferences->occupation ?? []);
+    $details['country'] = $multiCheck($profile->country ?? null, $preferences->country ?? []);
+    $details['family_type'] = $multiCheck($profile->family_type ?? null, $preferences->family_type ?? []);
+    $details['state'] = $multiCheck($profile->state ?? null, $preferences->state ?? []);
+    $details['city'] = $multiCheck($profile->city ?? null, $preferences->city ?? []);
+    $details['mother_tongue'] = $multiCheck($profile->mother_tongue ?? null, $preferences->mother_tongue ?? []);
 
     return $details;
 }

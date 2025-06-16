@@ -10,9 +10,9 @@ class SubscriptionResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'plan' => $this->plan->name,
-            'features' => $this->plan_features ?? $this->plan->features,
-            'formatted_plan_features' => $this->formatted_plan_features ?? $this->plan->formatted_features,
+            'plan' => optional($this->plan)->name,
+            'features' => $this->plan_features ?? optional($this->plan)->features,
+            'formatted_plan_features' => $this->formatted_plan_features ?? optional($this->plan)->formatted_features,
             'start_date' => $this->start_date,
             'end_date' => $this->end_date,
             'status' => $this->status,

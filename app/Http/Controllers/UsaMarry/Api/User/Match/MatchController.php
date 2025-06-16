@@ -212,8 +212,8 @@ private function getMatchDetails($user, $matchedUser)
             : false,
         'you' => ($preferences->age_min && $preferences->age_max)
             ? "{$preferences->age_min}-{$preferences->age_max}"
-            : 'not_provided',
-        'matched_user' => $age ?? 'not_provided',
+            : 'not provided',
+        'matched_user' => $age ?? 'not provided',
     ];
 
     // Height
@@ -223,16 +223,16 @@ private function getMatchDetails($user, $matchedUser)
             : false,
         'you' => ($preferences->height_min && $preferences->height_max)
             ? "{$preferences->height_min}-{$preferences->height_max}"
-            : 'not_provided',
-        'matched_user' => $matchedUser->height ?? 'not_provided',
+            : 'not provided',
+        'matched_user' => $matchedUser->height ?? 'not provided',
     ];
 
     // Helper function
     $multiCheck = function ($value, $preference) {
         return [
             'matched' => ($value && is_array($preference)) ? in_array($value, $preference) : false,
-            'you' => $preference ?: ['not_provided'],
-            'matched_user' => $value ?? 'not_provided',
+            'you' => $preference ?: ['not provided'],
+            'matched_user' => $value ?? 'not provided',
         ];
     };
 

@@ -352,7 +352,18 @@ public function recentStatsOverview()
     $visitors = \App\Models\User::with('profile')
         ->whereIn('id', $visitorIds)
         ->get()
-        ->map(function ($visitor) {
+        ->map(function ($visitor,$user) {
+
+        $connectionRequestStatus = null;
+     
+            $connection = UserConnection::where('user_id', $user->id)
+            ->where('connected_user_id', $visitor->id)
+            ->first();
+            $connectionRequestStatus = $connection ? $connection->status : null;
+   
+
+
+
             return [
                 'visitor_id' => $visitor->id,
                 'name' => $visitor->name,
@@ -363,6 +374,7 @@ public function recentStatsOverview()
                 'marital_status' => optional($visitor)->marital_status,
                 'profile_picture' => optional($visitor)->profile_picture,
                 'visited_at' => optional($visitor->profileVisit)?->created_at?->diffForHumans(), // optional if you later build visit relationship
+                'connection_request_Status' => $connectionRequestStatus,
             ];
         });
 

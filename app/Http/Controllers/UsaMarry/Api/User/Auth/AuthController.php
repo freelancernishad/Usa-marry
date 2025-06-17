@@ -88,8 +88,6 @@ class AuthController extends Controller
     public function login(Request $request)
     {
 
-
-
         if($request->access_token){
 
             return handleGoogleAuth($request);
@@ -118,6 +116,7 @@ class AuthController extends Controller
                 'gender' => $user->gender,
                 'dob' => $user->dob,
                 'phone' => $user->phone,
+                'profile_picture' => $user->profile_picture,
                 'email_verified' => $user->hasVerifiedEmail(),
             ],
             'profile_completion' => $user->profile_completion,

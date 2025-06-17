@@ -64,7 +64,22 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'hobbies' => 'array',
     ];
 
-    protected $appends = ['age', 'profile_picture', 'match_percentage'];
+protected $appends = ['age', 'profile_picture', 'match_percentage', 'plan_name'];
+
+
+
+    public function getPlanNameAttribute()
+{
+    $subscription = $this->activeSubscription;
+
+    if ($subscription && $subscription->plan) {
+        return $subscription->plan->name;
+    }
+
+    return 'Free';
+}
+
+
 
     // Existing accessors ...
 

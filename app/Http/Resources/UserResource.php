@@ -96,6 +96,7 @@ class UserResource extends JsonResource
                 'connection_request_Status' => $connectionRequestStatus,
                 'contact_viewed' => $contactViewed, // ✅ new flag
                 'match_percentage' => $this->match_percentage, // ✅ new flag
+                'plan_name' => $this->plan_name, // ✅ new flag
 
             ]
         );

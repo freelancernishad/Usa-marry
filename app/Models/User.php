@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use App\Helpers\NotificationHelper;
+use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -63,7 +64,23 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'hobbies' => 'array',
     ];
 
-    protected $appends = ['age', 'profile_picture'];
+    protected $appends = ['age', 'profile_picture', 'match_percentage'];
+
+    // Existing accessors ...
+
+    public function getMatchPercentageAttribute()
+    {
+        $authUser = Auth::user();
+
+        if ($authUser && $authUser->id !== $this->id) {
+            // ধরে নিচ্ছি calculateMatchPercentage() globally accessible function
+            return calculateMatchPercentage($authUser, $this);
+        }
+
+        return null;
+    }
+
+
 
     public function getProfilePictureAttribute()
     {
@@ -442,7 +459,7 @@ public function getPendingConnections()
                 ? $connection->receiver
                 : $connection->sender;
 
-       
+
 
             $connection->connection_user = [
                 'id' => $matchedUser->id ?? null,

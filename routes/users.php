@@ -75,6 +75,7 @@ Route::middleware(AuthenticateUser::class)->group(function () {
     Route::prefix('profile')->group(function () {
         Route::get('/overview', [ProfileController::class, 'profileOverview']);
         Route::get('/recent-activities', [ProfileController::class, 'recentStatsOverview']);
+        Route::get('/recent-activities/matches', [MatchController::class, 'getMatchesWithLimit']);
         Route::get('/', [ProfileController::class, 'show']);
         Route::put('/basic', [ProfileController::class, 'updateBasicInfo']);
         Route::put('/', [ProfileController::class, 'updateProfile']);

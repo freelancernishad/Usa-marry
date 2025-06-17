@@ -185,7 +185,7 @@ public function showMatch($userId)
     ]);
 
     // ✅ Match calculation and details
-    $matchPercentage = $this->calculateMatchPercentage($user, $matchedUser);
+    $matchPercentage = calculateMatchPercentage($user, $matchedUser);
     $matchDetails = $this->getMatchDetails($user, $matchedUser);
 
     return response()->json([
@@ -259,110 +259,6 @@ private function getMatchDetails($user, $matchedUser)
 
 
 
-    private function calculateMatchPercentage(User $user, User $matchedUser)
-    {
-        $score = 0;
-        $maxScore = 0;
-
-        // 1. Basic Compatibility (20%)
-        $maxScore += 20;
-        if ($user->partnerPreference && $user->partnerPreference->religion) {
-            if ($user->partnerPreference->religion === $matchedUser->religion) {
-                $score += 10;
-                if ($user->partnerPreference->caste === $matchedUser->caste) {
-                    $score += 10;
-                }
-            }
-        } else {
-            $score += 20; // No preference means full points
-        }
-
-        // 2. Age Compatibility (15%)
-        $maxScore += 15;
-        if ($user->partnerPreference && ($user->partnerPreference->age_min || $user->partnerPreference->age_max)) {
-            $age = $matchedUser->dob->age;
-            $minAge = $user->partnerPreference->age_min ?? 18;
-            $maxAge = $user->partnerPreference->age_max ?? 99;
-
-            if ($age >= $minAge && $age <= $maxAge) {
-                $score += 15;
-            } else {
-                $score += max(0, 15 - abs($age - (($minAge + $maxAge) / 2)));
-            }
-        } else {
-            $score += 15;
-        }
-
-        // 3. Education & Career (20%)
-        $maxScore += 20;
-        if ($user->profile && $matchedUser->profile) {
-            // Education match
-            if ($user->partnerPreference && $user->partnerPreference->education) {
-                if ($user->partnerPreference->education === $matchedUser->profile->highest_degree) {
-                    $score += 10;
-                }
-            } else {
-                $score += 10;
-            }
-
-            // Occupation match
-            if ($user->partnerPreference && $user->partnerPreference->occupation) {
-                if ($user->partnerPreference->occupation === $matchedUser->profile->occupation) {
-                    $score += 10;
-                }
-            } else {
-                $score += 10;
-            }
-        }
-
-        // 4. Lifestyle (15%)
-        $maxScore += 15;
-        if ($user->profile && $matchedUser->profile) {
-            // Diet
-            if ($user->profile->diet === $matchedUser->profile->diet) {
-                $score += 5;
-            }
-
-            // Drink/Smoke
-            if ($user->profile->drink === $matchedUser->profile->drink) {
-                $score += 5;
-            }
-            if ($user->profile->smoke === $matchedUser->profile->smoke) {
-                $score += 5;
-            }
-        }
-
-        // 5. Location (10%)
-        $maxScore += 10;
-        if ($user->profile && $matchedUser->profile) {
-            if ($user->partnerPreference && $user->partnerPreference->country) {
-                if ($user->partnerPreference->country === $matchedUser->profile->country) {
-                    $score += 10;
-                }
-            } else {
-                $score += 10;
-            }
-        }
-
-        // 6. Horoscope (10%)
-        $maxScore += 10;
-        if ($user->profile && $matchedUser->profile) {
-            if ($user->profile->has_horoscope && $matchedUser->profile->has_horoscope) {
-                // Simple check - in real app you'd use proper astro matching
-                if ($user->profile->manglik === $matchedUser->profile->manglik) {
-                    $score += 10;
-                }
-            } else {
-                $score += 10;
-            }
-        }
-
-        // 7. Profile Completeness (10%)
-        $maxScore += 10;
-        $score += ($matchedUser->profile_completion / 100) * 10;
-
-        return min(100, round(($score / $maxScore) * 100));
-    }
 
     public function expressInterest(User $matchedUser)
     {
@@ -381,7 +277,7 @@ private function getMatchDetails($user, $matchedUser)
         $match = UserMatch::create([
             'user_id' => $user->id,
             'matched_user_id' => $matchedUser->id,
-            'match_score' => $this->calculateMatchPercentage($user, $matchedUser),
+            'match_score' => calculateMatchPercentage($user, $matchedUser),
             'status' => 'Pending'
         ]);
 
@@ -534,6 +430,46 @@ public function moreMatches(Request $request)
     $matches = UserResource::collection($matches);
     return response()->json($matches);
 }
+
+
+
+
+public function getMatchesWithLimit(Request $request)
+{
+    $user = Auth::user();
+    $perPage = $request->per_page ?? 10;
+
+    // Check if the user has a premium account
+    $isPremium = $user->account_type === 'premium'; // Assuming 'account_type' is used to distinguish account types
+
+    // Get the correct pagination limit based on the account type
+    $limit = $isPremium ? 20 : $perPage;
+
+    // Get three types of matches: New Matches, My Matches, and Premium Matches
+    $newMatches = $this->findPotentialMatches($user,false)->where('created_at', '>=', now()->subDays(3)) // Example condition for "new"
+                               ->where('id', '!=', $user->id)->limit($perPage)->get();
+    $newMatches = collect($newMatches)->sortByDesc(fn($m) => $m->match_percentage);
+
+
+
+        $myMatches =  $this->findPotentialMatches($user,false)->limit($perPage)->get();
+        $myMatches = collect($myMatches)->sortByDesc(fn($m) => $m->match_percentage);
+
+    $premiumMatches = $isPremium ? $this->findPotentialMatches($user,false)->limit($perPage)->get() : [];
+    $premiumMatches = collect($premiumMatches)->sortByDesc(fn($m) => $m->match_percentage);
+
+
+    // Format the results using UserResource
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Matches retrieved successfully',
+        'new_matches' => UserResource::collection($newMatches),
+        'my_matches' => UserResource::collection($myMatches),
+        'premium_matches' => UserResource::collection($premiumMatches),
+    ]);
+}
+
+
 
 
 

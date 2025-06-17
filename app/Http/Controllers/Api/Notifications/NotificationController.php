@@ -25,12 +25,12 @@ class NotificationController extends Controller
             $user = Auth::guard('user')->user();
             $notifications = Notification::where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
-                ->get();
+                ->paginate($request->get('per_page', 15));
         } elseif (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
-            $notifications = Notification::where('admin_id', $admin->id) // Only fetch notifications for the admin
+            $notifications = Notification::where('admin_id', $admin->id)
                 ->orderBy('created_at', 'desc')
-                ->get();
+                ->paginate($request->get('per_page', 15));
         } else {
             return response()->json([
                 'status' => 'error',

@@ -138,3 +138,113 @@ function getNextMissingSection(User $user)
 
     return null; // all completed
 }
+
+
+
+
+
+
+ function calculateMatchPercentage(User $user, User $matchedUser)
+    {
+        $score = 0;
+        $maxScore = 0;
+
+        // 1. Basic Compatibility (20%)
+        $maxScore += 20;
+        if ($user->partnerPreference && $user->partnerPreference->religion) {
+            if ($user->partnerPreference->religion === $matchedUser->religion) {
+                $score += 10;
+                if ($user->partnerPreference->caste === $matchedUser->caste) {
+                    $score += 10;
+                }
+            }
+        } else {
+            $score += 20; // No preference means full points
+        }
+
+        // 2. Age Compatibility (15%)
+        $maxScore += 15;
+        if ($user->partnerPreference && ($user->partnerPreference->age_min || $user->partnerPreference->age_max)) {
+            $age = $matchedUser->dob->age;
+            $minAge = $user->partnerPreference->age_min ?? 18;
+            $maxAge = $user->partnerPreference->age_max ?? 99;
+
+            if ($age >= $minAge && $age <= $maxAge) {
+                $score += 15;
+            } else {
+                $score += max(0, 15 - abs($age - (($minAge + $maxAge) / 2)));
+            }
+        } else {
+            $score += 15;
+        }
+
+        // 3. Education & Career (20%)
+        $maxScore += 20;
+        if ($user->profile && $matchedUser->profile) {
+            // Education match
+            if ($user->partnerPreference && $user->partnerPreference->education) {
+                if ($user->partnerPreference->education === $matchedUser->profile->highest_degree) {
+                    $score += 10;
+                }
+            } else {
+                $score += 10;
+            }
+
+            // Occupation match
+            if ($user->partnerPreference && $user->partnerPreference->occupation) {
+                if ($user->partnerPreference->occupation === $matchedUser->profile->occupation) {
+                    $score += 10;
+                }
+            } else {
+                $score += 10;
+            }
+        }
+
+        // 4. Lifestyle (15%)
+        $maxScore += 15;
+        if ($user->profile && $matchedUser->profile) {
+            // Diet
+            if ($user->profile->diet === $matchedUser->profile->diet) {
+                $score += 5;
+            }
+
+            // Drink/Smoke
+            if ($user->profile->drink === $matchedUser->profile->drink) {
+                $score += 5;
+            }
+            if ($user->profile->smoke === $matchedUser->profile->smoke) {
+                $score += 5;
+            }
+        }
+
+        // 5. Location (10%)
+        $maxScore += 10;
+        if ($user->profile && $matchedUser->profile) {
+            if ($user->partnerPreference && $user->partnerPreference->country) {
+                if ($user->partnerPreference->country === $matchedUser->profile->country) {
+                    $score += 10;
+                }
+            } else {
+                $score += 10;
+            }
+        }
+
+        // 6. Horoscope (10%)
+        $maxScore += 10;
+        if ($user->profile && $matchedUser->profile) {
+            if ($user->profile->has_horoscope && $matchedUser->profile->has_horoscope) {
+                // Simple check - in real app you'd use proper astro matching
+                if ($user->profile->manglik === $matchedUser->profile->manglik) {
+                    $score += 10;
+                }
+            } else {
+                $score += 10;
+            }
+        }
+
+        // 7. Profile Completeness (10%)
+        $maxScore += 10;
+        $score += ($matchedUser->profile_completion / 100) * 10;
+
+        return min(100, round(($score / $maxScore) * 100));
+    }

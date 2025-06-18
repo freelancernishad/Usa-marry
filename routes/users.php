@@ -81,6 +81,7 @@ Route::middleware(AuthenticateUser::class)->group(function () {
         Route::put('/', [ProfileController::class, 'updateProfile']);
     });
     Route::get('/contacts/{contactId}', [ContactController::class, 'showContact']);
+    Route::post('/contacts/{contactId}', [ContactController::class, 'showContact']);
     Route::get('/my/contact/views/list', [ContactController::class, 'myViewedContacts']);
 
     // routes/api.php

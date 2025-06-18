@@ -61,7 +61,7 @@ class UserResource extends JsonResource
             $userData['family_location'] = $maskAddress($userData['family_location']);
         }
 
-        $userData['age'] = $this->age;
+        $userData['age'] = $this->age ?? null;
 
         // Profile fields
         $profileFields = [

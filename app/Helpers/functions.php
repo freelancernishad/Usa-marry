@@ -165,13 +165,16 @@ function getNextMissingSection(User $user)
         // 2. Age Compatibility (15%)
         $maxScore += 15;
         if ($user->partnerPreference && ($user->partnerPreference->age_min || $user->partnerPreference->age_max)) {
-            $age = $matchedUser->dob->age;
+            $age = null;
+            if ($matchedUser->dob && property_exists($matchedUser->dob, 'age')) {
+                $age = $matchedUser->dob->age;
+            }
             $minAge = $user->partnerPreference->age_min ?? 18;
             $maxAge = $user->partnerPreference->age_max ?? 99;
 
-            if ($age >= $minAge && $age <= $maxAge) {
+            if ($age !== null && $age >= $minAge && $age <= $maxAge) {
                 $score += 15;
-            } else {
+            } elseif ($age !== null) {
                 $score += max(0, 15 - abs($age - (($minAge + $maxAge) / 2)));
             }
         } else {

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\UserPaginationResource;
 
 class MatchController extends Controller
 {
@@ -343,8 +344,7 @@ public function newMatches(Request $request)
         ->where('created_at', '>=', now()->subDays(3)) // Example condition for "new"
         ->where('id', '!=', $user->id)
         ->paginate($perPage);
-    $matches = UserResource::collection($matches);
-    return response()->json($matches);
+    return $matches = new UserPaginationResource($matches);
 }
 
 
@@ -362,8 +362,8 @@ public function matchHistory(Request $request)
         })
         ->latest()
         ->paginate($perPage);
-    $history = UserResource::collection($history);
-    return response()->json($history);
+    return $history = new UserPaginationResource($history);
+
 }
 
 
@@ -378,9 +378,7 @@ public function todaysMatches(Request $request)
         ->whereDate('created_at', $today)
         ->where('id', '!=', $user->id)
         ->paginate($perPage);
-    $matches = UserResource::collection($matches);
-
-    return response()->json($matches);
+    return $matches = new UserPaginationResource($matches);
 }
 
 
@@ -391,12 +389,12 @@ public function myMatches(Request $request)
     $user = Auth::user();
     $perPage = $request->per_page ?? 10;
 
-    $matches = $this->findPotentialMatches($user,false)
-        ->paginate($perPage);
+    $matches = $this->findPotentialMatches($user, false)->paginate($perPage);
 
-    // $matches = UserResource::collection($matches);
-    return response()->json($matches);
+    return $matches = new UserPaginationResource($matches);
+
 }
+
 
 
 
@@ -415,8 +413,7 @@ public function nearMe(Request $request)
         })
         ->paginate($perPage);
 
-    $matches = UserResource::collection($matches);
-    return response()->json($matches);
+    return $matches = new UserPaginationResource($matches);
 }
 
 
@@ -427,8 +424,7 @@ public function moreMatches(Request $request)
 
     $user = Auth::user();
     $matches = $this->findPotentialMatches($user,false)->paginate($perPage);
-    $matches = UserResource::collection($matches);
-    return response()->json($matches);
+    return $matches = new UserPaginationResource($matches);
 }
 
 

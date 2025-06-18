@@ -339,6 +339,7 @@ public function profileOverview()
                     'marital_status' => optional($req->sender)->marital_status,
                     'profile_picture' => optional($req->sender)->profile_picture,
                     'sent_at' => $req->created_at->diffForHumans(),
+                    'plan_name' => $req->plan_name,
                 ];
             });
 
@@ -375,6 +376,7 @@ public function profileOverview()
                     'profile_picture' => optional($visitor)->profile_picture,
                     'visited_at' => optional($visitor->profileVisit)?->created_at?->diffForHumans(), // optional if you later build visit relationship
                     'connection_request_Status' => $connectionRequestStatus,
+                    'plan_name' => $visitor->plan_name,
                 ];
             });
 

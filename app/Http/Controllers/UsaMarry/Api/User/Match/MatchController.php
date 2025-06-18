@@ -394,7 +394,7 @@ public function myMatches(Request $request)
     $matches = $this->findPotentialMatches($user,false)
         ->paginate($perPage);
 
-    $matches = UserResource::collection($matches);
+    // $matches = UserResource::collection($matches);
     return response()->json($matches);
 }
 

@@ -90,9 +90,26 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         return null;
     }
 
+    // public function getProfilePictureAttribute()
+    // {
+    //     return $this->primaryPhoto ? $this->primaryPhoto->path : null;
+    // }
+
+
+
     public function getProfilePictureAttribute()
     {
-        return $this->primaryPhoto ? $this->primaryPhoto->path : null;
+        $authUser = Auth::user();
+
+        if (!$authUser || $authUser->id === $this->id) {
+            return $this->primaryPhoto?->path;
+        }
+
+        if ($this->hasAcceptedPhotoRequestWith($authUser)) {
+            return $this->primaryPhoto?->path;
+        }
+
+        return 'Locked';
     }
 
     public function getAgeAttribute()
@@ -236,4 +253,28 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 
         return $feature['value'] ?? null;
     }
+
+
+    public function sentPhotoRequests()
+    {
+        return $this->hasMany(PhotoRequest::class, 'sender_id');
+    }
+
+    public function receivedPhotoRequests()
+    {
+        return $this->hasMany(PhotoRequest::class, 'receiver_id');
+    }
+
+    public function hasAcceptedPhotoRequestWith(User $otherUser): bool
+    {
+        return PhotoRequest::where(function ($q) use ($otherUser) {
+            $q->where('sender_id', $this->id)
+            ->where('receiver_id', $otherUser->id);
+        })->orWhere(function ($q) use ($otherUser) {
+            $q->where('sender_id', $otherUser->id)
+            ->where('receiver_id', $this->id);
+        })->where('status', 'accepted')->exists();
+    }
+
+
 }

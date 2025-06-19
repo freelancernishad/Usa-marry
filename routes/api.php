@@ -49,6 +49,11 @@ if (file_exists($userConnectionRoutes = __DIR__.'/userConnectionRoutes.php')) {
 }
 
 
+if (file_exists($PhotoRequestRoutes = __DIR__.'/PhotoRequestRoutes.php')) {
+    require $PhotoRequestRoutes;
+}
+
+
 
 Route::get('/server-status', [ServerStatusController::class, 'checkStatus']);
 

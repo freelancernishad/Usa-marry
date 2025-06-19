@@ -8,6 +8,7 @@ use App\Models\UserConnection;
 use App\Helpers\NotificationHelper;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Resources\CompactUserResource;
 
 class UserConnectionController extends Controller
 {
@@ -172,17 +173,7 @@ public function getRejectedConnections(Request $request)
                 ? $connection->receiver
                 : $connection->sender;
 
-            $connection->connection_user = [
-                'id' => $matchedUser->id ?? null,
-                'name' => $matchedUser->name ?? '',
-                'profile_picture' => $matchedUser->profile_picture ?? '',
-                'age' => $matchedUser->age ?? '',
-                'height' => $matchedUser->height ?? '',
-                'caste' => $matchedUser->caste ?? '',
-                'religion' => $matchedUser->religion ?? '',
-                'highest_degree' => $matchedUser->profile->highest_degree ?? '',
-                'occupation' => $matchedUser->profile->occupation ?? '',
-            ];
+             $connection->connection_user = new CompactUserResource($matchedUser);
 
             unset($connection->sender, $connection->receiver);
 
@@ -232,17 +223,7 @@ public function getRejectedConnections(Request $request)
                     ? $connection->receiver
                     : $connection->sender;
 
-                $connection->connection_user = [
-                    'id' => $matchedUser->id ?? null,
-                    'name' => $matchedUser->name ?? '',
-                    'profile_picture' => $matchedUser->profile_picture ?? '',
-                    'age' => $matchedUser->age ?? '',
-                    'height' => $matchedUser->height ?? '',
-                    'caste' => $matchedUser->caste ?? '',
-                    'religion' => $matchedUser->religion ?? '',
-                    'highest_degree' => $matchedUser->profile->highest_degree ?? '',
-                    'occupation' => $matchedUser->profile->occupation ?? '',
-                ];
+                $connection->connection_user = new CompactUserResource($matchedUser);
 
                 unset($connection->sender, $connection->receiver);
 
@@ -306,18 +287,7 @@ public function getPendingConnections(Request $request)
             $matchedUser = $connection->user_id == $user->id
                 ? $connection->receiver
                 : $connection->sender;
-
-            $connection->connection_user = [
-                'id' => $matchedUser->id ?? null,
-                'name' => $matchedUser->name ?? '',
-                'profile_picture' => $matchedUser->profile_picture ?? '',
-                'age' => $matchedUser->age ?? '',
-                'height' => $matchedUser->height ?? '',
-                'caste' => $matchedUser->caste ?? '',
-                'religion' => $matchedUser->religion ?? '',
-                'highest_degree' => $matchedUser->profile->highest_degree ?? '',
-                'occupation' => $matchedUser->profile->occupation ?? '',
-            ];
+            $connection->connection_user = new CompactUserResource($matchedUser);
 
             unset($connection->sender, $connection->receiver);
 

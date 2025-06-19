@@ -28,7 +28,7 @@ public function showContact($contactId)
     }
 
     // Send a connection request if not already connected
-    $connectionResponse = $user->connectWithUser($contactId);
+    $connectionResponse = connectWithUser($contactId);
 
     return response()->json([
         'message' => $result['message'],

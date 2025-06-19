@@ -14,86 +14,10 @@ class UserConnectionController extends Controller
 
     public function connectWithUser($connectedUserId, Request $request)
     {
-        $user = $request->user();
+        return connectWithUser($connectedUserId);
 
-        if ($user->id == $connectedUserId) {
-            return response()->json(['message' => 'You cannot send a connection request to yourself.'], 400);
-        }
 
-        $connectedUser = User::find($connectedUserId);
-        if (!$connectedUser) {
-            return response()->json(['message' => 'User not found.'], 404);
-        }
-
-        $existingConnection = $user->connections()
-            ->where('connected_user_id', $connectedUserId)
-            ->first();
-
-        if ($existingConnection) {
-            switch ($existingConnection->status) {
-                case 'pending':
-                    return response()->json(['message' => 'Connection request is already pending.'], 400);
-
-                case 'accepted':
-                    return response()->json(['message' => 'You are already connected.'], 400);
-
-                case 'disconnected':
-                case 'rejected':
-                case 'cancelled':
-                    $existingConnection->status = 'pending';
-                    $existingConnection->save();
-
-                    NotificationHelper::sendUserNotification(
-                        $connectedUser,
-                        "{$user->name} has sent you a connection request again.",
-                        'Connection Request Re-sent',
-                        'User',
-                        $user->id
-                    );
-
-                    NotificationHelper::sendUserNotification(
-                        $user,
-                        "You have re-sent a connection request to {$connectedUser->name}.",
-                        'Connection Request Re-sent',
-                        'User',
-                        $connectedUser->id
-                    );
-
-                    return response()->json(['message' => 'Connection request has been re-sent.'], 200);
-
-                case 'blocked':
-                    return response()->json(['message' => 'You have blocked this user or have been blocked.'], 400);
-
-                default:
-                    return response()->json(['message' => 'Unknown connection status.'], 400);
-            }
-        }
-
-        // Create new connection request
-        $user->connections()->create([
-            'connected_user_id' => $connectedUserId,
-            'status' => 'pending',
-        ]);
-
-        // Notify receiver
-        NotificationHelper::sendUserNotification(
-            $connectedUser,
-            "{$user->name} has sent you a connection request.",
-            'New Connection Request',
-            'User',
-            $user->id
-        );
-
-        // Notify sender
-        NotificationHelper::sendUserNotification(
-            $user,
-            "You have sent a connection request to {$connectedUser->name}.",
-            'Connection Request Sent',
-            'User',
-            $connectedUser->id
-        );
-
-        return response()->json(['message' => 'Connection request sent successfully.'], 201);
+        // return response()->json(['message' => 'Connection request sent successfully.'], 201);
     }
 
 

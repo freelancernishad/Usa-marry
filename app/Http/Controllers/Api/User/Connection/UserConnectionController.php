@@ -11,96 +11,226 @@ use Illuminate\Support\Facades\Auth;
 
 class UserConnectionController extends Controller
 {
-    // Send a connection request
+
     public function connectWithUser($connectedUserId, Request $request)
     {
         $user = $request->user();
 
-        if ($user->id === $connectedUserId) {
-            return response()->json(['message' => 'You cannot connect with yourself.'], 400);
+        if ($user->id == $connectedUserId) {
+            return response()->json(['message' => 'You cannot send a connection request to yourself.'], 400);
         }
 
-        $user->connectWithUser($connectedUserId);
+        $connectedUser = User::find($connectedUserId);
+        if (!$connectedUser) {
+            return response()->json(['message' => 'User not found.'], 404);
+        }
 
-        return response()->json(['message' => 'Connection request sent.']);
+        $existingConnection = $user->connections()
+            ->where('connected_user_id', $connectedUserId)
+            ->first();
+
+        if ($existingConnection) {
+            switch ($existingConnection->status) {
+                case 'pending':
+                    return response()->json(['message' => 'Connection request is already pending.'], 400);
+
+                case 'accepted':
+                    return response()->json(['message' => 'You are already connected.'], 400);
+
+                case 'disconnected':
+                case 'rejected':
+                case 'cancelled':
+                    $existingConnection->status = 'pending';
+                    $existingConnection->save();
+
+                    NotificationHelper::sendUserNotification(
+                        $connectedUser,
+                        "{$user->name} has sent you a connection request again.",
+                        'Connection Request Re-sent',
+                        'User',
+                        $user->id
+                    );
+
+                    NotificationHelper::sendUserNotification(
+                        $user,
+                        "You have re-sent a connection request to {$connectedUser->name}.",
+                        'Connection Request Re-sent',
+                        'User',
+                        $connectedUser->id
+                    );
+
+                    return response()->json(['message' => 'Connection request has been re-sent.'], 200);
+
+                case 'blocked':
+                    return response()->json(['message' => 'You have blocked this user or have been blocked.'], 400);
+
+                default:
+                    return response()->json(['message' => 'Unknown connection status.'], 400);
+            }
+        }
+
+        // Create new connection request
+        $user->connections()->create([
+            'connected_user_id' => $connectedUserId,
+            'status' => 'pending',
+        ]);
+
+        // Notify receiver
+        NotificationHelper::sendUserNotification(
+            $connectedUser,
+            "{$user->name} has sent you a connection request.",
+            'New Connection Request',
+            'User',
+            $user->id
+        );
+
+        // Notify sender
+        NotificationHelper::sendUserNotification(
+            $user,
+            "You have sent a connection request to {$connectedUser->name}.",
+            'Connection Request Sent',
+            'User',
+            $connectedUser->id
+        );
+
+        return response()->json(['message' => 'Connection request sent successfully.'], 201);
     }
 
+
+
     // Accept a connection request
-public function acceptConnection($connectedUserId, Request $request)
+    public function acceptConnection($connectedUserId, Request $request)
+    {
+        $user = $request->user();
+
+        // Prevent accepting your own connection request
+        if ($user->id === (int)$connectedUserId) {
+            return response()->json(['message' => 'You cannot accept your own connection request.'], 400);
+        }
+
+        // Find the pending connection where the current user is the recipient
+        $connection = UserConnection::where('user_id', $connectedUserId)
+            ->where('connected_user_id', $user->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($connection) {
+            // Accept the connection
+            $connection->status = 'accepted';
+            $connection->save();
+
+            $otherUser = User::find($connectedUserId);
+
+            if ($otherUser) {
+                // Notify the other user (who sent the request)
+                NotificationHelper::sendUserNotification(
+                    $otherUser,
+                    "{$user->name} has accepted your connection request.",
+                    'Connection Accepted',
+                    'User',
+                    $user->id
+                );
+
+                // Notify current user (who accepted)
+                NotificationHelper::sendUserNotification(
+                    $user,
+                    "You have successfully accepted the connection request from {$otherUser->name}. You are now connected.",
+                    'Connection Accepted',
+                    'User',
+                    $otherUser->id
+                );
+            }
+
+            return response()->json(['message' => 'Connection accepted.']);
+        }
+
+        return response()->json(['message' => 'Connection request not found or already accepted.'], 404);
+    }
+
+    // Disconnect from a user (remove the connection)
+public function disconnectFromUser($connectedUserId, Request $request)
 {
     $user = $request->user();
 
-    // Prevent accepting your own connection request
-    if ($user->id === (int)$connectedUserId) {
-        return response()->json(['message' => 'You cannot accept your own connection request.'], 400);
-    }
-
-    // Find the pending connection where the current user is the recipient
-    $connection = UserConnection::where('user_id', $connectedUserId)
-        ->where('connected_user_id', $user->id)
-        ->where('status', 'pending')
+    $connection = $user->connections()
+        ->where('connected_user_id', $connectedUserId)
         ->first();
 
     if ($connection) {
-        // Accept the connection
-        $connection->status = 'accepted';
+        $connection->status = 'disconnected';
         $connection->save();
 
         $otherUser = User::find($connectedUserId);
 
         if ($otherUser) {
-            // Notify the other user (who sent the request)
+            // Notify the other user
             NotificationHelper::sendUserNotification(
                 $otherUser,
-                "{$user->name} has accepted your connection request.",
-                'Connection Accepted',
+                "{$user->name} has disconnected from you.",
+                'Connection Disconnected',
                 'User',
                 $user->id
             );
 
-            // Notify current user (who accepted)
+            // Notify the current user
             NotificationHelper::sendUserNotification(
                 $user,
-                "You have successfully accepted the connection request from {$otherUser->name}. You are now connected.",
-                'Connection Accepted',
+                "You have disconnected from {$otherUser->name}.",
+                'Connection Disconnected',
+                'User',
+                $connectedUserId
+            );
+        }
+
+        return response()->json(['message' => 'Disconnected from user.']);
+    }
+
+    return response()->json(['message' => 'Connection not found.'], 404);
+}
+
+
+    // Disconnect from a user (remove the connection)
+public function rejectConnectionRequest($requesterId, Request $request)
+{
+    $user = $request->user();
+
+    // Find the connection where the requester sent the request to the current user
+    $connection = \App\Models\UserConnection::where('user_id', $requesterId)
+        ->where('connected_user_id', $user->id)
+        ->first();
+
+    if ($connection) {
+        $connection->status = 'rejected';
+        $connection->save();
+
+        $otherUser = User::find($requesterId);
+
+        if ($otherUser) {
+            // Notify the requester (other user)
+            NotificationHelper::sendUserNotification(
+                $otherUser,
+                "{$user->name} has rejected your connection request.",
+                'Connection Rejected',
+                'User',
+                $user->id
+            );
+
+            // Notify current user
+            NotificationHelper::sendUserNotification(
+                $user,
+                "You have rejected the connection request from {$otherUser->name}.",
+                'Connection Rejected',
                 'User',
                 $otherUser->id
             );
         }
 
-        return response()->json(['message' => 'Connection accepted.']);
+        return response()->json(['message' => 'Rejected from user.']);
     }
 
-    return response()->json(['message' => 'Connection request not found or already accepted.'], 404);
+    return response()->json(['message' => 'Connection not found.'], 404);
 }
 
-    // Disconnect from a user (remove the connection)
-    public function disconnectFromUser($connectedUserId, Request $request)
-    {
-        $user = $request->user();
-
-        $connection = $user->disconnectFromUser($connectedUserId);
-
-        if ($connection) {
-            return response()->json(['message' => 'Disconnected from user.']);
-        }
-
-        return response()->json(['message' => 'Connection not found.'], 404);
-    }
-
-    // Disconnect from a user (remove the connection)
-    public function rejectConnectionRequest($UserId, Request $request)
-    {
-        $user = $request->user();
-
-        $connection = $user->rejectConnectionRequest($UserId);
-
-        if ($connection) {
-            return response()->json(['message' => 'Rejected from user.']);
-        }
-
-        return response()->json(['message' => 'Connection not found.'], 404);
-    }
 
     // Disconnect from a user (remove the connection)
     public function cancelFromUser($connectedUserId, Request $request)
@@ -125,53 +255,176 @@ public function acceptConnection($connectedUserId, Request $request)
     {
         $user = $request->user();
 
-        // Call the getConnections method from the User model to get accepted connections
-        $connections = $user->getConnections();
+        // Get all accepted connections where current user is either sender or recipient
+        $connections = \App\Models\UserConnection::where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhere('connected_user_id', $user->id);
+            })
+            ->where('status', 'accepted')
+            ->with(['sender', 'receiver'])
+            ->get()
+            ->map(function ($connection) use ($user) {
+                // Determine the other user in the connection
+                if ($connection->user_id == $user->id) {
+                    $matchedUser = $connection->receiver;
+                } else {
+                    $matchedUser = $connection->sender;
+                }
 
-        // Return the accepted connections as a JSON response
+                // Set connection_user using UserResource
+                $connection->connection_user = new \App\Http\Resources\UserResource($matchedUser);
+
+                // Remove sender and receiver from result to avoid redundancy
+                unset($connection->sender, $connection->receiver);
+
+                return $connection;
+            });
+
         return response()->json($connections);
     }
 
+
     // Get the list of all pending connections
-    public function getPendingConnections(Request $request)
-    {
-         $user = $request->user();
-       return $pendingConnections = $user->getPendingConnections();
+public function getPendingConnections(Request $request)
+{
+    $user = $request->user();
 
-        return response()->json($pendingConnections);
-    }
+    $pendingConnections = \App\Models\UserConnection::where(function ($query) use ($user) {
+            $query->where('user_id', $user->id);
+                // ->orWhere('connected_user_id', $user->id); // if needed, you can add this later
+        })
+        ->where('status', 'pending')
+        ->with(['sender.profile', 'receiver.profile']) // Eager load sender/receiver with profile
+        ->get()
+        ->map(function ($connection) use ($user) {
+            $matchedUser = $connection->user_id == $user->id
+                ? $connection->receiver
+                : $connection->sender;
+
+            $connection->connection_user = [
+                'id' => $matchedUser->id ?? null,
+                'name' => $matchedUser->name ?? '',
+                'profile_picture' => $matchedUser->profile_picture ?? '',
+                'age' => $matchedUser->age ?? '',
+                'height' => $matchedUser->height ?? '',
+                'caste' => $matchedUser->caste ?? '',
+                'religion' => $matchedUser->religion ?? '',
+                'highest_degree' => $matchedUser->profile->highest_degree ?? '',
+                'occupation' => $matchedUser->profile->occupation ?? '',
+            ];
+
+            unset($connection->sender, $connection->receiver);
+
+            return $connection;
+        });
+
+    return response()->json($pendingConnections);
+}
+
 
     // Get the list of all users who have connected with the current user
-    public function getUsersWhoConnectedWithMe(Request $request)
-    {
-        $user = $request->user();
-        $users = $user->getUsersWhoConnectedWithMe();
+public function getUsersWhoConnectedWithMe(Request $request)
+{
+    $user = $request->user();
 
-        return response()->json($users);
-    }
+    $users = \App\Models\UserConnection::where('connected_user_id', $user->id) // Current user is the recipient
+        ->where('status', 'accepted') // Only accepted connections
+        ->with(['sender']) // Load the sender (who sent the request)
+        ->get()
+        ->map(function ($connection) {
+            // Indicate role as 'receiver'
+            $connection->role = 'receiver';
+
+            // Set connection_user as the sender
+            $connection->connection_user = new \App\Http\Resources\UserResource($connection->sender);
+
+            // Remove sender to avoid duplication
+            unset($connection->sender);
+
+            return $connection;
+        });
+
+    return response()->json($users);
+}
+
     // Get the list of all users who have connected with the current user
-    public function getMySentAcceptedConnections(Request $request)
-    {
-        $user = $request->user();
-        $users = $user->getMySentAcceptedConnections();
+public function getMySentAcceptedConnections(Request $request)
+{
+    $user = $request->user();
 
-        return response()->json($users);
-    }
+    $users = \App\Models\UserConnection::where('user_id', $user->id) // Current user is the sender
+        ->where('status', 'accepted') // Only accepted connections
+        ->with(['receiver']) // Load the receiver (who accepted the request)
+        ->get()
+        ->map(function ($connection) {
+            // Indicate role as 'sender'
+            $connection->role = 'sender';
+
+            // Set connection_user as the receiver
+            $connection->connection_user = new \App\Http\Resources\UserResource($connection->receiver);
+
+            // Remove receiver to avoid duplication
+            unset($connection->receiver);
+
+            return $connection;
+        });
+
+    return response()->json($users);
+}
+
 
     // Get the list of all pending connections for the current user
-    public function getPendingConnectionsForMe(Request $request)
-    {
-        $user = $request->user();
-        $pendingConnections = $user->getPendingConnectionsForMe();
+public function getPendingConnectionsForMe(Request $request)
+{
+    $user = $request->user();
 
-        return response()->json($pendingConnections);
-    }
+    $pendingConnections = \App\Models\UserConnection::where('connected_user_id', $user->id) // Current user is the recipient
+        ->where('status', 'pending') // Only pending connections
+        ->with(['sender']) // Load sender info (who sent the request)
+        ->get()
+        ->map(function ($connection) {
+            // Indicate the role
+            $connection->role = 'receiver';
 
-    public function getDisconnectedUsers(Request $request)
-    {
-        $user = $request->user();
-        $disconnectedUsers = $user->getDisconnectedUsers();
+            // Set connection_user as the sender
+            $connection->connection_user = new \App\Http\Resources\UserResource($connection->sender);
 
-        return response()->json($disconnectedUsers);
-    }
+            // Remove sender to avoid redundancy
+            unset($connection->sender);
+
+            return $connection;
+        });
+
+    return response()->json($pendingConnections);
+}
+
+public function getDisconnectedUsers(Request $request)
+{
+    $user = $request->user();
+
+    $disconnectedUsers = \App\Models\UserConnection::where(function ($query) use ($user) {
+            $query->where('user_id', $user->id)  // Current user is sender
+                  ->orWhere('connected_user_id', $user->id); // or recipient
+        })
+        ->where('status', 'disconnected') // Only disconnected
+        ->with(['sender', 'receiver']) // Eager load both sides
+        ->get()
+        ->map(function ($connection) use ($user) {
+            // Identify the other user
+            $matchedUser = $connection->user_id == $user->id
+                ? $connection->receiver
+                : $connection->sender;
+
+            // Format as connection_user
+            $connection->connection_user = new \App\Http\Resources\UserResource($matchedUser);
+
+            // Clean up
+            unset($connection->sender, $connection->receiver);
+
+            return $connection;
+        });
+
+    return response()->json($disconnectedUsers);
+}
+
 }

@@ -97,7 +97,7 @@ class UserResource extends JsonResource
                 'contact_viewed' => $contactViewed,
                 'match_percentage' => $this->match_percentage,
                 'plan_name' => $this->plan_name,
-                'photos_locked ' => $this->photos_locked ,
+                'photos_locked' => $this->photos_locked ,
 
             ]
         );

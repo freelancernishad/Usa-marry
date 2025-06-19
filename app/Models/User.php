@@ -96,27 +96,27 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     }
 
 
-    // public function getProfilePictureAttribute()
-    // {
-    //     return $this->primaryPhoto ? $this->primaryPhoto->path : null;
-    // }
-
-
-
     public function getProfilePictureAttribute()
     {
-        $authUser = Auth::user();
-
-        if (!$authUser || $authUser->id === $this->id) {
-            return $this->primaryPhoto?->path;
-        }
-
-        if ($this->hasAcceptedPhotoRequestWith($authUser)) {
-            return $this->primaryPhoto?->path;
-        }
-
-        return 'Locked';
+        return $this->primaryPhoto ? $this->primaryPhoto->path : null;
     }
+
+
+
+    // public function getProfilePictureAttribute()
+    // {
+    //     $authUser = Auth::user();
+
+    //     if (!$authUser || $authUser->id === $this->id) {
+    //         return $this->primaryPhoto?->path;
+    //     }
+
+    //     if ($this->hasAcceptedPhotoRequestWith($authUser)) {
+    //         return $this->primaryPhoto?->path;
+    //     }
+
+    //     return 'Locked';
+    // }
 
     public function getAgeAttribute()
     {

@@ -18,9 +18,15 @@ Route::middleware(AuthenticateUser::class)->prefix('user')->group(function () {
 
     // Reject from a user (remove the connection)
     Route::post('/connection/{UserId}/reject', [UserConnectionController::class, 'rejectConnectionRequest']);
+    Route::get('/connection-reject/list', [UserConnectionController::class, 'getRejectedConnections']);
 
     // Cancel from a user (remove the connection)
     Route::post('/connection/{connectedUserId}/cancel', [UserConnectionController::class, 'cancelFromUser']);
+
+
+    Route::get('/connection-canceled/list', [UserConnectionController::class, 'getCancelledConnections']);
+
+
 
     // Get all accepted connections
     Route::get('/connections', [UserConnectionController::class, 'getConnections']);

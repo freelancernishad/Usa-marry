@@ -232,7 +232,46 @@ public function rejectConnectionRequest($requesterId, Request $request)
 }
 
 
-    // Disconnect from a user (remove the connection)
+public function getRejectedConnections(Request $request)
+{
+    $user = $request->user();
+
+    $rejectedConnections = \App\Models\UserConnection::where(function ($query) use ($user) {
+            $query->where('user_id', $user->id)
+                  ->orWhere('connected_user_id', $user->id);
+        })
+        ->where('status', 'rejected')
+        ->with(['sender.profile', 'receiver.profile'])
+        ->get()
+        ->map(function ($connection) use ($user) {
+            $matchedUser = $connection->user_id == $user->id
+                ? $connection->receiver
+                : $connection->sender;
+
+            $connection->connection_user = [
+                'id' => $matchedUser->id ?? null,
+                'name' => $matchedUser->name ?? '',
+                'profile_picture' => $matchedUser->profile_picture ?? '',
+                'age' => $matchedUser->age ?? '',
+                'height' => $matchedUser->height ?? '',
+                'caste' => $matchedUser->caste ?? '',
+                'religion' => $matchedUser->religion ?? '',
+                'highest_degree' => $matchedUser->profile->highest_degree ?? '',
+                'occupation' => $matchedUser->profile->occupation ?? '',
+            ];
+
+            unset($connection->sender, $connection->receiver);
+
+            return $connection;
+        });
+
+    return response()->json($rejectedConnections);
+}
+
+
+
+
+    // Cancel from a user (remove the connection)
     public function cancelFromUser($connectedUserId, Request $request)
     {
         $user = $request->user();
@@ -243,12 +282,55 @@ public function rejectConnectionRequest($requesterId, Request $request)
             ->first();
 
         if ($connection) {
-            $connection->delete();  // Delete the connection record
-            return response()->json(['message' => 'Cancel from user.']);
+            $connection->status = 'cancelled';  // status update instead of delete
+            $connection->save();
+
+            return response()->json(['message' => 'Connection request cancelled.']);
         }
 
         return response()->json(['message' => 'Connection not found.'], 404);
     }
+
+
+    public function getCancelledConnections(Request $request)
+    {
+        $user = $request->user();
+
+        $cancelledConnections = \App\Models\UserConnection::where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhere('connected_user_id', $user->id);
+            })
+            ->where('status', 'cancelled')
+            ->with(['sender.profile', 'receiver.profile']) // sender/receiver সাথে profile eager load
+            ->get()
+            ->map(function ($connection) use ($user) {
+                $matchedUser = $connection->user_id == $user->id
+                    ? $connection->receiver
+                    : $connection->sender;
+
+                $connection->connection_user = [
+                    'id' => $matchedUser->id ?? null,
+                    'name' => $matchedUser->name ?? '',
+                    'profile_picture' => $matchedUser->profile_picture ?? '',
+                    'age' => $matchedUser->age ?? '',
+                    'height' => $matchedUser->height ?? '',
+                    'caste' => $matchedUser->caste ?? '',
+                    'religion' => $matchedUser->religion ?? '',
+                    'highest_degree' => $matchedUser->profile->highest_degree ?? '',
+                    'occupation' => $matchedUser->profile->occupation ?? '',
+                ];
+
+                unset($connection->sender, $connection->receiver);
+
+                return $connection;
+            });
+
+        return response()->json($cancelledConnections);
+    }
+
+
+
+
 
     // Get the list of all accepted connections for the current user
     public function getConnections(Request $request)

@@ -1,14 +1,15 @@
 <?php
 
 
+use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use App\Models\User;
 use Illuminate\Support\Facades\Http;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Http\Resources\UserLoginResource;
+use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
 function handleGoogleAuth(Request $request)
@@ -59,15 +60,7 @@ function handleGoogleAuth(Request $request)
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'gender' => $user->gender,
-                'dob' => $user->dob,
-                'phone' => $user->phone,
-                'email_verified' => $user->hasVerifiedEmail(),
-            ],
+            'user' => new UserLoginResource($user),
             'profile_completion' => $user->profile_completion,
             'message' => 'Login successful',
         ]);

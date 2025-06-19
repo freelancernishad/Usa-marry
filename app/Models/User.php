@@ -38,7 +38,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     ];
 
     protected $appends = [
-        'age', 'profile_picture', 'match_percentage', 'plan_name',
+        'age', 'profile_picture', 'match_percentage', 'plan_name', 'is_premium',
     ];
 
     // Cache property for age attribute
@@ -89,6 +89,12 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 
         return null;
     }
+
+    public function getIsPremiumAttribute(): bool
+    {
+        return $this->hasActiveSubscription();
+    }
+
 
     // public function getProfilePictureAttribute()
     // {

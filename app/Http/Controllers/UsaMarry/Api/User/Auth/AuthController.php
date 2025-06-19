@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use App\Http\Resources\UserLoginResource;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
@@ -66,33 +67,21 @@ class AuthController extends Controller
             Mail::to($user->email)->send(new OtpNotification($otp));
         }
 
-        // Define payload data
-        $payload = [
-            'email' => $user->email,
-            'name' => $user->name,
-            'gender' => $user->gender,
-            'dob' => $user->dob,
-            'phone' => $user->phone,
-            'profile_completion' => $user->profile_completion,
-            'email_verified' => $user->hasVerifiedEmail(), // Check verification status
-        ];
+
 
         return response()->json([
             'message' => 'User registered successfully',
             'token' => $token,
-            'user' => $payload,
+            'user' =>new UserLoginResource($user),
             'next_step' => 'complete_profile'
         ], 201);
     }
 
     public function login(Request $request)
     {
-
-        if($request->access_token){
-
+        if ($request->access_token) {
             return handleGoogleAuth($request);
         }
-
 
         $credentials = $request->only('email', 'password');
 
@@ -109,16 +98,7 @@ class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'gender' => $user->gender,
-                'dob' => $user->dob,
-                'phone' => $user->phone,
-                'profile_picture' => $user->profile_picture,
-                'email_verified' => $user->hasVerifiedEmail(),
-            ],
+            'user' => new UserLoginResource($user),
             'profile_completion' => $user->profile_completion,
             'message' => 'Login successful',
         ]);

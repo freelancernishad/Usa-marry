@@ -38,7 +38,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     ];
 
     protected $appends = [
-        'age', 'profile_picture', 'match_percentage', 'plan_name', 'is_premium',
+        'age', 'profile_picture', 'match_percentage', 'plan_name', 'is_premium','photos_locked',
     ];
 
     // Cache property for age attribute
@@ -95,28 +95,45 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         return $this->hasActiveSubscription();
     }
 
-
-    public function getProfilePictureAttribute()
+    public function getPhotosLockedAttribute(): bool
     {
-        return $this->primaryPhoto ? $this->primaryPhoto->path : null;
-    }
+        $authUser = Auth::user();
 
+        // যদি কেউ লগইন না থাকে বা নিজেই নিজের প্রোফাইল দেখে, তাহলে locked না
+        if (!$authUser || $authUser->id === $this->id) {
+            return false;
+        }
+
+        // যদি উভয়ের মধ্যে accepted photo request না থাকে, তাহলে locked
+        return !$this->hasAcceptedPhotoRequestWith($authUser);
+    }
 
 
     // public function getProfilePictureAttribute()
     // {
-    //     $authUser = Auth::user();
-
-    //     if (!$authUser || $authUser->id === $this->id) {
-    //         return $this->primaryPhoto?->path;
-    //     }
-
-    //     if ($this->hasAcceptedPhotoRequestWith($authUser)) {
-    //         return $this->primaryPhoto?->path;
-    //     }
-
-    //     return 'Locked';
+    //     return $this->primaryPhoto ? $this->primaryPhoto->path : url('files/male.jpeg');
     // }
+
+
+
+    public function getProfilePictureAttribute()
+    {
+        $authUser = Auth::user();
+
+        if (!$authUser || $authUser->id === $this->id) {
+            return $this->primaryPhoto?->path;
+        }
+
+        if ($this->hasAcceptedPhotoRequestWith($authUser)) {
+            return $this->primaryPhoto?->path;
+        }
+        if ($this->gender === 'Female') {
+            return url('files/female.jpeg');
+        }
+
+        return url('files/male.jpeg');
+
+    }
 
     public function getAgeAttribute()
     {

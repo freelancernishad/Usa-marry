@@ -24,6 +24,7 @@ class CompactUserResource extends JsonResource
             'highest_degree' => optional($this->profile)->highest_degree ?? '',
             'occupation' => optional($this->profile)->occupation ?? '',
             'plan_name' => $this->plan_name,
+            'photos_locked ' => $this->photos_locked ,
         ];
     }
 }

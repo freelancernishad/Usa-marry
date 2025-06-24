@@ -150,7 +150,6 @@ class ProfileController extends Controller
         $validator = Validator::make($request->all(), [
             // User model fields
             'name' => 'sometimes|nullable|string|max:255',
-            'email' => 'sometimes|nullable|string|email|max:255|unique:users,email,'.$user->id,
             'phone' => 'sometimes|nullable|numeric',
             'gender' => 'sometimes|nullable|in:Male,Female,Other',
             'dob' => 'sometimes|nullable|date',

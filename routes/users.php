@@ -14,6 +14,7 @@ use App\Http\Controllers\UsaMarry\Api\User\Profile\ContactController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ProfileController;
 use App\Http\Controllers\UsaMarry\Api\User\Auth\RegistrationController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ProfileVisitController;
+use App\Http\Controllers\UsaMarry\Api\User\Settings\AllSettingsController;
 use App\Http\Controllers\UsaMarry\Api\User\Subscription\SubscriptionController;
 use App\Http\Controllers\UsaMarry\Api\User\PartnerPreference\PartnerPreferenceController;
 
@@ -134,6 +135,14 @@ Route::middleware(AuthenticateUser::class)->group(function () {
 
         // Mark a notification as read
         Route::post('user/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead']);
+
+
+
+        Route::prefix('settings')->group(function () {
+            Route::post('/photos', [AllSettingsController::class, 'updatePhotoSettings']);
+        });
+
+
 
 
     // Search routes

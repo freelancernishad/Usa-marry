@@ -20,12 +20,12 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'marital_status', 'height', 'blood_group', 'disability_issue', 'family_location',
         'grew_up_in', 'hobbies', 'disability', 'mother_tongue', 'profile_created_by',
         'verified', 'profile_completion', 'account_status', 'email_verified_at',
-        'email_verification_hash', 'otp', 'otp_expires_at',
+        'email_verification_hash', 'otp', 'otp_expires_at', 'photo_privacy', 'photo_visibility',
     ];
 
     protected $hidden = [
         'password', 'remember_token', 'email_verification_hash',
-        'email_verified_at', 'otp', 'otp_expires_at',
+        'email_verified_at', 'otp', 'otp_expires_at', 'photos'
     ];
 
     protected $casts = [
@@ -95,45 +95,68 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         return $this->hasActiveSubscription();
     }
 
+
+
     public function getPhotosLockedAttribute(): bool
     {
         $authUser = Auth::user();
+        $privacy = $this->photo_privacy ?? 'accepted';
 
-        // যদি কেউ লগইন না থাকে বা নিজেই নিজের প্রোফাইল দেখে, তাহলে locked না
         if (!$authUser || $authUser->id === $this->id) {
             return false;
         }
 
-        // যদি উভয়ের মধ্যে accepted photo request না থাকে, তাহলে locked
-        return !$this->hasAcceptedPhotoRequestWith($authUser);
+        if ($privacy === 'all') return false;
+        if ($privacy === 'premium' && $authUser->is_premium) return false;
+        if ($privacy === 'accepted' && $this->hasAcceptedPhotoRequestWith($authUser)) return false;
+
+        return true;
     }
+
+
+
+
 
 
     // public function getProfilePictureAttribute()
     // {
-    //     return $this->primaryPhoto ? $this->primaryPhoto->path : url('files/male.jpeg');
-    // }
+    //     $authUser = Auth::user();
 
+    //     if (!$authUser || $authUser->id === $this->id) {
+    //         return $this->primaryPhoto?->path;
+    //     }
+
+    //     if ($this->hasAcceptedPhotoRequestWith($authUser)) {
+    //         return $this->primaryPhoto?->path;
+    //     }
+    //     if ($this->gender === 'Female') {
+    //         return url('files/female.jpeg');
+    //     }
+
+    //     return url('files/male.jpeg');
+
+    // }
 
 
     public function getProfilePictureAttribute()
     {
-        $authUser = Auth::user();
+        // $authUser = Auth::user();
+        $visibility = $this->photo_visibility ?? 'profile_only';
 
-        if (!$authUser || $authUser->id === $this->id) {
+        if (!$this->photos_locked) {
             return $this->primaryPhoto?->path;
         }
 
-        if ($this->hasAcceptedPhotoRequestWith($authUser)) {
+        if (!$this->photos_locked && $visibility !== 'hidden') {
             return $this->primaryPhoto?->path;
         }
-        if ($this->gender === 'Female') {
-            return url('files/female.jpeg');
-        }
 
-        return url('files/male.jpeg');
-
+        return $this->gender === 'Female'
+            ? url('files/female.jpeg')
+            : url('files/male.jpeg');
     }
+
+
 
     public function getAgeAttribute()
     {
@@ -182,6 +205,50 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     {
         return $this->hasOne(PartnerPreference::class);
     }
+
+
+    public function visiblePhotos()
+    {
+        $authUser = Auth::user();
+        $privacy = $this->photo_privacy ?? 'all';
+        $visibility = $this->photo_visibility ?? 'profile_only';
+
+        $query = $this->photos();
+
+        // নিজের প্রোফাইল হলে সব ছবি
+        if (!$authUser || $authUser->id === $this->id) {
+            return $query->get();
+        }
+
+        // visibility: hidden → কিছুই না
+        if ($visibility === 'hidden') {
+            return collect();
+        }
+
+        // privacy: all → সব ছবি
+        if ($privacy === 'all') {
+            return $query->get();
+        }
+
+        // privacy: premium → যদি viewer premium হয়
+        if ($privacy === 'premium' && $authUser->is_premium) {
+            return $query->get();
+        }
+
+        // privacy: accepted → যদি accepted request থাকে
+        if ($privacy === 'accepted' && $this->hasAcceptedPhotoRequestWith($authUser)) {
+            return $query->get();
+        }
+
+        // অন্য ক্ষেত্রে শুধু প্রাইমারি ছবি (visibility = profile_only)
+        if ($visibility === 'profile_only') {
+            return $query->where('is_primary', true)->get();
+        }
+
+        return collect(); // fallback
+    }
+
+
 
     public function photos()
     {
@@ -300,4 +367,8 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     }
 
 
+    public function photoSetting()
+    {
+        return $this->hasOne(PhotoSetting::class);
+    }
 }

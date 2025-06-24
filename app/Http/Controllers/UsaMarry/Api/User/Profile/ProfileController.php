@@ -127,7 +127,25 @@ class ProfileController extends Controller
 
     public function updateProfile(Request $request)
     {
-        $user = Auth::user();
+
+        $isAdmin = auth()->guard('admin')->check();
+        if($isAdmin){
+            $user = User::findOrFail($request->user_id);
+
+            // Check if the authenticated admin is trying to update their own profile
+            if ($user->id === Auth::id()) {
+                return response()->json(['error' => 'Admins cannot update their own profile through this endpoint.'], 403);
+            }
+
+            // Ensure the admin has permission to update this user
+            if (!Auth::user()->can('update', $user)) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+        }else{
+
+            $user = Auth::user();
+        }
+
 
         $validator = Validator::make($request->all(), [
             // User model fields

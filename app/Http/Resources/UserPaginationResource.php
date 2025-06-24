@@ -18,12 +18,13 @@ class UserPaginationResource extends ResourceCollection
     {
         return [
             'current_page' => $this->currentPage(),
-            'data' => $this->collection,
+            'data' => UserResource::collection($this->collection),
             'from' => $this->firstItem(),
             'last_page' => $this->lastPage(),
             'per_page' => $this->perPage(),
             'to' => $this->lastItem(),
             'total' => $this->total(),
+
         ];
     }
 }

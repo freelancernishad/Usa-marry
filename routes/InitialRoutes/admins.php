@@ -35,13 +35,7 @@ Route::prefix('admin')->group(function () {
         // Dashboard
         Route::get('dashboard', [AdminDashboardController::class, 'index']);
 
-        Route::prefix('users')->group(function () {
-            Route::get('/', [UserController::class, 'index']);          // List users
-            Route::post('/', [UserController::class, 'store']);         // Create user
-            Route::get('/{user}', [UserController::class, 'show']);     // Show user details
-            Route::put('/{user}', [UserController::class, 'update']);   // Update user
-            Route::delete('/{user}', [UserController::class, 'destroy']); // Delete user
-        });
+
 
 
 

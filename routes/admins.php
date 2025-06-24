@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\AuthenticateAdmin;
 use App\Http\Controllers\Api\Coupon\CouponController;
+use App\Http\Controllers\Api\Admin\Users\UserController;
 use App\Http\Controllers\Api\Auth\Admin\AdminAuthController;
 use App\Http\Controllers\UsaMarry\Api\Admin\Plans\PlanController;
 use App\Http\Controllers\UsaMarry\Api\Admin\Plans\FeatureController;
@@ -26,6 +27,17 @@ Route::prefix('auth/admin')->group(function () {
 Route::prefix('admin')->group(function () {
 
     Route::middleware(AuthenticateAdmin::class)->group(function () {
+
+
+
+
+
+        Route::prefix('/users')->group(function () {
+            Route::get('/', [UserController::class, 'index']); // list users
+            Route::get('/{id}', [UserController::class, 'show']); // single user details
+            Route::get('/{id}/subscription', [UserController::class, 'showSubscription']); // user subscription
+        });
+
 
 
         Route::prefix('plan/features')->group(function () {

@@ -5,103 +5,65 @@ namespace App\Http\Controllers\Api\Admin\Users;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
+use App\Http\Resources\UserResource;
+use App\Http\Resources\UserPaginationResource;
 
 class UserController extends Controller
 {
-    // List users with optional search
+    // ✅ All users with optional search and subscriptions loaded
     public function index(Request $request)
     {
-        $query = User::query();
+        $query = User::with(['activeSubscription.plan']); // eager load to reduce queries
 
-        // Apply search filter
-        if ($request->has('search')) {
-            $search = $request->input('search');
+        // Optional search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('id', 'LIKE', "%{$search}%")
-                  ->orWhere('email', 'LIKE', "%{$search}%");
+                $q->where('name', 'LIKE', "%$search%")
+                  ->orWhere('email', 'LIKE', "%$search%")
+                  ->orWhere('id', 'LIKE', "%$search%");
             });
         }
 
-        // Set dynamic pagination
-        $perPage = $request->input('per_page', 10); // Default to 10 if not specified
-        $users = $query->paginate($perPage);
-
-        return response()->json($users);
-    }
-
-
-
-
-    public function store(Request $request)
-    {
-
-        // Define validation rules
-        $rules =  [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-        ];
-        $validationResponse = validateRequest($request->all(), $rules);
-        if ($validationResponse) {
-            return $validationResponse; // Return if validation fails
+        // Optional filter: only subscribed users
+        if ($request->filled('subscribed') && $request->subscribed == 'true') {
+            $query->whereHas('subscriptions', function ($q) {
+                $q->where('status', 'Success')->where('end_date', '>=', now());
+            });
         }
 
+        $users = $query->latest()->paginate($request->input('per_page', 10));
 
+        return new UserPaginationResource($users);
+    }
 
-        // Create the user
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+    // ✅ View single user with subscription and profile data
+    public function show($id)
+    {
+        $user = User::with([
+            'profile',
+            'partnerPreference',
+            'photos',
+            'activeSubscription.plan'
+        ])->findOrFail($id);
+
+        return new UserResource($user);
+    }
+
+    // ✅ Show user's current active plan/subscription
+    public function showSubscription($id)
+    {
+        $user = User::with('activeSubscription.plan')->findOrFail($id);
+
+        if (!$user->activeSubscription) {
+            return response()->json([
+                'message' => 'This user does not have any active subscription.'
+            ], 404);
+        }
+
+        return response()->json([
+            'plan_name' => $user->plan_name,
+            'subscription_details' => $user->activeSubscription
         ]);
-
-        return response()->json($user, 201);
-    }
-
-
-    // Show user details
-    public function show(User $user)
-    {
-        return response()->json($user);
-    }
-
-    // Update a user
-    public function update(Request $request, User $user)
-    {
-        $rules = [
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'sometimes|string|min:8',
-        ];
-
-        $validationResponse = validateRequest($request->all(), $rules);
-        if ($validationResponse) {
-            return $validationResponse; // Return if validation fails
-        }
-
-
-
-        // Prepare the data array for update
-        $data = [
-            'name' => $request->name ?? $user->name, // Keep current value if not updating
-            'email' => $request->email ?? $user->email,
-            'password' => isset($request->password) ? Hash::make($request->password) : $user->password,
-        ];
-
-        // Update the user with the new data
-        $user->update($data);
-
-        return response()->json($user);
-    }
-
-    // Delete a user
-    public function destroy(User $user)
-    {
-        $user->delete();
-
-        return response()->json(['message' => 'User deleted successfully']);
     }
 }

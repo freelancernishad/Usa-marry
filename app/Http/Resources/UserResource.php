@@ -12,6 +12,8 @@ class UserResource extends JsonResource
     public function toArray(Request $request): array
     {
         $authUser = $request->user();
+        $isAdmin = auth()->guard('admin')->check();
+
         $isOwner = $authUser && $authUser->id === $this->id;
 
         // Check if contact has been viewed
@@ -55,7 +57,7 @@ class UserResource extends JsonResource
             'created_at', 'updated_at'
         ]);
 
-        if (!$isOwner && !$contactViewed) {
+        if (!$isOwner && !$contactViewed && !$isAdmin) {
             $userData['email'] = $maskEmail($userData['email']);
             $userData['phone'] = $maskPhone($userData['phone']);
             $userData['family_location'] = $maskAddress($userData['family_location']);
@@ -74,7 +76,7 @@ class UserResource extends JsonResource
 
         $profileData = $this->profile ? $this->profile->only($profileFields) : array_fill_keys($profileFields, null);
 
-        if (!$isOwner && !$contactViewed) {
+        if (!$isOwner && !$contactViewed && !$isAdmin) {
             foreach (['country', 'state', 'city'] as $field) {
                 $profileData[$field] = $maskAddress($profileData[$field]);
             }
@@ -91,7 +93,8 @@ class UserResource extends JsonResource
             $userData,
             $profileData,
             [
-                'photos' => $this->photos ?? [],
+                // 'photos' => $this->photos ?? [],
+                'photos' => $this->visiblePhotos() ?? [],
                 'partner_preference' => $this->partnerPreference ?? null,
                 'connection_request_Status' => $connectionRequestStatus,
                 'contact_viewed' => $contactViewed,

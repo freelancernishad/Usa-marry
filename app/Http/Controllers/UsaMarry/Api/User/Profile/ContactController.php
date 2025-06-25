@@ -11,16 +11,20 @@ use Illuminate\Support\Facades\Auth;
 
 class ContactController extends Controller
 {
+
+
 public function showContact($contactId)
 {
     $user = Auth::user();
 
+    // Check if user has permission to view the contact
     $result = SubscriptionHelper::canViewContact($user, $contactId);
 
     if (!$result['allowed']) {
         return response()->json(['message' => $result['message']], 403);
     }
 
+    // Fetch the contact
     $contact = User::with('profile')->find($contactId);
 
     if (!$contact) {
@@ -32,7 +36,8 @@ public function showContact($contactId)
 
     return response()->json([
         'message' => $result['message'],
-        'connection_status' => $connectionResponse->message ?? null,
+        'connection_status' => $connectionResponse->getData(true)['message'] ?? null,
+        'remaining_views' => $user->contact_view_balance, // ✅ use accessor here
         'contact' => [
             'name'             => $contact->name,
             'email'            => $contact->email,
@@ -44,6 +49,8 @@ public function showContact($contactId)
         ]
     ]);
 }
+
+
 
 
 

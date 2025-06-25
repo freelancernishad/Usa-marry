@@ -106,7 +106,7 @@ public function subscribe(Request $request)
             'value' => $coupon->value,
         ]);
 
-   
+
         if ($coupon->type == 'percentage') {
             $discountPercent = $coupon->value;
             $discountAmount = ($originalAmount * $discountPercent) / 100;
@@ -275,4 +275,24 @@ public function webhook(Request $request)
 
         return response()->json($subscription);
     }
+
+    // Fetch all subscriptions of the authenticated user (latest first)
+    public function subscriptionHistory()
+    {
+        $user = Auth::user();
+
+        $subscriptions = $user->subscriptions()
+            ->with('plan') // include related plan info
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($subscriptions->isEmpty()) {
+            return response()->json(['message' => 'No Transaction history found.'], 404);
+        }
+
+        return response()->json($subscriptions);
+    }
+
+
+
 }

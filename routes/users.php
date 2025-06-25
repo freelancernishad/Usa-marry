@@ -128,6 +128,8 @@ Route::middleware(AuthenticateUser::class)->group(function () {
         Route::post('/subscribe', [SubscriptionController::class, 'subscribe']);
     });
 
+    Route::get('/transaction-history', [SubscriptionController::class, 'subscriptionHistory']);
+
 
 
         // Get notifications for the authenticated user or admin

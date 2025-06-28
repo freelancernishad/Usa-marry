@@ -361,11 +361,14 @@ public function todaysMatches(Request $request)
         // created_at filter বাদ দিয়ে একই query, তবে random order
         $fallbackQuery = $this->findPotentialMatches($user, false);
         $fallbackQuery = $this->applyFilters($fallbackQuery, $request);
-        $fallbackQuery = $fallbackQuery
-            ->inRandomOrder()
-            ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true), 'partnerPreference']);
 
-        $randomMatches = $fallbackQuery->paginate($perPage);
+        // অর্ডার রিসেট করে দিন
+        $fallbackQuery->getQuery()->orders = [];
+
+        $randomMatches = $fallbackQuery
+            ->inRandomOrder()
+            ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true), 'partnerPreference'])
+            ->paginate($perPage);
 
         return new SingleUserPaginationResource($randomMatches);
     }

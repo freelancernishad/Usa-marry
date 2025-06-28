@@ -16,7 +16,7 @@ class SingleUserResource extends JsonResource
         $matchDetails = getMatchDetails($authUser, $this->resource);
 
 
-         $userDetails = new \App\Http\Resources\UserResource($authUser);
+         $userDetails = new \App\Http\Resources\UserResource($this->resource);
 
 
              return [

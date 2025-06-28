@@ -13,25 +13,41 @@ use App\Http\Resources\UserPaginationResource;
 
 class MatchController extends Controller
 {
-    public function getMatches(Request $request)
-    {
-        $user = Auth::user();
-        $perPage = $request->per_page ?? 10;
 
-        // Get base matches with scoring
-        $matches = $this->findPotentialMatches($user)
+public function getMatches(Request $request)
+{
+    $user = Auth::user();
+    $perPage = $request->per_page ?? 10;
+
+    // Strict mode query
+    $query = $this->findPotentialMatches($user, true);
+
+    // Apply filters (strict)
+    $query = $this->applyFilters($query, $request);
+
+    $matches = $query
+        ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
+        ->paginate($perPage);
+
+    // If no matches, relaxed mode with filters
+    if ($matches->isEmpty()) {
+        $query = $this->findPotentialMatches($user, false);
+
+        $query = $this->applyFilters($query, $request);
+
+        $matches = $query
             ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
             ->paginate($perPage);
-
-        // If no matches found with strict criteria, try relaxed criteria
-        if ($matches->isEmpty()) {
-            $matches = $this->findPotentialMatches($user, false) // relaxed mode
-                ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-                ->paginate($perPage);
-        }
-
-        return response()->json($matches);
     }
+
+    return response()->json($matches);
+}
+
+
+
+
+
+
 
    private function findPotentialMatches(User $user, bool $strictMode = true)
 {
@@ -334,19 +350,24 @@ private function getMatchDetails($user, $matchedUser)
     // New Matches, Match History, Today Matches, My Match, Near Me, More Match
 
 
-// ✅ 1. New Matches
-public function newMatches(Request $request)
-{
-    $user = Auth::user();
-    $perPage = $request->per_page ?? 10;
+    public function newMatches(Request $request)
+    {
+        $user = Auth::user();
+        $perPage = $request->per_page ?? 10;
 
-    $matches = $this->findPotentialMatches($user,false)
-        ->where('created_at', '>=', now()->subDays(3)) // Example condition for "new"
-        ->where('id', '!=', $user->id)
-        ->paginate($perPage);
-    return $matches = new UserPaginationResource($matches);
-}
+        $query = $this->findPotentialMatches($user, false)
+            ->where('created_at', '>=', now()->subDays(3)) // "New" users: last 3 days
+            ->where('id', '!=', $user->id);
 
+        // Apply reusable filters
+        $query = $this->applyFilters($query, $request);
+
+        $matches = $query
+            ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
+            ->paginate($perPage);
+
+        return new UserPaginationResource($matches);
+    }
 
 
 // ✅ 2. Match History (still uses UserMatch and matchedUser)
@@ -374,13 +395,17 @@ public function todaysMatches(Request $request)
     $perPage = $request->per_page ?? 10;
     $today = now()->toDateString();
 
-    $matches = $this->findPotentialMatches($user,false)
-        ->whereDate('created_at', $today)
-        ->where('id', '!=', $user->id)
-        ->paginate($perPage);
-    return $matches = new UserPaginationResource($matches);
-}
+    $query = $this->findPotentialMatches($user, false)
+        ->whereDate('created_at', $today);
 
+    $query = $this->applyFilters($query, $request);
+
+    $matches = $query
+        ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
+        ->paginate($perPage);
+
+    return new UserPaginationResource($matches);
+}
 
 
 // ✅ 4. My Matches
@@ -389,10 +414,14 @@ public function myMatches(Request $request)
     $user = Auth::user();
     $perPage = $request->per_page ?? 10;
 
-    $matches = $this->findPotentialMatches($user, false)->paginate($perPage);
+    $query = $this->findPotentialMatches($user, false);
 
-    return $matches = new UserPaginationResource($matches);
+    $query = $this->applyFilters($query, $request);
 
+    $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
+                     ->paginate($perPage);
+
+    return new UserPaginationResource($matches);
 }
 
 
@@ -405,27 +434,41 @@ public function nearMe(Request $request)
     $perPage = $request->per_page ?? 10;
     $location = $user->profile;
 
-    $matches = $this->findPotentialMatches($user,false)
+    $query = $this->findPotentialMatches($user, false)
         ->whereHas('profile', function ($q) use ($location) {
             $q->where('city', $location->city ?? '')
               ->orWhere('state', $location->state ?? '')
               ->orWhere('country', $location->country ?? '');
-        })
-        ->paginate($perPage);
+        });
 
-    return $matches = new UserPaginationResource($matches);
+    // Apply common filters
+    $query = $this->applyFilters($query, $request);
+
+    $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
+                     ->paginate($perPage);
+
+    return new UserPaginationResource($matches);
 }
+
 
 
 // ✅ 6. More Matches
 public function moreMatches(Request $request)
 {
     $perPage = $request->per_page ?? 10;
-
     $user = Auth::user();
-    $matches = $this->findPotentialMatches($user,false)->paginate($perPage);
-    return $matches = new UserPaginationResource($matches);
+
+    $query = $this->findPotentialMatches($user, false);
+
+    // Apply filters if any
+    $query = $this->applyFilters($query, $request);
+
+    $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
+                     ->paginate($perPage);
+
+    return new UserPaginationResource($matches);
 }
+
 
 
 
@@ -463,6 +506,106 @@ public function getMatchesWithLimit(Request $request)
         'my_matches' => UserResource::collection($myMatches),
         'premium_matches' => UserResource::collection($premiumMatches),
     ]);
+}
+
+
+
+
+
+    private function applyFilters($query, Request $request)
+{
+    // Basic filters with 'all' condition
+    $photoVisibility = $request->photo_visibility; // 'all', 'profile_only', etc.
+    $maritalStatus = $request->marital_status;     // 'all', 'single', etc.
+    $recent = $request->recent;                    // 'all', 'day', 'week', 'month'
+
+    $recentDaysMap = [
+        'day' => 1,
+        'week' => 7,
+        'month' => 30,
+    ];
+    $recentDays = $recentDaysMap[$recent] ?? null;
+
+    if ($photoVisibility && $photoVisibility !== 'all') {
+        $query->where('photo_visibility', $photoVisibility);
+    }
+
+    if ($maritalStatus && $maritalStatus !== 'all') {
+        $query->where('marital_status', $maritalStatus);
+    }
+
+    if ($recent && $recent !== 'all' && $recentDays) {
+        $query->where('created_at', '>=', now()->subDays($recentDays));
+    }
+
+    // Age filter
+    if ($request->has('age_min') || $request->has('age_max')) {
+        $minAge = $request->age_min ?? 18;
+        $maxAge = $request->age_max ?? 99;
+        $query->whereRaw("TIMESTAMPDIFF(YEAR, dob, CURDATE()) BETWEEN ? AND ?", [$minAge, $maxAge]);
+    }
+
+    // Height filter
+    if ($request->has('height_min') || $request->has('height_max')) {
+        $minHeight = $request->height_min ?? 100;
+        $maxHeight = $request->height_max ?? 250;
+        $query->whereBetween('height', [$minHeight, $maxHeight]);
+    }
+
+    // Religion & Caste
+    if ($request->religion) {
+        $query->where('religion', $request->religion);
+        if ($request->caste) {
+            $query->where('caste', $request->caste);
+        }
+    }
+
+    // Marital status again if provided differently (optional, but safe)
+    if ($request->marital_status) {
+        $query->where('marital_status', $request->marital_status);
+    }
+
+    // Education
+    if ($request->education) {
+        $query->whereHas('profile', function($q) use ($request) {
+            $q->where('highest_degree', $request->education);
+        });
+    }
+
+    // Occupation
+    if ($request->occupation) {
+        $query->whereHas('profile', function($q) use ($request) {
+            $q->where('occupation', $request->occupation);
+        });
+    }
+
+    // Country
+    if ($request->country) {
+        $query->whereHas('profile', function($q) use ($request) {
+            $q->where('country', $request->country);
+        });
+    }
+
+    // Lifestyle filters: diet, drink, smoke
+    if ($request->diet) {
+        $query->whereHas('profile', function($q) use ($request) {
+            $q->where('diet', $request->diet);
+        });
+    }
+
+    if ($request->drink) {
+        $query->whereHas('profile', function($q) use ($request) {
+            $q->where('drink', $request->drink);
+        });
+    }
+
+    if ($request->smoke) {
+        $query->whereHas('profile', function($q) use ($request) {
+            $q->where('smoke', $request->smoke);
+        });
+    }
+
+    return $query;
 }
 
 

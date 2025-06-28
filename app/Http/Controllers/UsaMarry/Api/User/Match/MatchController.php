@@ -345,7 +345,6 @@ public function todaysMatches(Request $request)
 {
     $user = auth()->user();
     $perPage = $request->per_page ?? 1;
-
     $today = now()->toDateString();
 
     $query = $this->findPotentialMatches($user, false)
@@ -357,8 +356,21 @@ public function todaysMatches(Request $request)
         ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true), 'partnerPreference'])
         ->paginate($perPage);
 
+    if ($matches->isEmpty()) {
+        // যদি কোনো ম্যাচ না মেলে, তাহলে random user নিয়ে আসুন (যারা active, নিজেকে বাদ দিয়ে)
+        $randomQuery = User::where('account_status', 'Active')
+            ->where('id', '!=', $user->id)
+            ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true), 'partnerPreference'])
+            ->inRandomOrder();
+
+        $randomMatches = $randomQuery->paginate($perPage);
+
+        return new SingleUserPaginationResource($randomMatches);
+    }
+
     return new SingleUserPaginationResource($matches);
 }
+
 
 
 

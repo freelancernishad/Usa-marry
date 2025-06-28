@@ -143,6 +143,61 @@ function getNextMissingSection(User $user)
 
 
 
+function getMatchDetails($user, $matchedUser)
+{
+    $preferences = $user->partnerPreference;
+
+    $details = [];
+
+    // Age
+    $age = $matchedUser->dob ? \Carbon\Carbon::parse($matchedUser->dob)->age : null;
+    $details['age'] = [
+        'matched' => $age && $preferences->age_min && $preferences->age_max
+            ? ($age >= $preferences->age_min && $age <= $preferences->age_max)
+            : false,
+        'you' => ($preferences->age_min && $preferences->age_max)
+            ? "{$preferences->age_min}-{$preferences->age_max}"
+            : 'not provided',
+        'matched_user' => $age ?? 'not provided',
+    ];
+
+    // Height
+    $details['height'] = [
+        'matched' => $matchedUser->height && $preferences->height_min && $preferences->height_max
+            ? ($matchedUser->height >= $preferences->height_min && $matchedUser->height <= $preferences->height_max)
+            : false,
+        'you' => ($preferences->height_min && $preferences->height_max)
+            ? "{$preferences->height_min}-{$preferences->height_max}"
+            : 'not provided',
+        'matched_user' => $matchedUser->height ?? 'not provided',
+    ];
+
+    // Helper function
+    $multiCheck = function ($value, $preference) {
+        return [
+            'matched' => ($value && is_array($preference)) ? in_array($value, $preference) : false,
+            'you' => $preference ?: ['not provided'],
+            'matched_user' => $value ?? 'not provided',
+        ];
+    };
+
+    $profile = $matchedUser->profile;
+
+    $details['religion'] = $multiCheck($matchedUser->religion ?? null, $preferences->religion ?? []);
+    $details['caste'] = $multiCheck($matchedUser->caste ?? null, $preferences->caste ?? []);
+    $details['marital_status'] = $multiCheck($matchedUser->marital_status ?? null, $preferences->marital_status ?? []);
+    $details['education'] = $multiCheck($profile->highest_degree ?? null, $preferences->education ?? []);
+    $details['occupation'] = $multiCheck($profile->occupation ?? null, $preferences->occupation ?? []);
+    $details['country'] = $multiCheck($profile->country ?? null, $preferences->country ?? []);
+    $details['family_type'] = $multiCheck($profile->family_type ?? null, $preferences->family_type ?? []);
+    $details['state'] = $multiCheck($profile->state ?? null, $preferences->state ?? []);
+    $details['city'] = $multiCheck($profile->city ?? null, $preferences->city ?? []);
+    $details['mother_tongue'] = $multiCheck($profile->mother_tongue ?? null, $preferences->mother_tongue ?? []);
+
+    return $details;
+}
+
+
 
 
  function calculateMatchPercentage(User $user, User $matchedUser)

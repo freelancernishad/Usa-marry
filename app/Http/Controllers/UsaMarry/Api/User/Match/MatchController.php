@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\UserPaginationResource;
+use App\Http\Resources\SingleUser\SingleUserPaginationResource;
 
 class MatchController extends Controller
 {
@@ -203,7 +204,7 @@ public function showMatch($userId)
 
     // ✅ Match calculation and details
     $matchPercentage = calculateMatchPercentage($user, $matchedUser);
-    $matchDetails = $this->getMatchDetails($user, $matchedUser);
+    $matchDetails = getMatchDetails($user, $matchedUser);
 
     return response()->json([
         'success' => true,
@@ -215,59 +216,7 @@ public function showMatch($userId)
 }
 
 
-private function getMatchDetails($user, $matchedUser)
-{
-    $preferences = $user->partnerPreference;
 
-    $details = [];
-
-    // Age
-    $age = $matchedUser->dob ? \Carbon\Carbon::parse($matchedUser->dob)->age : null;
-    $details['age'] = [
-        'matched' => $age && $preferences->age_min && $preferences->age_max
-            ? ($age >= $preferences->age_min && $age <= $preferences->age_max)
-            : false,
-        'you' => ($preferences->age_min && $preferences->age_max)
-            ? "{$preferences->age_min}-{$preferences->age_max}"
-            : 'not provided',
-        'matched_user' => $age ?? 'not provided',
-    ];
-
-    // Height
-    $details['height'] = [
-        'matched' => $matchedUser->height && $preferences->height_min && $preferences->height_max
-            ? ($matchedUser->height >= $preferences->height_min && $matchedUser->height <= $preferences->height_max)
-            : false,
-        'you' => ($preferences->height_min && $preferences->height_max)
-            ? "{$preferences->height_min}-{$preferences->height_max}"
-            : 'not provided',
-        'matched_user' => $matchedUser->height ?? 'not provided',
-    ];
-
-    // Helper function
-    $multiCheck = function ($value, $preference) {
-        return [
-            'matched' => ($value && is_array($preference)) ? in_array($value, $preference) : false,
-            'you' => $preference ?: ['not provided'],
-            'matched_user' => $value ?? 'not provided',
-        ];
-    };
-
-    $profile = $matchedUser->profile;
-
-    $details['religion'] = $multiCheck($matchedUser->religion ?? null, $preferences->religion ?? []);
-    $details['caste'] = $multiCheck($matchedUser->caste ?? null, $preferences->caste ?? []);
-    $details['marital_status'] = $multiCheck($matchedUser->marital_status ?? null, $preferences->marital_status ?? []);
-    $details['education'] = $multiCheck($profile->highest_degree ?? null, $preferences->education ?? []);
-    $details['occupation'] = $multiCheck($profile->occupation ?? null, $preferences->occupation ?? []);
-    $details['country'] = $multiCheck($profile->country ?? null, $preferences->country ?? []);
-    $details['family_type'] = $multiCheck($profile->family_type ?? null, $preferences->family_type ?? []);
-    $details['state'] = $multiCheck($profile->state ?? null, $preferences->state ?? []);
-    $details['city'] = $multiCheck($profile->city ?? null, $preferences->city ?? []);
-    $details['mother_tongue'] = $multiCheck($profile->mother_tongue ?? null, $preferences->mother_tongue ?? []);
-
-    return $details;
-}
 
 
 
@@ -388,11 +337,15 @@ public function matchHistory(Request $request)
 }
 
 
+
+
+
 // ✅ 3. Today Matches
 public function todaysMatches(Request $request)
 {
-    $user = Auth::user();
-    $perPage = $request->per_page ?? 10;
+    $user = auth()->user();
+    $perPage = $request->per_page ?? 1;
+
     $today = now()->toDateString();
 
     $query = $this->findPotentialMatches($user, false)
@@ -401,11 +354,13 @@ public function todaysMatches(Request $request)
     $query = $this->applyFilters($query, $request);
 
     $matches = $query
-        ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
+        ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true), 'partnerPreference'])
         ->paginate($perPage);
 
-    return new UserPaginationResource($matches);
+    return new SingleUserPaginationResource($matches);
 }
+
+
 
 
 // ✅ 4. My Matches

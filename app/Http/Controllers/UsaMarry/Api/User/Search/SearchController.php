@@ -101,6 +101,10 @@ class SearchController extends Controller
 
         $results = $query->paginate($perPage);
 
+        $results =  new \App\Http\Resources\UserPaginationResource($results);
+
+
+
         return response()->json($results);
     }
 }

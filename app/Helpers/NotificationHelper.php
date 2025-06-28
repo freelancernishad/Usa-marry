@@ -57,7 +57,7 @@ class NotificationHelper
         Notification::create([
             'user_id' => $user->id,
             'type' => 'plan_purchase',
-            'message' => "You have purchased the {$planName} plan for ৳{$amount}.",
+            'message' => "You have purchased the {$planName} plan for {$amount} USD.",
             'related_model' => $relatedModel,
             'related_model_id' => $relatedModelId,
             'is_read' => false,

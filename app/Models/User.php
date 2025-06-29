@@ -292,6 +292,19 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         return $this->hasMany(Subscription::class);
     }
 
+
+    public function blockedUsers()
+    {
+        return $this->hasMany(Block::class, 'user_id');
+    }
+
+    public function reportsFiled()
+    {
+        return $this->hasMany(Report::class, 'reporter_id');
+    }
+
+
+
     /**
      * Eager load plan with activeSubscription to optimize queries
      */

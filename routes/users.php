@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\AuthenticateUser;
+
 use App\Http\Controllers\Api\Coupon\CouponController;
 use App\Http\Controllers\UsaMarry\Api\User\Auth\AuthController;
 use App\Http\Controllers\UsaMarry\Api\Admin\Plans\PlanController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Api\Notifications\NotificationController;
 use App\Http\Controllers\UsaMarry\Api\User\Search\SearchController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ContactController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ProfileController;
+use App\Http\Controllers\UsaMarry\Api\User\Action\UserActionController;
 use App\Http\Controllers\UsaMarry\Api\User\Auth\RegistrationController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ProfileVisitController;
 use App\Http\Controllers\UsaMarry\Api\User\Settings\AllSettingsController;
@@ -71,6 +73,11 @@ Route::middleware(AuthenticateUser::class)->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    Route::post('/users/{user}/block', [UserActionController::class, 'block']);
+    Route::post('/users/{user}/report', [UserActionController::class, 'report']);
+
+
 
     // Profile routes
     Route::prefix('profile')->group(function () {

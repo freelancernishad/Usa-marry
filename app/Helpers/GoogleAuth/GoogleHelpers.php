@@ -82,7 +82,7 @@ function handleAppleAuth(Request $request)
 {
     $validator = Validator::make($request->all(), [
         'identity_token' => 'required|string',
-        'name' => 'required|string',
+        'name' => 'nullable|string',
     ]);
 
     if ($validator->fails()) {

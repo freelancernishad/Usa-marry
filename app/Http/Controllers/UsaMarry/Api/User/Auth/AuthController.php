@@ -79,8 +79,13 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+
         if ($request->access_token) {
             return handleGoogleAuth($request);
+        }
+
+        if ($request->identity_token) {
+            return handleAppleAuth($request);
         }
 
         $credentials = $request->only('email', 'password');

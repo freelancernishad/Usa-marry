@@ -5,6 +5,7 @@ use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
@@ -74,3 +75,77 @@ function handleGoogleAuth(Request $request)
     }
 }
 
+
+
+
+function handleAppleAuth(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'identity_token' => 'required|string',
+        'name' => 'required|string',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+    try {
+        // Verify identity token via Apple's public key (optional but recommended)
+        $appleToken = $request->identity_token;
+        $name = $request->name;
+        $appleUserInfo = decodeAppleIdentityToken($appleToken);
+        Log::info($appleUserInfo);
+
+        if (!$appleUserInfo || !isset($appleUserInfo['email'])) {
+            return response()->json(['error' => 'Invalid Apple token'], 400);
+        }
+
+        $user = User::where('email', $appleUserInfo['email'])->first();
+
+        if (!$user) {
+            $user = User::create([
+                'name' => $name ?? explode('@', $appleUserInfo['email'])[0],
+                'email' => $appleUserInfo['email'],
+                'password' => Hash::make(Str::random(16)),
+                'email_verified_at' => now(),
+                'profile_completion' => 10,
+            ]);
+        } else {
+            $user->update(['email_verified_at' => now()]);
+        }
+
+        Auth::login($user);
+
+        try {
+            $token = JWTAuth::fromUser($user, ['guard' => 'user']);
+        } catch (JWTException $e) {
+            return response()->json(['error' => 'Could not create token'], 500);
+        }
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => new UserLoginResource($user),
+            'profile_completion' => $user->profile_completion,
+            'message' => 'Login successful via Apple',
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Apple Login failed',
+            'details' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+
+ function decodeAppleIdentityToken($identityToken)
+{
+    try {
+        $tokenParts = explode(".", $identityToken);
+        $payload = base64_decode(strtr($tokenParts[1], '-_', '+/'));
+        return json_decode($payload, true);
+    } catch (\Exception $e) {
+        return null;
+    }
+}

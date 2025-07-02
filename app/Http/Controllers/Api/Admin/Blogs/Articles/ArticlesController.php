@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin\Blogs\Articles;
 
 use App\Models\Article;
 use App\Models\Category;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
@@ -13,11 +14,16 @@ class ArticlesController extends Controller
     /**
      * Display a listing of the articles.
      */
-    public function index()
-    {
-        $articles = Article::with('categories')->get(); // Fetch articles with categories
-        return response()->json($articles, 200);
-    }
+public function index()
+{
+    $articles = Article::with('categories')->get()->map(function ($article) {
+        $article->content = Str::limit(strip_tags($article->content), 100); // Limit to 100 characters
+        return $article;
+    });
+
+    return response()->json($articles, 200);
+}
+
 
     /**
      * Store a newly created article in storage.

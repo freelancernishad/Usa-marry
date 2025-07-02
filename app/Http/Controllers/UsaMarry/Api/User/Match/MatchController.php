@@ -583,6 +583,95 @@ public function getMatchesWithLimit(Request $request)
 
 
 
+public function getFullMenuWithCounts()
+{
+    $user = Auth::user();
+
+    // === Matches Counts ===
+    $myMatchCount = $this->findPotentialMatches($user, false)->count();
+    $newMatchesCount = $this->findPotentialMatches($user, false)
+        ->where('created_at', '>=', now()->subDays(3))
+        ->count();
+    $todayMatchesCount = $this->findPotentialMatches($user, false)
+        ->whereDate('created_at', now()->toDateString())
+        ->count();
+    $nearMeCount = $this->findPotentialMatches($user, false)
+        ->whereHas('profile', function ($q) use ($user) {
+            $q->where('city', $user->profile->city ?? '')
+              ->orWhere('state', $user->profile->state ?? '')
+              ->orWhere('country', $user->profile->country ?? '');
+        })->count();
+    $recentVisitorsCount = \App\Models\ProfileVisit::where('visited_id', $user->id)->count();
+
+    // === Connection Counts (direct queries without relation)
+    $receivedCount = \App\Models\UserMatch::where('matched_user_id', $user->id)->where('status', 'Pending')->count();
+    $acceptedCount = \App\Models\UserMatch::where('matched_user_id', $user->id)->where('status', 'Accepted')->count();
+    $requestsCount = \App\Models\UserMatch::where('user_id', $user->id)->where('status', 'Pending')->count();
+    $sentCount     = \App\Models\UserMatch::where('user_id', $user->id)->count();
+    $contactsCount = \App\Models\UserMatch::where(function($q) use ($user) {
+        $q->where('user_id', $user->id)
+          ->orWhere('matched_user_id', $user->id);
+    })->where('status', 'Accepted')->count();
+    $deletedCount  = \App\Models\UserMatch::where(function($q) use ($user) {
+        $q->where('user_id', $user->id)
+          ->orWhere('matched_user_id', $user->id);
+    })->where('status', 'Rejected')->count();
+
+    return response()->json([
+        [
+            'href' => "#my-marry",
+            'label' => "My USA Marry",
+            'label_mob' => "Home",
+            'subCategories' => [
+                [ 'label' => "Dashboard", 'href' => "/dashboard" ],
+                [ 'label' => "My Profile", 'href' => "/dashboard/my-profile" ],
+                [ 'label' => "My Photos", 'href' => "/dashboard/my-photos" ],
+                [ 'label' => "Partner Preferences", 'href' => "/dashboard/partner-preferences" ],
+                [ 'label' => "Settings", 'href' => "/dashboard/settings" ],
+                [ 'label' => "More", 'href' => "/dashboard/more" ],
+            ],
+        ],
+        [
+            'href' => "#my-matches",
+            'label' => "Matches",
+            'label_mob' => "Matches",
+            'count' => $myMatchCount + $newMatchesCount + $todayMatchesCount + $nearMeCount + $recentVisitorsCount,
+            'subCategories' => [
+                [ 'label' => "My Match", 'href' => "/dashboard/my-matches/my", 'count' => $myMatchCount ],
+                [ 'label' => "New Matches", 'href' => "/dashboard/my-matches/new", 'count' => $newMatchesCount ],
+                [ 'label' => "Today Matches", 'href' => "/dashboard/my-matches/today", 'count' => $todayMatchesCount ],
+                [ 'label' => "Near Me", 'href' => "/dashboard/my-matches/near", 'count' => $nearMeCount ],
+                [ 'label' => "Recent Visitors", 'href' => "/dashboard/my-matches/visitors", 'count' => $recentVisitorsCount ],
+            ],
+        ],
+        [
+            'href' => "#search",
+            'label' => "Search",
+            'label_mob' => "Search",
+            'subCategories' => [
+                [ 'label' => "Basic Search", 'href' => "/dashboard/search/filter?age_min=20&age_max=70" ],
+                [ 'label' => "Advanced Search", 'href' => "/dashboard/search/advanced" ],
+            ],
+        ],
+        [
+            'href' => "#inbox",
+            'label' => "Connection",
+            'label_mob' => "Connection",
+            'count' => $receivedCount + $acceptedCount + $requestsCount + $sentCount + $contactsCount + $deletedCount,
+            'subCategories' => [
+                [ 'label' => "Received", 'href' => "/dashboard/connection/received", 'count' => $receivedCount ],
+                [ 'label' => "Accepted", 'href' => "/dashboard/connection/accepted", 'count' => $acceptedCount ],
+                [ 'label' => "Requests", 'href' => "/dashboard/connection/requests", 'count' => $requestsCount ],
+                [ 'label' => "Sent", 'href' => "/dashboard/connection/sent", 'count' => $sentCount ],
+                [ 'label' => "Contacts", 'href' => "/dashboard/connection/contacts", 'count' => $contactsCount ],
+                [ 'label' => "Deleted", 'href' => "/dashboard/connection/deleted", 'count' => $deletedCount ],
+            ],
+        ],
+    ]);
+}
+
+
+
 
 
 }

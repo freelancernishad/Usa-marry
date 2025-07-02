@@ -74,6 +74,10 @@ Route::middleware(AuthenticateUser::class)->group(function () {
         return $request->user();
     });
 
+    Route::get('/user/menu', [MatchController::class, 'getFullMenuWithCounts']);
+
+
+
     Route::post('/users/{user}/block', [UserActionController::class, 'block']);
     Route::post('/users/{user}/report', [UserActionController::class, 'report']);
 

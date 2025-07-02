@@ -9,8 +9,8 @@ class AddPhotoSettingsToUsersTable extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->enum('photo_privacy', ['all', 'premium', 'accepted'])->default('accepted');
-            $table->enum('photo_visibility', ['all', 'profile_only', 'hidden'])->default('hidden');
+            $table->enum('photo_privacy', ['all', 'premium', 'accepted'])->default('all');
+            $table->enum('photo_visibility', ['all', 'profile_only', 'hidden'])->default('all');
         });
     }
 

@@ -62,6 +62,7 @@ class SupportTicketApiController extends Controller
     public function update(Request $request, SupportTicket $ticket)
     {
         // Ensure the ticket belongs to the authenticated user
+        return Auth::id();
         if ($ticket->user_id != Auth::id()) {
             return response()->json(['message' => 'Unauthorized access.'], 403);
         }

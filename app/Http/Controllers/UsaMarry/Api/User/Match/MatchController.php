@@ -150,14 +150,21 @@ public function getMatches(Request $request)
     $existingMatches = $user->matches()->pluck('matched_user_id');
     $query->whereNotIn('id', $existingMatches);
 
-    // Calculate match score
     $religions = $user->partnerPreference->religion ?? [];
-    $query->select('users.*')
-        ->selectRaw(
-            "(CASE WHEN religion IN (" . implode(',', array_fill(0, count($religions), '?')) . ") THEN 20 ELSE 0 END + profile_completion * 0.1) AS match_score",
+
+    $query->select('users.*');
+
+    if (!empty($religions)) {
+        $placeholders = implode(',', array_fill(0, count($religions), '?'));
+        $query->selectRaw(
+            "(CASE WHEN religion IN ($placeholders) THEN 20 ELSE 0 END + profile_completion * 0.1) AS match_score",
             $religions
-        )
-        ->orderByDesc('match_score');
+        );
+    } else {
+        $query->selectRaw("(0 + profile_completion * 0.1) AS match_score");
+    }
+
+    $query->orderByDesc('match_score');
 
     return $query;
 }

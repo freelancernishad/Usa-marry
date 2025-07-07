@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\User\Package\UserPackageController;
 use App\Http\Controllers\UsaMarry\Api\Admin\Plans\PlanController;
 use App\Http\Controllers\Api\Admin\Blogs\Articles\ArticlesController;
 use App\Http\Controllers\Api\Admin\Blogs\Category\CategoryController;
+use App\Http\Controllers\Api\User\UserManagement\UserProfileController;
 use App\Http\Controllers\Api\User\PackageAddon\UserPackageAddonController;
 
 // Load InitialRoutes
@@ -97,3 +98,6 @@ Route::prefix('global/')->group(function () {
 
 
 
+
+
+        Route::get('/import-users', [UserProfileController::class, 'importUsersFromAPI']);

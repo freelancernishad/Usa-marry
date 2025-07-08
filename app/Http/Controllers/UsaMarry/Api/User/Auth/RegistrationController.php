@@ -5,14 +5,15 @@ namespace App\Http\Controllers\UsaMarry\Api\User\Auth;
 use App\Models\User;
 use App\Models\Profile;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Mail;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Mail\OtpNotification;
+use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OtpVerifiedConfirmation;
+use Illuminate\Support\Facades\Validator;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class RegistrationController extends Controller
 {
@@ -102,6 +103,11 @@ class RegistrationController extends Controller
         $user->otp_expires_at = null;
         $user->email_verified_at = now();
         $user->save();
+
+            // ✅ Send confirmation email
+        if ($user->email) {
+            Mail::to($user->email)->send(new OtpVerifiedConfirmation($user));
+        }
 
         return response()->json([
             'message' => 'OTP verified successfully',

@@ -157,7 +157,7 @@ class ProfileController extends Controller
             'caste' => 'sometimes|nullable|string|max:255',
             'sub_caste' => 'nullable|string|max:255',
             'marital_status' => 'sometimes|nullable|string',
-            'height' => 'sometimes|nullable|numeric|between:100,250',
+            'height' => 'sometimes|nullable|numeric',
 
             'blood_group' => 'sometimes|nullable|string|in:A+,A-,B+,B-,O+,O-,AB+,AB-',
             'disability_issue' => 'sometimes|nullable|string|max:255',
@@ -188,7 +188,7 @@ class ProfileController extends Controller
             'family_type' => 'nullable|string|in:Nuclear,Joint,Other',
             'family_values' => 'nullable|string|in:Traditional,Moderate,Liberal',
             'financial_status' => 'nullable|string|in:Affluent,Upper Middle Class,Middle Class,Lower Middle Class',
-            'diet' => 'sometimes|nullable|string|in:Vegetarian,Eggetarian,Non-Vegetarian,Vegan',
+            'diet' => 'sometimes|nullable|string',
             'drink' => 'sometimes|nullable|string|in:No,Occasionally,Yes',
             'smoke' => 'sometimes|nullable|string|in:No,Occasionally,Yes',
             'country' => 'sometimes|nullable|string|max:255',

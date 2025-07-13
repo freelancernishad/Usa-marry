@@ -147,12 +147,31 @@ function getMatchDetails($user, $matchedUser)
 {
     $preferences = $user->partnerPreference;
 
+    if (!$preferences) {
+        $preferences = (object) [
+            'age_min' => null,
+            'age_max' => null,
+            'height_min' => null,
+            'height_max' => null,
+            'religion' => [],
+            'caste' => [],
+            'marital_status' => [],
+            'education' => [],
+            'occupation' => [],
+            'country' => [],
+            'family_type' => [],
+            'state' => [],
+            'city' => [],
+            'mother_tongue' => [],
+        ];
+    }
+
     $details = [];
 
     // Age
     $age = $matchedUser->dob ? \Carbon\Carbon::parse($matchedUser->dob)->age : null;
     $details['age'] = [
-        'matched' => $age && $preferences->age_min && $preferences->age_max
+        'matched' => $age !== null && $preferences->age_min && $preferences->age_max
             ? ($age >= $preferences->age_min && $age <= $preferences->age_max)
             : false,
         'you' => ($preferences->age_min && $preferences->age_max)
@@ -172,30 +191,31 @@ function getMatchDetails($user, $matchedUser)
         'matched_user' => $matchedUser->height ?? 'not provided',
     ];
 
-    // Helper function
-    $multiCheck = function ($value, $preference) {
+    // Helper for array-based preferences
+    $multiFormat = function ($value, $preferenceArray) {
         return [
-            'matched' => ($value && is_array($preference)) ? in_array($value, $preference) : false,
-            'you' => $preference ?: ['not provided'],
+            'matched' => $value && is_array($preferenceArray) && in_array($value, $preferenceArray),
+            'you' => !empty($preferenceArray) ? implode(', ', $preferenceArray) : 'not provided',
             'matched_user' => $value ?? 'not provided',
         ];
     };
 
-    $profile = $matchedUser->profile;
+    $profile = $matchedUser->profile ?? (object) [];
 
-    $details['religion'] = $multiCheck($matchedUser->religion ?? null, $preferences->religion ?? []);
-    $details['caste'] = $multiCheck($matchedUser->caste ?? null, $preferences->caste ?? []);
-    $details['marital_status'] = $multiCheck($matchedUser->marital_status ?? null, $preferences->marital_status ?? []);
-    $details['education'] = $multiCheck($profile->highest_degree ?? null, $preferences->education ?? []);
-    $details['occupation'] = $multiCheck($profile->occupation ?? null, $preferences->occupation ?? []);
-    $details['country'] = $multiCheck($profile->country ?? null, $preferences->country ?? []);
-    $details['family_type'] = $multiCheck($profile->family_type ?? null, $preferences->family_type ?? []);
-    $details['state'] = $multiCheck($profile->state ?? null, $preferences->state ?? []);
-    $details['city'] = $multiCheck($profile->city ?? null, $preferences->city ?? []);
-    $details['mother_tongue'] = $multiCheck($profile->mother_tongue ?? null, $preferences->mother_tongue ?? []);
+    $details['religion'] = $multiFormat($matchedUser->religion ?? null, $preferences->religion ?? []);
+    $details['caste'] = $multiFormat($matchedUser->caste ?? null, $preferences->caste ?? []);
+    $details['marital_status'] = $multiFormat($matchedUser->marital_status ?? null, $preferences->marital_status ?? []);
+    $details['education'] = $multiFormat($profile->highest_degree ?? null, $preferences->education ?? []);
+    $details['occupation'] = $multiFormat($profile->occupation ?? null, $preferences->occupation ?? []);
+    $details['country'] = $multiFormat($profile->country ?? null, $preferences->country ?? []);
+    $details['family_type'] = $multiFormat($profile->family_type ?? null, $preferences->family_type ?? []);
+    $details['state'] = $multiFormat($profile->state ?? null, $preferences->state ?? []);
+    $details['city'] = $multiFormat($profile->city ?? null, $preferences->city ?? []);
+    $details['mother_tongue'] = $multiFormat($profile->mother_tongue ?? null, $preferences->mother_tongue ?? []);
 
     return $details;
 }
+
 
 
 

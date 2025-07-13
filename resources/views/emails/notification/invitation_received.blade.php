@@ -142,7 +142,19 @@
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px; color: #a0aec0;">
                                             <path d="M7.75 6.06H5.25v11.88h2.5V6.06M18.75 6.06h-2.5v11.88h2.5V6.06m-5.5-2.06h-2.5v15.94h2.5V4M21.25 2H2.75v20h18.5V2z"/>
                                         </svg>
-                                        <strong>Height:</strong> {{ $senderHeight }}
+                                        <strong>Height:</strong>
+                                        @if(!empty($senderHeight))
+                                            @php
+                                                // Assume $senderHeight is in centimeters
+                                                $heightCm = floatval($senderHeight);
+                                                $inchesTotal = $heightCm / 2.54;
+                                                $feet = floor($inchesTotal / 12);
+                                                $inches = round($inchesTotal - ($feet * 12));
+                                            @endphp
+                                            {{ $feet }}' {{ $inches }}" ({{ $senderHeight }} cm)
+                                        @else
+                                            N/A
+                                        @endif
                                     </div>
                                     <div style="display: flex; align-items: center; font-size: 14px; color: #4a5568;">
                                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px; color: #a0aec0;">

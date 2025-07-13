@@ -36,11 +36,12 @@ class ProfileResource extends JsonResource
         // Masking functions
         $maskEmail = fn($email) => $email ? (substr($email, 0, 1) . str_repeat('*', strpos($email, '@') - 1) . substr($email, strpos($email, '@'))) : null;
         $maskPhone = fn($phone) => $phone ? (substr($phone, 0, 2) . str_repeat('*', strlen($phone) - 4) . substr($phone, -2)) : null;
+        $maskWhatsapps = fn($whatsapps) => $whatsapps ? (substr($whatsapps, 0, 2) . str_repeat('*', strlen($whatsapps) - 4) . substr($whatsapps, -2)) : null;
         $maskAddress = fn($val) => $val ? (substr($val, 0, 1) . str_repeat('*', max(strlen($val) - 2, 0)) . substr($val, -1)) : null;
 
         // Main user info
         $userData = $user->only([
-            'id', 'name', 'email', 'phone', 'profile_picture', 'gender', 'dob', 'religion', 'caste',
+            'id', 'name', 'email', 'phone', 'whatsapps', 'profile_picture', 'gender', 'dob', 'religion', 'caste',
             'sub_caste', 'marital_status', 'height', 'disability', 'blood_group',
             'disability_issue', 'family_location', 'grew_up_in', 'hobbies', 'mother_tongue',
             'profile_created_by', 'verified', 'profile_completion', 'account_status',
@@ -51,6 +52,7 @@ class ProfileResource extends JsonResource
         if (!$isOwner && !$contactViewed) {
             $userData['email'] = $maskEmail($userData['email']);
             $userData['phone'] = $maskPhone($userData['phone']);
+            $userData['maskWhatsapps'] = $maskWhatsapps($userData['whatsapps']);
             $userData['family_location'] = $maskAddress($userData['family_location']);
         }
 

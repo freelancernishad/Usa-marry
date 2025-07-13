@@ -342,22 +342,47 @@ function getMatchDetails($user, $matchedUser)
                 case 'cancelled':
                     $existingConnection->status = 'pending';
                     $existingConnection->save();
+// Notify receiver using the 'received' blade (they get a new request)
+NotificationHelper::sendUserNotification(
+    $connectedUser, // receiver
+    "{$user->name} has sent you a connection request again.",
+    'Connection Request Re-sent',
+    'User',
+    $user->id,
+    'emails.notification.invitation_received',
+     [
+        'senderName'     => $user->name,
+        'profile_picture'     => $user->profile_picture,
+        'senderCode'     => $user->id ?? '',
+        'senderLocation' => $user->location ?? '',
+        'senderAge'      => $user->age ?? '',
+        'senderHeight'   => $user->height ?? '',
+        'senderReligion' => $user->religion ?? '',
+        'senderCaste'    => $user->caste ?? '',
+        'profileUrl'     => "https://usamarry.com/dashboard/profile/$user->id",
+        'acceptUrl'      => "https://usamarry.com/dashboard/profile/$user->id",
+        'declineUrl'     => "https://usamarry.com/dashboard/profile/$user->id",
+        'recipientName'  => $connectedUser->name,
+    ]
 
-                    NotificationHelper::sendUserNotification(
-                        $connectedUser,
-                        "{$user->name} has sent you a connection request again.",
-                        'Connection Request Re-sent',
-                        'User',
-                        $user->id
-                    );
+);
 
-                    NotificationHelper::sendUserNotification(
-                        $user,
-                        "You have re-sent a connection request to {$connectedUser->name}.",
-                        'Connection Request Re-sent',
-                        'User',
-                        $connectedUser->id
-                    );
+// Notify sender using the 'sent' blade (confirmation that request was sent)
+NotificationHelper::sendUserNotification(
+    $user, // sender
+    "You have re-sent a connection request to {$connectedUser->name}.",
+    'Connection Request Re-sent',
+    'User',
+    $connectedUser->id,
+    'emails.notification.invitation_sent',
+        [
+        'user' => $user,
+        'profile_picture' => $connectedUser->profile_picture,
+        'connection_user' => $connectedUser,
+        'profileUrl' => "https://usamarry.com/dashboard/profile/{$connectedUser->id}",
+        'connection_location' => $connectedUser->location ?? 'N/A',
+    ]
+);
 
                     return response()->json(['message' => 'Connection request has been re-sent.'], 200);
 
@@ -375,23 +400,47 @@ function getMatchDetails($user, $matchedUser)
             'status' => 'pending',
         ]);
 
-        // Notify receiver
-        NotificationHelper::sendUserNotification(
-            $connectedUser,
-            "{$user->name} has sent you a connection request.",
-            'New Connection Request',
-            'User',
-            $user->id
-        );
+// Notify receiver
+NotificationHelper::sendUserNotification(
+    $connectedUser,
+    "{$user->name} has sent you a connection request.",
+    'New Connection Request',
+    'User',
+    $user->id,
+    'emails.notification.invitation_received',
+         [
+        'senderName'     => $user->name,
+        'senderCode'     => $user->id ?? '',
+        'senderLocation' => $user->location ?? '',
+        'senderAge'      => $user->age ?? '',
+        'senderHeight'   => $user->height ?? '',
+        'senderReligion' => $user->religion ?? '',
+        'senderCaste'    => $user->caste ?? '',
+        'profile_picture'    => $user->profile_picture ?? '',
+        'profileUrl'     => "https://usamarry.com/dashboard/profile/$user->id",
+        'acceptUrl'      => "https://usamarry.com/dashboard/profile/$user->id",
+        'declineUrl'     => "https://usamarry.com/dashboard/profile/$user->id",
+        'recipientName'  => $connectedUser->name,
+    ]
+);
 
-        // Notify sender
-        NotificationHelper::sendUserNotification(
-            $user,
-            "You have sent a connection request to {$connectedUser->name}.",
-            'Connection Request Sent',
-            'User',
-            $connectedUser->id
-        );
+// Notify sender
+NotificationHelper::sendUserNotification(
+    $user,
+    "You have sent a connection request to {$connectedUser->name}.",
+    'Connection Request Sent',
+    'User',
+    $connectedUser->id,
+    'emails.notification.invitation_sent',
+        [
+        'user' => $user,
+        'profile_picture' => $connectedUser->profile_picture,
+        'connection_user' => $connectedUser,
+        'profileUrl' => "https://usamarry.com/dashboard/profile/{$connectedUser->id}",
+        'connection_location' => $connectedUser->location ?? 'N/A',
+    ]
+);
+
 
         return response()->json(['message' => 'Connection request sent successfully.'], 201);
     }

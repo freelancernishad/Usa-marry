@@ -36,6 +36,7 @@ class ProfileController extends Controller
             'gender' => 'nullable|in:Male,Female,Other',
             'dob' => 'nullable|date',
             'phone' => 'nullable|numeric',
+            'whatsapps' => 'nullable|numeric',
 
             // Religious and background information
             'religion' => 'nullable|string|max:255',
@@ -93,14 +94,14 @@ class ProfileController extends Controller
 
         // Update user basic fields
         $user->update($request->only([
-            'name', 'gender', 'dob', 'phone', 'religion',
+            'name', 'gender', 'dob', 'phone', 'whatsapps', 'religion',
             'caste', 'sub_caste', 'marital_status', 'height',
             'disability', 'mother_tongue', 'profile_created_by'
         ]));
 
         // Update or create the profile
         $profileData = $request->except([
-            'name', 'gender', 'dob', 'phone', 'religion',
+            'name', 'gender', 'dob', 'phone', 'whatsapps', 'religion',
             'caste', 'sub_caste', 'marital_status', 'height',
             'disability', 'mother_tongue', 'profile_created_by'
         ]);
@@ -151,6 +152,7 @@ class ProfileController extends Controller
             // User model fields
             'name' => 'sometimes|nullable|string|max:255',
             'phone' => 'sometimes|nullable|numeric',
+            'whatsapps' => 'sometimes|nullable|numeric',
             'gender' => 'sometimes|nullable|in:Male,Female,Other',
             'dob' => 'sometimes|nullable|date',
             'religion' => 'sometimes|nullable|string|max:255',
@@ -213,7 +215,7 @@ class ProfileController extends Controller
 
         // Update user fields
         $userFields = $request->only([
-            'name', 'phone', 'gender', 'dob', 'religion', 'caste',
+            'name', 'phone','whatsapps', 'gender', 'dob', 'religion', 'caste',
             'sub_caste', 'marital_status', 'height', 'blood_group','disability_issue','family_location','grew_up_in', 'disability', 'mother_tongue',
             'profile_created_by',
         ]);
@@ -230,7 +232,7 @@ class ProfileController extends Controller
 
         // Update profile fields
         $profileFields = $request->except([
-            'name', 'email', 'phone', 'gender', 'dob', 'religion', 'caste',
+            'name', 'email', 'phone', 'whatsapps', 'gender', 'dob', 'religion', 'caste',
             'sub_caste', 'marital_status', 'height', 'blood_group','disability_issue','family_location','grew_up_in', 'disability', 'mother_tongue',
             'profile_created_by', 'account_status', 'password', 'verified',
             'profile_completion', 'email_verified_at', 'email_verification_hash',
@@ -321,6 +323,9 @@ public function profileOverview()
         'user' =>  [
             'id' => $user->id,
             'name' => $user->name,
+            'phone' => $user->phone,
+            'whatsapps' => $user->whatsapps,
+            'email' => $user->email,
             'profile_picture' => $user->profile_picture,
             'country' => optional($user->profile)->country,
             'state' => optional($user->profile)->state,

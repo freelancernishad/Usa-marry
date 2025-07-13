@@ -47,30 +47,56 @@ class UserConnectionController extends Controller
             $otherUser = User::find($connectedUserId);
 
             if ($otherUser) {
-                // Notify the other user (who sent the request)
-                NotificationHelper::sendUserNotification(
-                    $otherUser,
-                    "{$user->name} has accepted your connection request.",
-                    'Connection Accepted',
-                    'User',
-                    $user->id
-                );
 
-                // Notify current user (who accepted)
-                NotificationHelper::sendUserNotification(
-                    $user,
-                    "You have successfully accepted the connection request from {$otherUser->name}. You are now connected.",
-                    'Connection Accepted',
-                    'User',
-                    $otherUser->id
-                );
-            }
+
+    NotificationHelper::sendUserNotification(
+    $otherUser,
+    "{$user->name} has accepted your connection request.",
+    'Connection Accepted',
+    'User',
+    $user->id,
+    'emails.notification.connection_accepted_received',
+    [
+        'receiverName'       => $otherUser->name,
+        'profile_picture'   => $user->profile_picture ?? '',
+        'receiverLocation'   => $user->location ?? 'Not specified',
+        'receiverAge'        => $user->age ?? 'N/A',
+        'receiverHeight'     => $user->height ?? 'N/A',
+        'receiverOccupation' => $user->profession ?? 'N/A',
+        'receiverBioSnippet' => \Illuminate\Support\Str::limit($user->bio ?? 'No bio available.', 100),
+        'receiverProfileUrl' => "https://usamarry.com/dashboard/profile/{$user->id}",
+        'senderName'         => $user->name,
+    ]
+);
+
+NotificationHelper::sendUserNotification(
+    $user,
+    "You have successfully accepted the connection request from {$otherUser->name}. You are now connected.",
+    'Connection Accepted',
+    'User',
+    $otherUser->id,
+    'emails.notification.connection_accepted_sent',
+    [
+        'receiverName'       => $user->name,
+        'senderName'         => $otherUser->name,
+        'profile_picture'         => $otherUser->profile_picture,
+        'senderLocation'     => $otherUser->location ?? 'N/A',
+        'senderAge'          => $otherUser->age ?? 'N/A',
+        'senderHeight'       => $otherUser->height ?? 'N/A',
+        'senderOccupation'   => $otherUser->profession ?? 'N/A',
+        'senderBioSnippet'   => \Illuminate\Support\Str::limit($otherUser->bio ?? 'No bio provided.', 100),
+        'senderProfileUrl'   => "https://usamarry.com/dashboard/profile/{$otherUser->id}",
+    ]
+);
+
+
 
             return response()->json(['message' => 'Connection accepted.']);
         }
 
         return response()->json(['message' => 'Connection request not found or already accepted.'], 404);
     }
+}
 
     // Disconnect from a user (remove the connection)
 public function disconnectFromUser($connectedUserId, Request $request)

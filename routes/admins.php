@@ -9,6 +9,8 @@ use App\Http\Controllers\UsaMarry\Api\Admin\Plans\PlanController;
 use App\Http\Controllers\UsaMarry\Api\Admin\Plans\FeatureController;
 use App\Http\Controllers\Api\Admin\Blogs\Articles\ArticlesController;
 use App\Http\Controllers\Api\Admin\Blogs\Category\CategoryController;
+use App\Http\Controllers\UsaMarry\Api\Admin\UserManagement\BlockController;
+use App\Http\Controllers\UsaMarry\Api\Admin\UserManagement\ReportController;
 
 Route::prefix('auth/admin')->group(function () {
     Route::post('login', [AdminAuthController::class, 'login'])->name('admin.login');
@@ -37,6 +39,21 @@ Route::prefix('admin')->group(function () {
             Route::get('/{id}', [UserController::class, 'show']); // single user details
             Route::get('/{id}/subscription', [UserController::class, 'showSubscription']); // user subscription
         });
+
+
+
+
+            // রিপোর্ট লিস্ট
+            Route::get('reports', [ReportController::class, 'index']);
+            Route::get('reports/user/{userId}', [ReportController::class, 'reportsByUser']);
+
+            // ব্লকড ইউজার লিস্ট
+            Route::get('blocks', [BlockController::class, 'index']);
+            // আনব্লক only
+            Route::delete('blocks/{id}', [BlockController::class, 'destroy']);
+
+
+
 
 
 

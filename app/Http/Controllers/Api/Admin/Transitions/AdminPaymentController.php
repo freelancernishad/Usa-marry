@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api\Admin\Transitions;
 
-use App\Http\Controllers\Controller;
 use App\Models\Payment;
+use App\Models\Subscription;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class AdminPaymentController extends Controller
 {
@@ -66,4 +68,27 @@ class AdminPaymentController extends Controller
 
         return response()->json($transactions);
     }
+
+
+
+    /**
+     * Get all users' subscription history (latest first)
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function allSubscriptionHistory()
+    {
+        $subscriptions = Subscription::with(['user:id,name,email', 'plan:id,name,discounted_price'])
+            ->where('status', 'Success')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        if ($subscriptions->isEmpty()) {
+            return response()->json(['message' => 'No subscription history found.'], 404);
+        }
+
+        return response()->json($subscriptions);
+    }
+
+
 }

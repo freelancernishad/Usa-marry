@@ -9,8 +9,10 @@ use App\Http\Controllers\UsaMarry\Api\Admin\Plans\PlanController;
 use App\Http\Controllers\UsaMarry\Api\Admin\Plans\FeatureController;
 use App\Http\Controllers\Api\Admin\Blogs\Articles\ArticlesController;
 use App\Http\Controllers\Api\Admin\Blogs\Category\CategoryController;
+use App\Http\Controllers\Api\Admin\Transitions\AdminPaymentController;
 use App\Http\Controllers\UsaMarry\Api\Admin\UserManagement\BlockController;
 use App\Http\Controllers\UsaMarry\Api\Admin\UserManagement\ReportController;
+use App\Http\Controllers\Api\Admin\DashboardMetrics\AdminDashboardController;
 
 Route::prefix('auth/admin')->group(function () {
     Route::post('login', [AdminAuthController::class, 'login'])->name('admin.login');
@@ -31,6 +33,7 @@ Route::prefix('admin')->group(function () {
     Route::middleware(AuthenticateAdmin::class)->group(function () {
 
 
+        Route::get('/dashboard-overview', [AdminDashboardController::class, 'adminDashboardOverview']);
 
 
 
@@ -38,6 +41,13 @@ Route::prefix('admin')->group(function () {
             Route::get('/', [UserController::class, 'index']); // list users
             Route::get('/{id}', [UserController::class, 'show']); // single user details
             Route::get('/{id}/subscription', [UserController::class, 'showSubscription']); // user subscription
+
+
+            
+            Route::post('/{id}/ban', [UserController::class, 'ban']);
+            Route::post('/{id}/unban', [UserController::class, 'unban']);
+            Route::delete('/{id}', [UserController::class, 'destroy']);
+            
         });
 
 
@@ -116,6 +126,7 @@ Route::prefix('admin')->group(function () {
 
         });
 
+            Route::get('/transaction-history', [AdminPaymentController::class, 'allSubscriptionHistory']);
 
 
 

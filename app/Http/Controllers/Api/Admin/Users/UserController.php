@@ -66,4 +66,48 @@ class UserController extends Controller
             'subscription_details' => $user->activeSubscription
         ]);
     }
+
+
+ // ✅ Ban user
+    public function ban($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->banned_at) {
+            return response()->json(['message' => 'User is already banned.'], 400);
+        }
+
+        $user->banned_at = now();
+        $user->save();
+
+        return response()->json(['message' => 'User has been banned successfully.']);
+    }
+
+    // ✅ Unban user
+    public function unban($id)
+    {
+        $user = User::findOrFail($id);
+
+        if (!$user->banned_at) {
+            return response()->json(['message' => 'User is not banned.'], 400);
+        }
+
+        $user->banned_at = null;
+        $user->save();
+
+        return response()->json(['message' => 'User has been unbanned successfully.']);
+    }
+
+    // ✅ Delete user
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+
+        $user->delete();
+
+        return response()->json(['message' => 'User has been deleted successfully.']);
+    }
+
+
+
 }

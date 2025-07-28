@@ -384,4 +384,9 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     {
         return $this->hasOne(PhotoSetting::class);
     }
+
+    public function getIsBannedAttribute()
+    {
+        return $this->banned_at !== null;
+    }
 }

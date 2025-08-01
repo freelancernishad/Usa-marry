@@ -312,7 +312,7 @@ public function showMatch($userId)
         $perPage = $request->per_page ?? 10;
 
         $query = $this->findPotentialMatches($user, false)
-            ->where('created_at', '>=', now()->subDays(3)) // "New" users: last 3 days
+            ->where('created_at', '>=', now()->subDays(7)) // "New" users: last 3 days
             ->where('id', '!=', $user->id);
 
         // Apply reusable filters
@@ -464,7 +464,7 @@ public function getMatchesWithLimit(Request $request)
     $limit = $isPremium ? 20 : $perPage;
 
     // Get three types of matches: New Matches, My Matches, and Premium Matches
-    $newMatches = $this->findPotentialMatches($user,false)->where('created_at', '>=', now()->subDays(3)) // Example condition for "new"
+    $newMatches = $this->findPotentialMatches($user,false)->where('created_at', '>=', now()->subDays(7)) // Example condition for "new"
                                ->where('id', '!=', $user->id)->limit($perPage)->get();
     $newMatches = collect($newMatches)->sortByDesc(fn($m) => $m->match_percentage);
 
@@ -599,9 +599,18 @@ public function getFullMenuWithCounts()
     $newMatchesCount = $this->findPotentialMatches($user, false)
         ->where('created_at', '>=', now()->subDays(3))
         ->count();
-    $todayMatchesCount = $this->findPotentialMatches($user, false)
-        ->whereDate('created_at', now()->toDateString())
-        ->count();
+
+        $todayMatchesCount = $this->findPotentialMatches($user, false)
+            ->whereDate('created_at', now()->toDateString())
+            ->count();
+
+        // If no today's matches, show a random count (but less than 100)
+        if ($todayMatchesCount == 0) {
+            $todayMatchesCount = rand(1, 99);
+        }
+
+
+
     $nearMeCount = $this->findPotentialMatches($user, false)
         ->whereHas('profile', function ($q) use ($user) {
             $q->where('city', $user->profile->city ?? '')

@@ -42,7 +42,7 @@ class ProfileController extends Controller
             'religion' => 'nullable|string|max:255',
             'caste' => 'nullable|string|max:255',
             'sub_caste' => 'nullable|string|max:255',
-            'marital_status' => 'nullable|string|in:Never Married,Divorced,Widowed,Awaiting Divorce',
+            'marital_status' => 'nullable|string',
 
             // Physical attributes
             'height' => 'nullable|numeric|between:100,250',
@@ -53,27 +53,27 @@ class ProfileController extends Controller
             'father_status' => 'nullable|string|max:255',
             'mother_status' => 'nullable|string|max:255',
             'siblings' => 'nullable|integer|min:0',
-            'family_type' => 'nullable|string|in:Nuclear,Joint,Other',
-            'family_values' => 'nullable|string|in:Traditional,Moderate,Liberal',
-            'financial_status' => 'nullable|string|in:Affluent,Upper Middle Class,Middle Class,Lower Middle Class',
+            'family_type' => 'nullable|string',
+            'family_values' => 'nullable|string',
+            'financial_status' => 'nullable|string',
 
             // Lifestyle
-            'diet' => 'nullable|string|in:Vegetarian,Eggetarian,Non-Vegetarian,Vegan',
-            'drink' => 'nullable|string|in:No,Occasionally,Yes',
-            'smoke' => 'nullable|string|in:No,Occasionally,Yes',
+            'diet' => 'nullable|string',
+            'drink' => 'nullable|string',
+            'smoke' => 'nullable|string',
 
             // Education and career
             'highest_degree' => 'nullable|string|max:255',
             'institution' => 'nullable|string|max:255',
             'occupation' => 'nullable|string|max:255',
             'annual_income' => 'nullable|string|max:255',
-            'employed_in' => 'nullable|string|in:Government,Private,Business,Self-Employed,Not Working',
+            'employed_in' => 'nullable|string',
 
             // Location
             'country' => 'nullable|string|max:255',
             'state' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:255',
-            'resident_status' => 'nullable|string|in:Citizen,Permanent Resident,Temporary Resident',
+            'resident_status' => 'nullable|string',
 
             // Horoscope
             'has_horoscope' => 'nullable|boolean',
@@ -82,9 +82,9 @@ class ProfileController extends Controller
             'manglik' => 'nullable|string|in:Yes,No,Partial',
 
             // Profile settings
-            'profile_created_by' => 'nullable|string|in:Self,Parent,Sibling,Relative,Friend',
+            'profile_created_by' => 'nullable|string',
             'show_contact' => 'nullable|boolean',
-            'visible_to' => 'nullable|string|in:All,My Community,My Matches',
+            'visible_to' => 'nullable|string',
             'about' => 'nullable|string|max:1000',
         ]);
 
@@ -174,7 +174,7 @@ class ProfileController extends Controller
 
             'disability' => 'nullable|boolean',
             'mother_tongue' => 'sometimes|nullable|string|max:255',
-            'profile_created_by' => 'nullable|string|in:Self,Parent,Sibling,Relative,Friend',
+            'profile_created_by' => 'nullable|string',
             // 'account_status' => 'sometimes|in:Active,Suspended,Deleted',
 
             // Profile model fields
@@ -187,22 +187,22 @@ class ProfileController extends Controller
             'father_status' => 'nullable|string|max:255',
             'mother_status' => 'nullable|string|max:255',
             'siblings' => 'nullable|integer|min:0',
-            'family_type' => 'nullable|string|in:Nuclear,Joint,Other',
-            'family_values' => 'nullable|string|in:Traditional,Moderate,Liberal',
-            'financial_status' => 'nullable|string|in:Affluent,Upper Middle Class,Middle Class,Lower Middle Class',
+            'family_type' => 'nullable|string',
+            'family_values' => 'nullable|string',
+            'financial_status' => 'nullable|string',
             'diet' => 'sometimes|nullable|string',
-            'drink' => 'sometimes|nullable|string|in:No,Occasionally,Yes',
-            'smoke' => 'sometimes|nullable|string|in:No,Occasionally,Yes',
+            'drink' => 'sometimes|nullable|string',
+            'smoke' => 'sometimes|nullable|string',
             'country' => 'sometimes|nullable|string|max:255',
             'state' => 'sometimes|nullable|string|max:255',
             'city' => 'sometimes|nullable|string|max:255',
-            'resident_status' => 'nullable|string|in:Citizen,Permanent Resident,Temporary Resident',
+            'resident_status' => 'nullable|string',
 
             'rashi' => 'nullable|string|max:255',
             'nakshatra' => 'nullable|string|max:255',
-            'manglik' => 'nullable|string|in:Yes,No,Partial',
+            'manglik' => 'nullable|string',
 
-            'visible_to' => 'nullable|string|in:All,My Community,My Matches',
+            'visible_to' => 'nullable|string',
 
 
            'update_step' => 'nullable|string|in:account_signup,profile_creation,personal_information,location_details,education_career,about_me,photos,partner_preference'

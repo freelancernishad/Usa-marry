@@ -15,6 +15,7 @@ use App\Http\Controllers\UsaMarry\Api\User\Profile\ContactController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ProfileController;
 use App\Http\Controllers\UsaMarry\Api\User\Action\UserActionController;
 use App\Http\Controllers\UsaMarry\Api\User\Auth\RegistrationController;
+use App\Http\Controllers\Api\Admin\Users\UserController;
 use App\Http\Controllers\UsaMarry\Api\User\Profile\ProfileVisitController;
 use App\Http\Controllers\UsaMarry\Api\User\Settings\AllSettingsController;
 use App\Http\Controllers\UsaMarry\Api\User\Subscription\SubscriptionController;
@@ -160,6 +161,9 @@ Route::middleware(AuthenticateUser::class)->group(function () {
 
     // Search routes
 });
+
+Route::get('users/top/profiles', [UserController::class, 'topProfiles']);
+
 Route::get('/search', [SearchController::class, 'search']);
 
 Route::prefix('coupons')->group(function () {

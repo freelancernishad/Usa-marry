@@ -53,7 +53,7 @@ class UserResource extends JsonResource
             'id', 'name', 'email', 'phone', 'profile_picture', 'gender', 'dob', 'religion', 'caste',
             'sub_caste', 'marital_status', 'height', 'disability', 'blood_group',
             'disability_issue', 'family_location', 'grew_up_in', 'hobbies', 'mother_tongue',
-            'profile_created_by', 'verified', 'profile_completion', 'account_status',
+            'profile_created_by', 'verified', 'profile_completion', 'account_status','is_top_profile',
             'created_at', 'updated_at'
         ]);
 

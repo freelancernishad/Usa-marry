@@ -110,4 +110,28 @@ class UserController extends Controller
 
 
 
+    public function toggleTopProfile($id)
+    {
+        $user = User::findOrFail($id);
+        $user->is_top_profile = !$user->is_top_profile;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => $user->is_top_profile
+                ? 'User added to Top Bride & Groom list.'
+                : 'User removed from Top Bride & Groom list.',
+            'is_top_profile' => $user->is_top_profile,
+        ]);
+    }
+
+    public function topProfiles()
+    {
+    
+        $users = User::where('is_top_profile', true)->latest()->get();
+
+        return UserResource::collection($users);
+    }
+
+
 }

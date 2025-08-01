@@ -43,11 +43,18 @@ Route::prefix('admin')->group(function () {
             Route::get('/{id}/subscription', [UserController::class, 'showSubscription']); // user subscription
 
 
-            
+
             Route::post('/{id}/ban', [UserController::class, 'ban']);
             Route::post('/{id}/unban', [UserController::class, 'unban']);
             Route::delete('/{id}', [UserController::class, 'destroy']);
-            
+
+            // For API route
+            Route::post('/{id}/toggle-top-profile', [UserController::class, 'toggleTopProfile']);
+            Route::get('/top/profiles', [UserController::class, 'topProfiles']);
+
+
+
+
         });
 
 

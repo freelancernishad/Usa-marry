@@ -20,7 +20,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'marital_status', 'height', 'blood_group', 'disability_issue', 'family_location',
         'grew_up_in', 'hobbies', 'disability', 'mother_tongue', 'profile_created_by',
         'verified', 'profile_completion', 'account_status', 'email_verified_at',
-        'email_verification_hash', 'otp', 'otp_expires_at', 'photo_privacy', 'photo_visibility',
+        'email_verification_hash', 'otp', 'otp_expires_at', 'photo_privacy', 'photo_visibility', 'is_top_profile',
     ];
 
     protected $hidden = [
@@ -35,6 +35,7 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         'disability' => 'boolean',
         'verified' => 'boolean',
         'hobbies' => 'array',
+        'is_top_profile' => 'boolean',
     ];
 
     protected $appends = [

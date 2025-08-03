@@ -92,8 +92,15 @@ class UserResource extends JsonResource
             : null;
 
 
-            $matchedUser = User::find($this->id);
-        $matchPercentage = calculateMatchPercentageAllFields($authUser, $matchedUser);
+            if($$isOwner){
+
+                $matchedUser = User::find($this->id);
+                $matchPercentage = calculateMatchPercentageAllFields($authUser, $matchedUser);
+            }else{
+                $matchPercentage = null;
+            }
+
+
 
         return array_merge(
             $userData,

@@ -210,7 +210,8 @@ public function showMatch($userId)
     ]);
 
     // ✅ Match calculation and details
-    $matchPercentage = calculateMatchPercentage($user, $matchedUser);
+    // $matchPercentage = calculateMatchPercentage($user, $matchedUser);
+    $matchPercentage = calculateMatchPercentageAllFields($user, $matchedUser);
     $matchDetails = getMatchDetails($user, $matchedUser);
 
     return response()->json([

@@ -258,7 +258,19 @@ function getMatchDetails($user, $matchedUser)
 }
 
 
+function calculateMatchPercentageAllFields($matchDetails)
+{
+    $totalFields = count($matchDetails);
+    $matchedCount = 0;
 
+    foreach ($matchDetails as $field => $data) {
+        if (!empty($data['matched'])) {
+            $matchedCount++;
+        }
+    }
+
+    return round(($matchedCount / $totalFields) * 100, 1);
+}
 
 
      function connectWithUser($connectedUserId)

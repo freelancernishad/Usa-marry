@@ -4,6 +4,7 @@ namespace App\Http\Controllers\UsaMarry\Api\User\Match;
 
 use App\Models\User;
 use App\Models\UserMatch;
+use App\Models\PhotoRequest;
 use App\Models\ProfileVisit;
 use Illuminate\Http\Request;
 use App\Models\UserConnection;
@@ -633,10 +634,7 @@ public function getFullMenuWithCounts()
             ->where('status', 'Accepted')
             ->count();
 
-        // Requests sent by current user that are still pending
-        $requestsCount = UserConnection::where('user_id', $user->id)
-            ->where('status', 'Pending')
-            ->count();
+
 
         // All requests sent by current user (any status)
         $sentCount = UserConnection::where('user_id', $user->id)
@@ -648,11 +646,33 @@ public function getFullMenuWithCounts()
             ->orWhere('connected_user_id', $user->id);
         })->where('status', 'Accepted')->count();
 
+
+
         // Total rejected connections (either sent or received)
         $deletedCount = UserConnection::where(function ($q) use ($user) {
             $q->where('user_id', $user->id)
             ->orWhere('connected_user_id', $user->id);
         })->where('status', 'Rejected')->count();
+
+
+
+        $userId = $user->id;
+
+// 2. Sent and still pending
+$sentPendingCount = PhotoRequest::where('sender_id', $userId)
+    ->where('status', 'Pending')->count();
+
+// 5. Received and still pending
+$receivedPendingCount = PhotoRequest::where('receiver_id', $userId)
+    ->where('status', 'Pending')->count();
+
+$requestsCount = $sentPendingCount + $receivedPendingCount;
+
+
+
+
+
+
 
     return response()->json([
         [
@@ -694,12 +714,12 @@ public function getFullMenuWithCounts()
             'href' => "#inbox",
             'label' => "Connection",
             'label_mob' => "Connection",
-            'count' => $receivedCount + $acceptedCount + $requestsCount + $sentCount + $contactsCount + $deletedCount,
+            'count' => $receivedCount + $acceptedCount + $requestsCount + $sentPendingCount + $contactsCount + $deletedCount,
             'subCategories' => [
                 [ 'label' => "Received", 'href' => "/dashboard/connection/received", 'count' => $receivedCount ],
                 [ 'label' => "Accepted", 'href' => "/dashboard/connection/accepted", 'count' => $acceptedCount ],
                 [ 'label' => "Requests", 'href' => "/dashboard/connection/requests", 'count' => $requestsCount ],
-                [ 'label' => "Sent", 'href' => "/dashboard/connection/sent", 'count' => $sentCount ],
+                [ 'label' => "Sent", 'href' => "/dashboard/connection/sent", 'count' => $sentPendingCount ],
                 [ 'label' => "Contacts", 'href' => "/dashboard/connection/contacts", 'count' => $contactsCount ],
                 [ 'label' => "Deleted", 'href' => "/dashboard/connection/deleted", 'count' => $deletedCount ],
             ],

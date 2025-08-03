@@ -180,6 +180,13 @@ public function showMatch($userId)
 {
     $user = Auth::user();
 
+    if ($user->id == $userId) {
+        return response()->json([
+            'success' => false,
+            'message' => 'You cannot visit your own profile from the match view. Please use the "My Profile" section instead.',
+        ], 403);
+    }
+    
     // ✅ Check if authenticated user has filled partner preference
     if (!$user->partnerPreference) {
         return response()->json([

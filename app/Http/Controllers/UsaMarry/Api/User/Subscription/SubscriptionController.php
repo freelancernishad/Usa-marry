@@ -266,15 +266,19 @@ public function webhook(Request $request)
     {
         $user = Auth::user();
 
-        // Fetch the active subscription with its related plan
-        $subscription = $user->subscriptions()->with('plan')->latest()->first();
+        // Use load on the result of the relationship
+        $subscription = $user->activeSubscription;
 
         if (!$subscription) {
             return response()->json(['message' => 'No active subscription found.'], 404);
         }
 
+        // Load the plan relationship
+        $subscription->load('plan');
+
         return response()->json($subscription);
     }
+
 
     // Fetch all subscriptions of the authenticated user (latest first)
     public function subscriptionHistory()

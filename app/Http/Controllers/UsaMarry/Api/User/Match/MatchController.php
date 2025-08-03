@@ -320,7 +320,8 @@ public function showMatch($userId)
     public function newMatches(Request $request)
     {
         $user = Auth::user();
-        $perPage = $request->per_page ?? 10;
+    $perPage = $request->per_page ?? 10;
+    $page = $request->page ?? 1;
 
         $query = $this->findPotentialMatches($user, false)
             ->where('created_at', '>=', now()->subDays(7)) // "New" users: last 3 days
@@ -345,8 +346,10 @@ public function matchHistory(Request $request)
 {
     $user = Auth::user();
     $perPage = $request->per_page ?? 10;
+    $page = $request->page ?? 1;
 
-    $history = UserMatch::with(['matchedUser.profile', 'matchedUser.photos'])
+
+    $matches = UserMatch::with(['matchedUser.profile', 'matchedUser.photos'])
         ->where(function ($q) use ($user) {
             $q->where('user_id', $user->id)
               ->orWhere('matched_user_id', $user->id);
@@ -427,6 +430,7 @@ public function nearMe(Request $request)
 {
     $user = Auth::user();
     $perPage = $request->per_page ?? 10;
+    $page = $request->page ?? 1;
     $location = $user->profile;
 
     $query = $this->findPotentialMatches($user, false)
@@ -453,6 +457,7 @@ public function nearMe(Request $request)
 public function moreMatches(Request $request)
 {
     $perPage = $request->per_page ?? 10;
+    $page = $request->page ?? 1;
     $user = Auth::user();
 
     $query = $this->findPotentialMatches($user, false);

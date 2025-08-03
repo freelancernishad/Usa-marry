@@ -333,7 +333,10 @@ public function showMatch($userId)
             ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
             ->paginate($perPage);
 
-        return new UserPaginationResource($matches);
+
+    $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);
+
+    return new UserPaginationResource($paginated);
     }
 
 
@@ -350,7 +353,10 @@ public function matchHistory(Request $request)
         })
         ->latest()
         ->paginate($perPage);
-    return $history = new UserPaginationResource($history);
+
+    $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);
+
+    return new UserPaginationResource($paginated);
 
 }
 
@@ -401,12 +407,16 @@ public function myMatches(Request $request)
 {
     $user = Auth::user();
     $perPage = $request->per_page ?? 10;
+    $page = $request->page ?? 1;
 
     $query = $this->findPotentialMatches($user, false);
-    $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-                     ->paginate($perPage);
 
-    return (new UserPaginationResource($matches))->withAuthUser($user);
+    $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
+                     ->get();
+
+    $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);
+
+    return new UserPaginationResource($paginated);
 }
 
 
@@ -432,7 +442,9 @@ public function nearMe(Request $request)
     $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
                      ->paginate($perPage);
 
-    return new UserPaginationResource($matches);
+    $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);
+
+    return new UserPaginationResource($paginated);
 }
 
 
@@ -451,7 +463,10 @@ public function moreMatches(Request $request)
     $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
                      ->paginate($perPage);
 
-    return new UserPaginationResource($matches);
+
+    $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);
+
+    return new UserPaginationResource($paginated);
 }
 
 

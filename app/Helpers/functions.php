@@ -272,6 +272,21 @@ function calculateMatchPercentageAllFields(User $user, User $matchedUser)
 }
 
 
+ function sortMatchesWithPercentage($matches, $user, $perPage, $page)
+{
+    $sorted = $matches->transform(function ($matchedUser) use ($user) {
+        $matchedUser->match_percentage = calculateMatchPercentageAllFields($user, $matchedUser);
+        return $matchedUser;
+    })->sortByDesc('match_percentage')->values();
+
+    return new \Illuminate\Pagination\LengthAwarePaginator(
+        $sorted->forPage($page, $perPage),
+        $sorted->count(),
+        $perPage,
+        $page,
+        ['path' => url()->current()]
+    );
+}
 
 
      function connectWithUser($connectedUserId)

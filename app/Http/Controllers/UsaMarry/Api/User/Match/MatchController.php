@@ -186,7 +186,7 @@ public function showMatch($userId)
             'message' => 'You cannot visit your own profile from the match view. Please use the "My Profile" section instead.',
         ], 403);
     }
-    
+
     // ✅ Check if authenticated user has filled partner preference
     if (!$user->partnerPreference) {
         return response()->json([
@@ -398,20 +398,36 @@ public function todaysMatches(Request $request)
 
 
 
-// ✅ 4. My Matches
 public function myMatches(Request $request)
 {
     $user = Auth::user();
     $perPage = $request->per_page ?? 10;
+    $page = $request->page ?? 1;
 
+    // 1. Get all potential matches (not paginated!)
     $query = $this->findPotentialMatches($user, false);
-
-    $query = $this->applyFilters($query, $request);
-
     $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-                     ->paginate($perPage);
+                     ->get();
 
-    return new UserPaginationResource($matches);
+    // 2. Add match percentage to each match
+    $matches->transform(function ($matchedUser) use ($user) {
+        $matchedUser->match_percentage = calculateMatchPercentageAllFields($user, $matchedUser);
+        return $matchedUser;
+    });
+
+    // 3. Sort by match percentage
+    $sorted = $matches->sortByDesc('match_percentage')->values();
+
+    // 4. Paginate manually
+    $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+        $sorted->forPage($page, $perPage),
+        $sorted->count(),
+        $perPage,
+        $page,
+        ['path' => url()->current()]
+    );
+
+    return new UserPaginationResource($paginated);
 }
 
 

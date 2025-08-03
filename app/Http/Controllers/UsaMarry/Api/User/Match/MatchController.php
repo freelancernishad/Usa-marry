@@ -638,8 +638,9 @@ public function getFullMenuWithCounts()
 
         // All requests sent by current user (any status)
         $sentCount = UserConnection::where('user_id', $user->id)
+         ->where('status', 'Pending')
             ->count();
-            
+
 
         // Total accepted connections (either sent or received)
         $contactsCount = UserConnection::where(function ($q) use ($user) {

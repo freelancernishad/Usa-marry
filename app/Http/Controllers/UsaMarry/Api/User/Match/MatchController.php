@@ -4,6 +4,7 @@ namespace App\Http\Controllers\UsaMarry\Api\User\Match;
 
 use App\Models\User;
 use App\Models\UserMatch;
+use App\Models\ContactView;
 use App\Models\PhotoRequest;
 use App\Models\ProfileVisit;
 use Illuminate\Http\Request;
@@ -650,6 +651,12 @@ public function getFullMenuWithCounts()
 
 
 
+
+
+
+
+
+
         // Total rejected connections (either sent or received)
         $deletedCount = UserConnection::where(function ($q) use ($user) {
             $q->where('user_id', $user->id)
@@ -667,12 +674,14 @@ $sentPendingCount = PhotoRequest::where('sender_id', $userId)
 // 5. Received and still pending
 $receivedPendingCount = PhotoRequest::where('receiver_id', $userId)
     ->where('status', 'Pending')->count();
-    
-$requestsCount = $sentPendingCount + $receivedPendingCount; 
+
+$requestsCount = $sentPendingCount + $receivedPendingCount;
 
 
 
 
+    // 1. Contacts you have viewed (i.e., you are the viewer)
+    $viewsSentCount = ContactView::where('user_id', $userId)->count();
 
 
 
@@ -716,13 +725,13 @@ $requestsCount = $sentPendingCount + $receivedPendingCount;
             'href' => "#inbox",
             'label' => "Connection",
             'label_mob' => "Connection",
-            'count' => $receivedCount + $acceptedCount + $requestsCount + $sentCount + $contactsCount + $deletedCount,
+            'count' => $receivedCount + $acceptedCount + $requestsCount + $sentCount + $contactsCount + $deletedCount + $viewsSentCount,
             'subCategories' => [
                 [ 'label' => "Received", 'href' => "/dashboard/connection/received", 'count' => $receivedCount ],
-                [ 'label' => "Accepted", 'href' => "/dashboard/connection/accepted", 'count' => $acceptedCount ],
+                [ 'label' => "Accepted", 'href' => "/dashboard/connection/accepted", 'count' => $contactsCount ],
                 [ 'label' => "Requests", 'href' => "/dashboard/connection/requests", 'count' => $requestsCount ],
                 [ 'label' => "Sent", 'href' => "/dashboard/connection/sent", 'count' => $sentCount ],
-                [ 'label' => "Contacts", 'href' => "/dashboard/connection/contacts", 'count' => $contactsCount ],
+                [ 'label' => "Contacts", 'href' => "/dashboard/connection/contacts", 'count' => $viewsSentCount ],
                 [ 'label' => "Deleted", 'href' => "/dashboard/connection/deleted", 'count' => $deletedCount ],
             ],
         ],

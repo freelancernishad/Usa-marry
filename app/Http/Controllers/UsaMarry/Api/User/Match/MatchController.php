@@ -397,37 +397,16 @@ public function todaysMatches(Request $request)
 
 
 
-
 public function myMatches(Request $request)
 {
     $user = Auth::user();
     $perPage = $request->per_page ?? 10;
-    $page = $request->page ?? 1;
 
-    // 1. Get all potential matches (not paginated!)
     $query = $this->findPotentialMatches($user, false);
     $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-                     ->get();
+                     ->paginate($perPage);
 
-    // 2. Add match percentage to each match
-    $matches->transform(function ($matchedUser) use ($user) {
-        $matchedUser->match_percentage = calculateMatchPercentageAllFields($user, $matchedUser);
-        return $matchedUser;
-    });
-
-    // 3. Sort by match percentage
-    $sorted = $matches->sortByDesc('match_percentage')->values();
-
-    // 4. Paginate manually
-    $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
-        $sorted->forPage($page, $perPage),
-        $sorted->count(),
-        $perPage,
-        $page,
-        ['path' => url()->current()]
-    );
-
-    return new UserPaginationResource($paginated);
+    return (new UserPaginationResource($matches))->withAuthUser($user);
 }
 
 

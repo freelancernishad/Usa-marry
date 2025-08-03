@@ -639,6 +639,7 @@ public function getFullMenuWithCounts()
         // All requests sent by current user (any status)
         $sentCount = UserConnection::where('user_id', $user->id)
             ->count();
+            
 
         // Total accepted connections (either sent or received)
         $contactsCount = UserConnection::where(function ($q) use ($user) {
@@ -665,8 +666,8 @@ $sentPendingCount = PhotoRequest::where('sender_id', $userId)
 // 5. Received and still pending
 $receivedPendingCount = PhotoRequest::where('receiver_id', $userId)
     ->where('status', 'Pending')->count();
-
-$requestsCount = $sentPendingCount + $receivedPendingCount;
+    
+$requestsCount = $sentPendingCount + $receivedPendingCount; 
 
 
 
@@ -714,12 +715,12 @@ $requestsCount = $sentPendingCount + $receivedPendingCount;
             'href' => "#inbox",
             'label' => "Connection",
             'label_mob' => "Connection",
-            'count' => $receivedCount + $acceptedCount + $requestsCount + $sentPendingCount + $contactsCount + $deletedCount,
+            'count' => $receivedCount + $acceptedCount + $requestsCount + $sentCount + $contactsCount + $deletedCount,
             'subCategories' => [
                 [ 'label' => "Received", 'href' => "/dashboard/connection/received", 'count' => $receivedCount ],
                 [ 'label' => "Accepted", 'href' => "/dashboard/connection/accepted", 'count' => $acceptedCount ],
                 [ 'label' => "Requests", 'href' => "/dashboard/connection/requests", 'count' => $requestsCount ],
-                [ 'label' => "Sent", 'href' => "/dashboard/connection/sent", 'count' => $sentPendingCount ],
+                [ 'label' => "Sent", 'href' => "/dashboard/connection/sent", 'count' => $sentCount ],
                 [ 'label' => "Contacts", 'href' => "/dashboard/connection/contacts", 'count' => $contactsCount ],
                 [ 'label' => "Deleted", 'href' => "/dashboard/connection/deleted", 'count' => $deletedCount ],
             ],

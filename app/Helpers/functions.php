@@ -257,10 +257,11 @@ function getMatchDetails($user, $matchedUser)
     return round(($matchedCount / $totalConsidered) * 100);
 }
 
-
-function calculateMatchPercentageAllFields($matchDetails)
+function calculateMatchPercentageAllFields(User $user, User $matchedUser)
 {
-    $totalFields = count($matchDetails);
+    $matchDetails = getMatchDetails($user, $matchedUser); // <-- this was missing
+
+    $totalFields = 12; // You can also use: count($matchDetails);
     $matchedCount = 0;
 
     foreach ($matchDetails as $field => $data) {

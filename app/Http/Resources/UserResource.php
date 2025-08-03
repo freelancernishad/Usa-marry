@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Models\UserConnection;
 use App\Models\ContactView;
+use App\Models\User;
 
 class UserResource extends JsonResource
 {
@@ -91,7 +92,8 @@ class UserResource extends JsonResource
             : null;
 
 
-
+            $matchedUser = User::find($this->id);
+        $matchPercentage = calculateMatchPercentageAllFields($authUser, $matchedUser);
 
         return array_merge(
             $userData,
@@ -102,7 +104,7 @@ class UserResource extends JsonResource
                 'partner_preference' => $this->partnerPreference ?? null,
                 'connection_request_Status' => $connectionRequestStatus,
                 'contact_viewed' => $contactViewed,
-                'match_percentage' => $this->match_percentage,
+                'match_percentage' => $matchPercentage,
                 'plan_name' => $this->plan_name,
                 'photos_locked' => $this->photos_locked ,
 

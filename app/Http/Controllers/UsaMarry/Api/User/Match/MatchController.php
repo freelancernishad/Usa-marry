@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\UserMatch;
 use App\Models\ProfileVisit;
 use Illuminate\Http\Request;
+use App\Models\UserConnection;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
@@ -620,19 +621,38 @@ public function getFullMenuWithCounts()
         })->count();
     $recentVisitorsCount = \App\Models\ProfileVisit::where('visited_id', $user->id)->count();
 
-    // === Connection Counts (direct queries without relation)
-    $receivedCount = \App\Models\UserMatch::where('matched_user_id', $user->id)->where('status', 'Pending')->count();
-    $acceptedCount = \App\Models\UserMatch::where('matched_user_id', $user->id)->where('status', 'Accepted')->count();
-    $requestsCount = \App\Models\UserMatch::where('user_id', $user->id)->where('status', 'Pending')->count();
-    $sentCount     = \App\Models\UserMatch::where('user_id', $user->id)->count();
-    $contactsCount = \App\Models\UserMatch::where(function($q) use ($user) {
-        $q->where('user_id', $user->id)
-          ->orWhere('matched_user_id', $user->id);
-    })->where('status', 'Accepted')->count();
-    $deletedCount  = \App\Models\UserMatch::where(function($q) use ($user) {
-        $q->where('user_id', $user->id)
-          ->orWhere('matched_user_id', $user->id);
-    })->where('status', 'Rejected')->count();
+        // === Connection Counts
+
+        // Received requests (pending ones where current user is receiver)
+        $receivedCount = UserConnection::where('connected_user_id', $user->id)
+            ->where('status', 'Pending')
+            ->count();
+
+        // Accepted connections where current user is the receiver
+        $acceptedCount = UserConnection::where('connected_user_id', $user->id)
+            ->where('status', 'Accepted')
+            ->count();
+
+        // Requests sent by current user that are still pending
+        $requestsCount = UserConnection::where('user_id', $user->id)
+            ->where('status', 'Pending')
+            ->count();
+
+        // All requests sent by current user (any status)
+        $sentCount = UserConnection::where('user_id', $user->id)
+            ->count();
+
+        // Total accepted connections (either sent or received)
+        $contactsCount = UserConnection::where(function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+            ->orWhere('connected_user_id', $user->id);
+        })->where('status', 'Accepted')->count();
+
+        // Total rejected connections (either sent or received)
+        $deletedCount = UserConnection::where(function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+            ->orWhere('connected_user_id', $user->id);
+        })->where('status', 'Rejected')->count();
 
     return response()->json([
         [

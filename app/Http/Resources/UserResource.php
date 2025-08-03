@@ -64,6 +64,7 @@ class UserResource extends JsonResource
             $userData['email'] = $maskEmail($userData['email']);
             $userData['phone'] = $maskPhone($userData['phone']);
             $userData['family_location'] = $maskAddress($userData['family_location']);
+            $userData['whatsapps'] = $maskWhatsapps($userData['whatsapps']);
         }
 
         $userData['age'] = $this->age ?? null;
@@ -79,11 +80,11 @@ class UserResource extends JsonResource
 
         $profileData = $this->profile ? $this->profile->only($profileFields) : array_fill_keys($profileFields, null);
 
-        if (!$isOwner && !$contactViewed && !$isAdmin) {
-            foreach (['country', 'state', 'city'] as $field) {
-                $profileData[$field] = $maskAddress($profileData[$field]);
-            }
-        }
+        // if (!$isOwner && !$contactViewed && !$isAdmin) {
+        //     foreach (['country', 'state', 'city'] as $field) {
+        //         $profileData[$field] = $maskAddress($profileData[$field]);
+        //     }
+        // }
 
         $userData['active_subscription'] = $isOwner && $this->activeSubscription
             ? new SubscriptionResource($this->activeSubscription)

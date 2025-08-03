@@ -7,6 +7,7 @@ use App\Models\TokenBlacklist;
 use App\Helpers\NotificationHelper;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 function TokenBlacklist($token){
@@ -287,6 +288,113 @@ function calculateMatchPercentageAllFields(User $user, User $matchedUser)
         ['path' => url()->current()]
     );
 }
+
+
+
+     function applyFilters($query, Request $request)
+{
+    // Basic filters with 'all' condition
+    $photoVisibility = $request->photo_visibility; // 'all', 'profile_only', etc.
+    $maritalStatus = $request->marital_status;     // 'all', 'single', etc.
+    $recent = $request->recent;                    // 'all', 'day', 'week', 'month'
+
+    $recentDaysMap = [
+        'day' => 1,
+        'week' => 7,
+        'month' => 30,
+    ];
+    $recentDays = $recentDaysMap[$recent] ?? null;
+
+    if ($photoVisibility && $photoVisibility !== 'all') {
+        $query->where('photo_visibility', $photoVisibility);
+    }
+
+    if ($maritalStatus && $maritalStatus !== 'all') {
+        $query->where('marital_status', $maritalStatus);
+    }
+
+    if ($recent && $recent !== 'all' && $recentDays) {
+        $query->where('created_at', '>=', now()->subDays($recentDays));
+    }
+
+    // Age filter
+    if ($request->has('age_min') || $request->has('age_max')) {
+        $minAge = $request->age_min ?? 18;
+        $maxAge = $request->age_max ?? 99;
+        $query->whereRaw("TIMESTAMPDIFF(YEAR, dob, CURDATE()) BETWEEN ? AND ?", [$minAge, $maxAge]);
+    }
+
+    // Height filter
+    if ($request->has('height_min') || $request->has('height_max')) {
+        $minHeight = $request->height_min ?? 100;
+        $maxHeight = $request->height_max ?? 250;
+        $query->whereBetween('height', [$minHeight, $maxHeight]);
+    }
+
+    // Religion & Caste
+    if ($request->religion) {
+        $query->where('religion', $request->religion);
+        if ($request->caste) {
+            $query->where('caste', $request->caste);
+        }
+    }
+
+    // Marital status again if provided differently (optional, but safe)
+    if ($request->marital_status) {
+        $query->where('marital_status', $request->marital_status);
+    }
+
+    // Education
+    if ($request->education) {
+        $query->whereHas('profile', function($q) use ($request) {
+            $q->where('highest_degree', $request->education);
+        });
+    }
+
+    // Occupation
+    if ($request->occupation) {
+        $query->whereHas('profile', function($q) use ($request) {
+            $q->where('occupation', $request->occupation);
+        });
+    }
+
+    // Country
+    if ($request->country) {
+        $query->whereHas('profile', function($q) use ($request) {
+            $q->where('country', $request->country);
+        });
+    }
+
+    // Lifestyle filters: diet, drink, smoke
+    if ($request->diet) {
+        $query->whereHas('profile', function($q) use ($request) {
+            $q->where('diet', $request->diet);
+        });
+    }
+
+    if ($request->drink) {
+        $query->whereHas('profile', function($q) use ($request) {
+            $q->where('drink', $request->drink);
+        });
+    }
+
+    if ($request->smoke) {
+        $query->whereHas('profile', function($q) use ($request) {
+            $q->where('smoke', $request->smoke);
+        });
+    }
+
+    return $query;
+}
+
+
+
+
+
+
+
+
+
 
 
      function connectWithUser($connectedUserId)

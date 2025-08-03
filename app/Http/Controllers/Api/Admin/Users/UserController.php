@@ -11,31 +11,48 @@ use App\Http\Resources\UserPaginationResource;
 class UserController extends Controller
 {
     // ✅ All users with optional search and subscriptions loaded
-    public function index(Request $request)
-    {
-        $query = User::with(['activeSubscription.plan']); // eager load to reduce queries
+public function index(Request $request)
+{
+    // Start with base query including eager loading
+    $query = User::with(['activeSubscription.plan']);
 
-        // Optional search filter
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%$search%")
-                  ->orWhere('email', 'LIKE', "%$search%")
-                  ->orWhere('id', 'LIKE', "%$search%");
-            });
-        }
-
-        // Optional filter: only subscribed users
-        if ($request->filled('subscribed') && $request->subscribed == 'true') {
-            $query->whereHas('subscriptions', function ($q) {
-                $q->where('status', 'Success')->where('end_date', '>=', now());
-            });
-        }
-
-        $users = $query->latest()->paginate($request->input('per_page', 10));
-
-        return new UserPaginationResource($users);
+    // Apply search filter
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'LIKE', "%$search%")
+              ->orWhere('email', 'LIKE', "%$search%")
+              ->orWhere('id', 'LIKE', "%$search%")
+              ->orWhere('marital_status', 'LIKE', "%$search%")
+              ->orWhere('religion', 'LIKE', "%$search%")
+              ->orWhere('caste', 'LIKE', "%$search%")
+              ->orWhereHas('profile', function ($q2) use ($search) {
+                  $q2->where('country', 'LIKE', "%$search%")
+                     ->orWhere('occupation', 'LIKE', "%$search%")
+                     ->orWhere('highest_degree', 'LIKE', "%$search%")
+                     ->orWhere('diet', 'LIKE', "%$search%")
+                     ->orWhere('drink', 'LIKE', "%$search%")
+                     ->orWhere('smoke', 'LIKE', "%$search%");
+              });
+        });
     }
+
+    // Apply only subscribed users filter
+    if ($request->filled('subscribed') && $request->subscribed == 'true') {
+        $query->whereHas('subscriptions', function ($q) {
+            $q->where('status', 'Success')->where('end_date', '>=', now());
+        });
+    }
+
+    // ✅ Apply additional filters using helper
+    $query = applyFilters($query, $request);
+
+    // Pagination
+    $users = $query->latest()->paginate($request->input('per_page', 10));
+
+    return new UserPaginationResource($users);
+}
+
 
     // ✅ View single user with subscription and profile data
     public function show($id)
@@ -127,7 +144,7 @@ class UserController extends Controller
 
     public function topProfiles()
     {
-    
+
         $users = User::where('is_top_profile', true)->latest()->get();
 
         return UserResource::collection($users);

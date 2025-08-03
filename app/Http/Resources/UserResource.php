@@ -47,10 +47,13 @@ class UserResource extends JsonResource
 
         $maskPhone = fn($phone) => $phone ? substr($phone, 0, 2) . str_repeat('*', strlen($phone) - 4) . substr($phone, -2) : null;
         $maskAddress = fn($value) => $value ? substr($value, 0, 1) . str_repeat('*', max(strlen($value) - 2, 0)) . substr($value, -1) : null;
+        $maskWhatsapps = fn($whatsapps) => $whatsapps ? (substr($whatsapps, 0, 2) . str_repeat('*', strlen($whatsapps) - 4) . substr($whatsapps, -2)) : null;
+
+
 
         // Base user data
         $userData = $this->only([
-            'id', 'name', 'email', 'phone', 'profile_picture', 'gender', 'dob', 'religion', 'caste',
+            'id', 'name', 'email', 'phone','whatsapps', 'profile_picture', 'gender', 'dob', 'religion', 'caste',
             'sub_caste', 'marital_status', 'height', 'disability', 'blood_group',
             'disability_issue', 'family_location', 'grew_up_in', 'hobbies', 'mother_tongue',
             'profile_created_by', 'verified', 'profile_completion', 'account_status','is_top_profile',

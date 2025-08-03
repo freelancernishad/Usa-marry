@@ -173,7 +173,10 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
         $now = Carbon::now();
         $diff = $dob->diff($now);
 
+
+        return $this->ageCache = "{$diff->y} years";
         return $this->ageCache = "{$diff->y} years, {$diff->m} months, {$diff->d} days";
+
     }
 
     public function getContactViewBalanceAttribute()

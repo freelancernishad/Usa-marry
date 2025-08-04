@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Server\ServerStatusController;
+use App\Http\Controllers\UsaMarry\Api\Global\ContactController;
 use App\Http\Controllers\Api\User\Package\UserPackageController;
 use App\Http\Controllers\UsaMarry\Api\Admin\Plans\PlanController;
 use App\Http\Controllers\Api\Admin\Blogs\Articles\ArticlesController;
@@ -76,7 +77,7 @@ Route::prefix('global/')->group(function () {
 
 
 
-
+Route::post('/contact/send', [ContactController::class, 'send']);
 
 
         // Admin routes for blog categories

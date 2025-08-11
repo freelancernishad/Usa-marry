@@ -57,9 +57,16 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     public function getJWTCustomClaims(): array
     {
         return [
+
+
+            'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'plan_name' => $this->plan_name,
+            'category' => $this->category ?? null,
             'email_verified' => !is_null($this->email_verified_at),
+            'is_premium' => $this->is_premium ?? null,
+            'profile_picture' => $this->profile_picture ?? null,
         ];
     }
 

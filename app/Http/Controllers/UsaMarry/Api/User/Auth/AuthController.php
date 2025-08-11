@@ -118,4 +118,38 @@ class AuthController extends Controller
             return response()->json(['error' => 'Failed to logout'], 500);
         }
     }
+
+
+
+    public function adminLoginUserByEmail(Request $request)
+    {
+        // Validator দিয়ে ভ্যালিডেশন
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        // ইউজার বের করো
+        $user = User::where('email', $request->email)->first();
+
+        // সরাসরি token generate করো
+        $token = JWTAuth::fromUser($user);
+
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => new UserLoginResource($user),
+            'profile_completion' => $user->profile_completion,
+            'message' => 'Login successful (admin override)',
+        ]);
+    }
+
+
+
 }

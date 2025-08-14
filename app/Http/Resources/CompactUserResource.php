@@ -11,6 +11,7 @@ class CompactUserResource extends JsonResource
     {
         return [
             'id' => $this->id ?? null,
+            'profile_id' => $this->profile_id ?? null,
             'name' => $this->name ?? '',
             'profile_picture' => $this->profile_picture ?? '',
             'age' => $this->age ?? '',

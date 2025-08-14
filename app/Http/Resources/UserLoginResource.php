@@ -16,6 +16,7 @@ class UserLoginResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'profile_id' => $this->profile_id,
             'name' => $this->name,
             'email' => $this->email,
             'gender' => $this->gender,

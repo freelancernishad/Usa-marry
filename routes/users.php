@@ -84,6 +84,7 @@ Route::middleware(AuthenticateUser::class)->group(function () {
 
 
 
+
     // Profile routes
     Route::prefix('profile')->group(function () {
         Route::get('/overview', [ProfileController::class, 'profileOverview']);
@@ -92,6 +93,7 @@ Route::middleware(AuthenticateUser::class)->group(function () {
         Route::get('/', [ProfileController::class, 'show']);
         Route::put('/basic', [ProfileController::class, 'updateBasicInfo']);
         Route::put('/', [ProfileController::class, 'updateProfile']);
+        Route::get('/completion/update', [ProfileController::class, 'updateAllUsersProfileCompletion']);
     });
     Route::get('/contacts/{contactId}', [ContactController::class, 'showContact']);
     Route::post('/contacts/{contactId}', [ContactController::class, 'showContact']);

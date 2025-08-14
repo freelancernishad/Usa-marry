@@ -268,7 +268,16 @@ class ProfileController extends Controller
 
 
 
+    public function updateAllUsersProfileCompletion()
+    {
+        $users = User::with(['profile', 'partnerPreference'])->get();
 
+        foreach ($users as $user) {
+            updateProfileCompletionWithPercentage($user);
+        }
+
+        return "Profile completion updated for all users.";
+    }
 
 
 public function updateProfile(Request $request)

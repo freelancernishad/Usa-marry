@@ -153,7 +153,8 @@ function updateProfileCompletion(User $user, $section)
 }
 
 
-function getMissingSections(User $user)
+
+function getMissingSections_old(User $user)
 {
     $allSections = [
         'account_signup' => 10,
@@ -179,6 +180,70 @@ function getMissingSections(User $user)
     }
 
     return $missing;
+}
+
+
+function getMissingSections(User $user)
+{
+      // Define sections and their fields
+    $sections = [
+        'profile_creation' => ['profile_created_by', 'gender', 'hobbies'],
+        'personal_information' => ['name','dob','height','blood_group','mother_tongue','marital_status','caste','sub_caste','religion'],
+        'location_details' => ['country','state','city','resident_status','family_location','grew_up_in'],
+        'education_career' => ['highest_degree','occupation','annual_income','employed_in'],
+        'about_me' => ['about','financial_status','diet','father_status','mother_status','siblings','family_type'],
+        'partner_preference' => ['age_min','age_max','height_min','height_max','marital_status','religion','caste','education','occupation','country','family_type','state','city','mother_tongue'],
+        'photos' => ['profile_photo','additional_photos'] // adjust your photo fields
+    ];
+
+    $totalFields = 0;
+    $filledCount = 0;
+    $missingSections = [];
+
+    foreach ($sections as $section => $fields) {
+        $sectionFilled = 0;
+
+        foreach ($fields as $field) {
+            $value = null;
+
+            // Check in user table
+            if (!empty($user->$field)) {
+                $value = $user->$field;
+            }
+            // Check in profile table
+            elseif (!empty($user->profile) && !empty($user->profile->$field)) {
+                $value = $user->profile->$field;
+            }
+            // Check in partner preference table
+            elseif (!empty($user->partnerPreference) && !empty($user->partnerPreference->$field)) {
+                $value = $user->partnerPreference->$field;
+            }
+
+            if (!empty($value)) {
+                $sectionFilled++;
+                $filledCount++;
+            }
+        }
+
+        $totalFields += count($fields);
+
+        // If section not fully filled, mark as missing
+        if ($sectionFilled < count($fields)) {
+            $missingSections[] = $section;
+        }
+    }
+
+    // Calculate total profile completion percentage
+    $profileCompletion = $totalFields > 0 ? round(($filledCount / $totalFields) * 100, 2) : 0;
+
+    // Update user
+    $user->update(['profile_completion' => $profileCompletion]);
+
+    // Logging
+    Log::info("Profile completion for user {$user->id}: {$profileCompletion}%");
+    Log::info("Missing sections for user {$user->id}:", $missingSections);
+
+    return $missingSections;
 }
 
 function getNextMissingSection(User $user)

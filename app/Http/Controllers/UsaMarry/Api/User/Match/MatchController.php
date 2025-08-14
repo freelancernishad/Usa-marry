@@ -174,65 +174,62 @@ public function getMatches(Request $request)
 
 
 
+    public function showMatch($userId)
+    {
+        $user = Auth::user();
 
-
-public function showMatch($userId)
-{
-    $user = Auth::user();
-
-    if ($user->id == $userId) {
-        return response()->json([
-            'success' => false,
-            'message' => 'You cannot visit your own profile from the match view. Please use the "My Profile" section instead.',
-        ], 403);
-    }
-
-    // ✅ Check if authenticated user has filled partner preference
-    if (!$user->partnerPreference) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Please complete your partner preference before viewing matches.',
-        ], 400);
-    }
-
-    // ✅ Find matched user
-    $matchedUser = User::where('id', $userId)
-        ->where('account_status', 'Active')
+        // ✅ Find matched user by id OR profile_id
+        $matchedUser = User::where(function ($query) use ($userId) {
+            $query->where('id', $userId)
+                ->orWhere('profile_id', $userId);
+        })->where('account_status', 'Active')
         ->first();
 
-    if (!$matchedUser) {
-        return response()->json(['message' => 'User not found'], 404);
-    }
+        if (!$matchedUser) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
 
-    // ✅ Log profile visit if it's not self
-    if ($user->id !== $matchedUser->id) {
+        // ✅ Prevent visiting own profile
+        if ($user->id == $matchedUser->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You cannot visit your own profile from the match view. Please use the "My Profile" section instead.',
+            ], 403);
+        }
+
+        // ✅ Check if authenticated user has filled partner preference
+        if (!$user->partnerPreference) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please complete your partner preference before viewing matches.',
+            ], 400);
+        }
+
+        // ✅ Log profile visit
         \App\Models\ProfileVisit::create([
             'visitor_id' => $user->id,
             'visited_id' => $matchedUser->id,
         ]);
+
+        // ✅ Load related data
+        $matchedUser->load([
+            'profile',
+            'photos',
+            'partnerPreference',
+        ]);
+
+        // ✅ Match calculation and details
+        $matchPercentage = calculateMatchPercentageAllFields($user, $matchedUser);
+        $matchDetails = getMatchDetails($user, $matchedUser);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Match details retrieved successfully',
+            'user' => new \App\Http\Resources\UserResource($matchedUser),
+            'match_percentage' => $matchPercentage,
+            'match_details' => $matchDetails,
+        ]);
     }
-
-    // ✅ Load related data
-    $matchedUser->load([
-        'profile',
-        'photos',
-        'partnerPreference',
-    ]);
-
-    // ✅ Match calculation and details
-    // $matchPercentage = calculateMatchPercentage($user, $matchedUser);
-    $matchPercentage = calculateMatchPercentageAllFields($user, $matchedUser);
-    $matchDetails = getMatchDetails($user, $matchedUser);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Match details retrieved successfully',
-        'user' => new \App\Http\Resources\UserResource($matchedUser),
-        'match_percentage' => $matchPercentage,
-        'match_details' => $matchDetails,
-    ]);
-}
-
 
 
 

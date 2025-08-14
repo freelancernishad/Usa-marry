@@ -74,6 +74,36 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     // Accessors
     // ----------------------------
 
+
+
+    protected static function booted()
+    {
+        parent::booted();
+
+        static::creating(function ($user) {
+            if (empty($user->profile_id)) {
+                $user->profile_id = self::generateUniqueProfileId();
+            }
+        });
+    }
+
+    /**
+     * Generate unique human-readable numeric profile_id
+     */
+    private static function generateUniqueProfileId()
+    {
+        do {
+            $id = mt_rand(100000, 999999); // 6-digit random number
+        } while (self::where('profile_id', $id)->exists());
+
+        return $id;
+    }
+
+
+
+
+
+
     public function getPlanNameAttribute()
     {
         $subscription = $this->activeSubscription;

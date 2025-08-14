@@ -185,7 +185,6 @@ function getMissingSections_old(User $user)
 
 function getMissingSections(User $user)
 {
-
     // Define sections and their fields
     $sections = [
         'profile_creation' => ['profile_created_by', 'gender', 'marital_status'],
@@ -202,7 +201,7 @@ function getMissingSections(User $user)
     $missingSections = [];
 
     foreach ($sections as $section => $fields) {
-        $sectionFilled = 0;
+        $sectionFilled = false; // flag for at least one field filled
 
         foreach ($fields as $field) {
             $value = null;
@@ -221,31 +220,32 @@ function getMissingSections(User $user)
             }
 
             if (!empty($value)) {
-                $sectionFilled++;
+                $sectionFilled = true;
                 $filledCount++;
             }
         }
 
         $totalFields += count($fields);
 
-        // If section not fully filled, mark as missing
-        if ($sectionFilled < count($fields)) {
+        // Mark as missing only if all fields empty
+        if (!$sectionFilled) {
             $missingSections[] = $section;
         }
     }
 
-    // Calculate total profile completion percentage
+    // Calculate percentage
     $profileCompletion = $totalFields > 0 ? round(($filledCount / $totalFields) * 100, 2) : 0;
 
-    // Update user
+    // Update in DB
     $user->update(['profile_completion' => $profileCompletion]);
 
-    // Logging
+    // Logs
     Log::info("Profile completion for user {$user->id}: {$profileCompletion}%");
     Log::info("Missing sections for user {$user->id}:", $missingSections);
 
     return $missingSections;
 }
+
 
 
 function getNextMissingSection_old(User $user)

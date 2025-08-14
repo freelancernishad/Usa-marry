@@ -289,7 +289,7 @@ function getNextMissingSection(User $user)
     ];
 
     foreach ($sections as $section => $fields) {
-        $sectionFilled = 0;
+        $sectionFilled = false; // flag if any field is filled
 
         foreach ($fields as $field) {
             $value = null;
@@ -303,12 +303,13 @@ function getNextMissingSection(User $user)
             }
 
             if (!empty($value)) {
-                $sectionFilled++;
+                $sectionFilled = true;
+                break; // No need to check rest of fields in this section
             }
         }
 
-        // If section is not fully filled, return it as next missing
-        if ($sectionFilled < count($fields)) {
+        // If no fields filled, this is the next missing section
+        if (!$sectionFilled) {
             return $section;
         }
     }
@@ -316,6 +317,7 @@ function getNextMissingSection(User $user)
     // All sections complete
     return null;
 }
+
 
 
 

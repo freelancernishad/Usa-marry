@@ -472,6 +472,7 @@ public function profileOverview()
         ],
         'user' =>  [
             'id' => $user->id,
+            'profile_id' => $user->profile_id,
             'name' => $user->name,
             'phone' => $user->phone,
             'whatsapps' => $user->whatsapps,

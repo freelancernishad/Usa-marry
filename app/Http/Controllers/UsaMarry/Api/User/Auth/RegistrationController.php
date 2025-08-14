@@ -142,8 +142,8 @@ class RegistrationController extends Controller
     public function createProfile(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'profile_created_by' => 'required|string',
-            'gender' => 'required|string|in:Male,Female,Other',
+            'profile_created_by' => 'nullable|string',
+            'gender' => 'nullable|string|in:Male,Female,Other',
         ]);
 
         if ($validator->fails()) {
@@ -151,16 +151,43 @@ class RegistrationController extends Controller
         }
 
         $user = Auth::user();
-        $user->update([
+
+        // Track before update
+        $fields = ['profile_created_by', 'gender'];
+        $beforeCount = 0;
+        foreach ($fields as $field) {
+            if (!empty($user->$field)) {
+                $beforeCount++;
+            }
+        }
+
+        // Update only if provided
+        $user->update(array_filter([
             'profile_created_by' => $request->profile_created_by,
             'gender' => $request->gender,
-        ]);
+        ], fn($value) => !is_null($value) && $value !== ''));
 
-        updateProfileCompletion($user, 'profile_creation');
+        // Track after update
+        $afterCount = 0;
+        foreach ($fields as $field) {
+            if (!empty($user->$field)) {
+                $afterCount++;
+            }
+        }
+
+        // Calculate percentage (out of 2 fields)
+        $totalFields = count($fields);
+        $percentage = ($afterCount / $totalFields) * 100;
+
+        // Only call if something actually changed
+        if ($afterCount > $beforeCount) {
+            updateProfileCompletionWithPercentage($user, 'profile_creation', $percentage);
+        }
 
         return response()->json([
-            'message' => 'Profile created successfully',
-            'next_step' => 'personal_information'
+            'message' => 'Profile updated successfully',
+            'next_step' => 'personal_information',
+            'completion_percentage' => $percentage
         ]);
     }
 

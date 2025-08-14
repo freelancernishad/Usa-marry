@@ -7,11 +7,13 @@ use App\Models\Profile;
 use App\Models\ContactView;
 use Illuminate\Http\Request;
 use App\Models\UserConnection;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\SubscriptionResource;
+
 
 class ProfileController extends Controller
 {
@@ -126,7 +128,7 @@ class ProfileController extends Controller
     }
 
 
-    public function updateProfile(Request $request)
+    public function updateProfile_old(Request $request)
     {
 
         $isAdmin = auth()->guard('admin')->check();
@@ -263,6 +265,145 @@ class ProfileController extends Controller
 
         ]);
     }
+
+
+
+
+
+
+public function updateProfile(Request $request)
+{
+    $isAdmin = auth()->guard('admin')->check();
+    if ($isAdmin) {
+        $user = User::findOrFail($request->user_id);
+
+        if ($user->id === Auth::id()) {
+            return response()->json(['error' => 'Admins cannot update their own profile through this endpoint.'], 403);
+        }
+
+        if (!Auth::user()->can('update', $user)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+    } else {
+        $user = Auth::user();
+    }
+
+    $validator = Validator::make($request->all(), [
+        // User model fields
+            'name' => 'sometimes|nullable|string|max:255',
+            'phone' => 'sometimes|nullable|numeric',
+            'whatsapps' => 'sometimes|nullable|numeric',
+            'gender' => 'sometimes|nullable|in:Male,Female,Other',
+            'dob' => 'sometimes|nullable|date',
+            'religion' => 'sometimes|nullable|string|max:255',
+            'caste' => 'sometimes|nullable|string|max:255',
+            'sub_caste' => 'nullable|string|max:255',
+            'marital_status' => 'sometimes|nullable|string',
+            'height' => 'sometimes|nullable|numeric',
+
+            'blood_group' => 'sometimes|nullable|string|in:A+,A-,B+,B-,O+,O-,AB+,AB-',
+            'disability_issue' => 'sometimes|nullable|string|max:255',
+            'family_location' => 'sometimes|nullable|string|max:255',
+            'grew_up_in' => 'sometimes|nullable|string|max:255',
+
+            // Add hobbies field
+            'hobbies' => 'sometimes|nullable|array', // Add validation for hobbies as an array
+            'hobbies.*' => 'string|max:255', // Each hobby should be a string with a max length of 255
+
+
+
+            'disability' => 'nullable|boolean',
+            'mother_tongue' => 'sometimes|nullable|string|max:255',
+            'profile_created_by' => 'nullable|string',
+            // 'account_status' => 'sometimes|in:Active,Suspended,Deleted',
+
+            // Profile model fields
+            'about' => 'nullable|string|max:1000',
+            'highest_degree' => 'sometimes|nullable|string|max:255',
+            'institution' => 'nullable|string|max:255',
+            'occupation' => 'sometimes|nullable|string|max:255',
+            'annual_income' => 'nullable|string|max:255',
+            'employed_in' => 'nullable|string',
+            'father_status' => 'nullable|string|max:255',
+            'mother_status' => 'nullable|string|max:255',
+            'siblings' => 'nullable|integer|min:0',
+            'family_type' => 'nullable|string',
+            'family_values' => 'nullable|string',
+            'financial_status' => 'nullable|string',
+            'diet' => 'sometimes|nullable|string',
+            'drink' => 'sometimes|nullable|string',
+            'smoke' => 'sometimes|nullable|string',
+            'country' => 'sometimes|nullable|string|max:255',
+            'state' => 'sometimes|nullable|string|max:255',
+            'city' => 'sometimes|nullable|string|max:255',
+            'resident_status' => 'nullable|string',
+
+            'rashi' => 'nullable|string|max:255',
+            'nakshatra' => 'nullable|string|max:255',
+            'manglik' => 'nullable|string',
+
+            'visible_to' => 'nullable|string',
+
+
+           'update_step' => 'nullable|string|in:account_signup,profile_creation,personal_information,location_details,education_career,about_me,photos,partner_preference'
+
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 400);
+    }
+
+
+
+    // Update user fields
+    $userFields = $request->only([
+        'name','phone','whatsapps','gender','dob','religion','caste',
+        'sub_caste','marital_status','height','blood_group','disability_issue',
+        'family_location','grew_up_in','disability','mother_tongue','profile_created_by'
+    ]);
+
+    if ($request->has('hobbies')) {
+        $userFields['hobbies'] = $request->hobbies;
+    }
+
+    if (!empty($userFields)) {
+        $user->update($userFields);
+    }
+
+    // Update profile fields
+    $profileFields = $request->except([
+        'name','email','phone','whatsapps','gender','dob','religion','caste',
+        'sub_caste','marital_status','height','blood_group','disability_issue',
+        'family_location','grew_up_in','disability','mother_tongue','profile_created_by',
+        'account_status','password','verified','profile_completion','email_verified_at',
+        'email_verification_hash','otp','otp_expires_at'
+    ]);
+
+    $profileFields['has_horoscope'] = $request->filled('has_horoscope') ? $request->has_horoscope : 0;
+    $profileFields['show_contact'] = $request->filled('show_contact') ? $request->show_contact : 0;
+    $profileFields['visible_to'] = $request->filled('visible_to') ? $request->visible_to : 'My Matches';
+
+    $user->profile()->updateOrCreate(
+        ['user_id' => $user->id],
+        $profileFields
+    );
+
+
+    $percentage = updateProfileCompletionWithPercentage($user);
+
+
+
+    return response()->json([
+        'message' => 'Profile updated successfully',
+        'profile_completion' => $percentage,
+        'user' => new UserResource($user)
+    ]);
+}
+
+
+
+
+
 
 public function profileOverview()
 {

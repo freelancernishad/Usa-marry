@@ -47,6 +47,73 @@ function validateRequest(array $data, array $rules)
 
 
     // The rest of the helper methods remain the same
+function updateProfileCompletionWithPercentage(User $user)
+{
+        // All profile-related fields for percentage calculation
+    $allFields = [
+        // user table
+        'name','phone','whatsapps','gender','dob','religion','caste','sub_caste',
+        'marital_status','height','blood_group','disability_issue','family_location',
+        'grew_up_in','mother_tongue','profile_created_by','hobbies',
+
+        // profile table
+        'about','highest_degree','occupation','annual_income','employed_in',
+        'father_status','mother_status','siblings','family_type',
+        'financial_status','diet','country','state','city','resident_status',
+
+        // partner preference table
+        'age_min', 'age_max', 'height_min', 'height_max',
+        'marital_status', 'religion', 'caste', 'education', 'occupation',
+        'country', 'family_type', 'state', 'city', 'mother_tongue'
+    ];
+
+
+
+    $filledCount = 0;
+    $missingFields = [];
+
+    foreach ($allFields as $field) {
+        $value = null;
+
+        // Check in user table
+        if (!empty($user->$field)) {
+            $value = $user->$field;
+        }
+        // Check in profile table
+        elseif (!empty($user->profile) && !empty($user->profile->$field)) {
+            $value = $user->profile->$field;
+        }
+        // Check in partner preference table
+        elseif (!empty($user->partnerPreference) && !empty($user->partnerPreference->$field)) {
+            $value = $user->partnerPreference->$field;
+        }
+
+        if (!empty($value)) {
+            $filledCount++;
+        } else {
+            $missingFields[] = $field;
+        }
+    }
+
+    // Calculate percentage
+    $totalFields = count($allFields);
+    $percentage = $totalFields > 0 ? round(($filledCount / $totalFields) * 100, 2) : 0;
+
+    // Log results
+    Log::info('Missing profile fields:', $missingFields);
+    Log::info('Profile completion percentage calculated', [
+        'user_id' => $user->id,
+        'profile_completion' => $percentage
+    ]);
+
+    $user->update([
+        'profile_completion' => $percentage
+    ]);
+
+    return $percentage;
+}
+
+    // The rest of the helper methods remain the same
 function updateProfileCompletion(User $user, $section)
 {
     $completion = $user->profile_completion;

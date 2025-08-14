@@ -62,12 +62,12 @@ class PartnerPreferenceController extends Controller
         $validated
     );
 
-    updateProfileCompletion($user, 'partner_preference');
+    $percentage = updateProfileCompletionWithPercentage($user);
 
     return response()->json([
         'message' => 'Partner preference updated successfully',
         'preference' => $preference,
-        'profile_completion' => $user->profile_completion
+        'profile_completion' => $percentage
     ]);
 }
 

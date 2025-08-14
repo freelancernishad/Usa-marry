@@ -246,7 +246,8 @@ function getMissingSections(User $user)
     return $missingSections;
 }
 
-function getNextMissingSection(User $user)
+
+function getNextMissingSection_old(User $user)
 {
     $allSections = [
         'account_signup' => 10,
@@ -273,6 +274,47 @@ function getNextMissingSection(User $user)
     return null; // all completed
 }
 
+function getNextMissingSection(User $user)
+{
+    // Define sections and their fields
+    $sections = [
+        'profile_creation' => ['profile_created_by', 'gender', 'hobbies'],
+        'personal_information' => ['name','dob','height','blood_group','mother_tongue','marital_status','caste','sub_caste','religion'],
+        'location_details' => ['country','state','city','resident_status','family_location','grew_up_in'],
+        'education_career' => ['highest_degree','occupation','annual_income','employed_in'],
+        'about_me' => ['about','financial_status','diet','father_status','mother_status','siblings','family_type'],
+        'partner_preference' => ['age_min','age_max','height_min','height_max','marital_status','religion','caste','education','occupation','country','family_type','state','city','mother_tongue'],
+        'photos' => ['profile_photo','additional_photos'] // adjust your photo fields
+    ];
+
+    foreach ($sections as $section => $fields) {
+        $sectionFilled = 0;
+
+        foreach ($fields as $field) {
+            $value = null;
+
+            if (!empty($user->$field)) {
+                $value = $user->$field;
+            } elseif (!empty($user->profile) && !empty($user->profile->$field)) {
+                $value = $user->profile->$field;
+            } elseif (!empty($user->partnerPreference) && !empty($user->partnerPreference->$field)) {
+                $value = $user->partnerPreference->$field;
+            }
+
+            if (!empty($value)) {
+                $sectionFilled++;
+            }
+        }
+
+        // If section is not fully filled, return it as next missing
+        if ($sectionFilled < count($fields)) {
+            return $section;
+        }
+    }
+
+    // All sections complete
+    return null;
+}
 
 
 

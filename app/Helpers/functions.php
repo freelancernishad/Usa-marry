@@ -185,12 +185,13 @@ function getMissingSections_old(User $user)
 
 function getMissingSections(User $user)
 {
-      // Define sections and their fields
+
+    // Define sections and their fields
     $sections = [
-        'profile_creation' => ['profile_created_by', 'gender', 'hobbies'],
-        'personal_information' => ['name','dob','height','blood_group','mother_tongue','marital_status','caste','sub_caste','religion'],
-        'location_details' => ['country','state','city','resident_status','family_location','grew_up_in'],
-        'education_career' => ['highest_degree','occupation','annual_income','employed_in'],
+        'profile_creation' => ['profile_created_by', 'gender', 'marital_status'],
+        'personal_information' => ['name','dob','religion','phone','about'],
+        'location_details' => ['country','city','family_location','resident_status','height','diet'],
+        'education_career' => ['highest_degree','employed_in','occupation','annual_income'],
         'about_me' => ['about','financial_status','diet','father_status','mother_status','siblings','family_type'],
         'partner_preference' => ['age_min','age_max','height_min','height_max','marital_status','religion','caste','education','occupation','country','family_type','state','city','mother_tongue'],
         'photos' => ['profile_photo','additional_photos'] // adjust your photo fields
@@ -278,10 +279,10 @@ function getNextMissingSection(User $user)
 {
     // Define sections and their fields
     $sections = [
-        'profile_creation' => ['profile_created_by', 'gender', 'hobbies'],
-        'personal_information' => ['name','dob','height','blood_group','mother_tongue','marital_status','caste','sub_caste','religion'],
-        'location_details' => ['country','state','city','resident_status','family_location','grew_up_in'],
-        'education_career' => ['highest_degree','occupation','annual_income','employed_in'],
+        'profile_creation' => ['profile_created_by', 'gender', 'marital_status'],
+        'personal_information' => ['name','dob','religion','phone','about'],
+        'location_details' => ['country','city','family_location','resident_status','height','diet'],
+        'education_career' => ['highest_degree','employed_in','occupation','annual_income'],
         'about_me' => ['about','financial_status','diet','father_status','mother_status','siblings','family_type'],
         'partner_preference' => ['age_min','age_max','height_min','height_max','marital_status','religion','caste','education','occupation','country','family_type','state','city','mother_tongue'],
         'photos' => ['profile_photo','additional_photos'] // adjust your photo fields

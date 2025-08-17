@@ -193,7 +193,7 @@ function getMissingSections(User $user)
         'education_career' => ['highest_degree','employed_in','occupation','annual_income'],
         'about_me' => ['about','financial_status','diet','father_status','mother_status','siblings','family_type'],
         'partner_preference' => ['age_min','age_max','height_min','height_max','marital_status','religion','caste','education','occupation','country','family_type','state','city','mother_tongue'],
-        'photos' => ['profile_photo','additional_photos'] // adjust your photo fields
+        'photos' => ['photos'] // adjust your photo fields
     ];
 
     $totalFields = 0;
@@ -205,6 +205,11 @@ function getMissingSections(User $user)
 
         foreach ($fields as $field) {
             $value = null;
+
+
+             if ($section === 'photos') {
+                $value = $user->photos()->exists();
+            }else {
 
             // Check in user table
             if (!empty($user->$field)) {
@@ -218,6 +223,10 @@ function getMissingSections(User $user)
             elseif (!empty($user->partnerPreference) && !empty($user->partnerPreference->$field)) {
                 $value = $user->partnerPreference->$field;
             }
+        }
+
+
+
 
             if (!empty($value)) {
                 $sectionFilled = true;
@@ -285,7 +294,7 @@ function getNextMissingSection(User $user)
         'education_career' => ['highest_degree','employed_in','occupation','annual_income'],
         'about_me' => ['about','financial_status','diet','father_status','mother_status','siblings','family_type'],
         'partner_preference' => ['age_min','age_max','height_min','height_max','marital_status','religion','caste','education','occupation','country','family_type','state','city','mother_tongue'],
-        'photos' => ['profile_photo','additional_photos'] // adjust your photo fields
+        'photos' => ['photos'] // adjust your photo fields
     ];
 
     foreach ($sections as $section => $fields) {
@@ -294,13 +303,20 @@ function getNextMissingSection(User $user)
         foreach ($fields as $field) {
             $value = null;
 
-            if (!empty($user->$field)) {
-                $value = $user->$field;
-            } elseif (!empty($user->profile) && !empty($user->profile->$field)) {
-                $value = $user->profile->$field;
-            } elseif (!empty($user->partnerPreference) && !empty($user->partnerPreference->$field)) {
-                $value = $user->partnerPreference->$field;
+
+             if ($section === 'photos') {
+                $value = $user->photos()->exists();
+            }else {
+                if (!empty($user->$field)) {
+                    $value = $user->$field;
+                } elseif (!empty($user->profile) && !empty($user->profile->$field)) {
+                    $value = $user->profile->$field;
+                } elseif (!empty($user->partnerPreference) && !empty($user->partnerPreference->$field)) {
+                    $value = $user->partnerPreference->$field;
+                }
             }
+
+
 
             if (!empty($value)) {
                 $sectionFilled = true;

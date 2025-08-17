@@ -266,7 +266,7 @@ public function webhook(Request $request)
     {
         $user = Auth::user();
 
-        // Use load on the result of the relationship
+        // Active Subscription
         $subscription = $user->activeSubscription;
 
         if (!$subscription) {
@@ -276,9 +276,32 @@ public function webhook(Request $request)
         // Load the plan relationship
         $subscription->load('plan');
 
-        return response()->json($subscription);
-    }
+        // Contacts Viewed Count
+        $contactsViewedCount = \App\Models\ContactView::where('user_id', $user->id)->count();
 
+        // Default limit
+        $totalViewContactLimit = 0;
+
+        // Get view_contact feature from plan_features
+        if ($subscription && is_array($subscription->plan_features)) {
+            $feature = collect($subscription->plan_features)->firstWhere('key', 'view_contact');
+            $totalViewContactLimit = isset($feature['value']) ? (int) $feature['value'] : 0;
+        }
+
+        // Calculate remaining balance and usage percentage
+        $remainingBalance = max(0, $totalViewContactLimit - $contactsViewedCount);
+        $contactViewUsagePercentage = $totalViewContactLimit > 0
+            ? round(($contactsViewedCount / $totalViewContactLimit) * 100, 2)
+            : 0;
+
+        return response()->json([
+            'subscription' => $subscription,
+            'contacts_viewed' => $contactsViewedCount,
+            'contact_view_limit' => $totalViewContactLimit,
+            'contact_view_balance' => $remainingBalance,
+            'usage_percentage' => $contactViewUsagePercentage,
+        ]);
+    }
 
     // Fetch all subscriptions of the authenticated user (latest first)
     public function subscriptionHistory()

@@ -21,6 +21,7 @@ public function index(Request $request)
         $search = $request->search;
         $query->where(function ($q) use ($search) {
             $q->where('name', 'LIKE', "%$search%")
+              ->orWhere('profile_id', 'LIKE', "%$search%")
               ->orWhere('email', 'LIKE', "%$search%")
               ->orWhere('id', 'LIKE', "%$search%")
               ->orWhere('marital_status', 'LIKE', "%$search%")

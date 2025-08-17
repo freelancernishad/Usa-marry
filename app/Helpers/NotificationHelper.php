@@ -23,26 +23,31 @@ class NotificationHelper
         'is_read' => false,
     ]);
 
+
+
     // Send email
-    Mail::to($user->email)->send(new class($subject, $bladeView, $viewData) extends \Illuminate\Mail\Mailable {
-        public $subjectLine;
-        public $bladeView;
-        public $viewData;
+    // Mail::to($user->email)->send(new class($subject, $bladeView, $viewData) extends \Illuminate\Mail\Mailable {
+    //     public $subjectLine;
+    //     public $bladeView;
+    //     public $viewData;
 
-        public function __construct($subjectLine, $bladeView, $viewData)
-        {
-            $this->subjectLine = $subjectLine;
-            $this->bladeView = $bladeView ?? 'emails.notification.connection'; // fallback view
-            $this->viewData = $viewData;
-        }
+    //     public function __construct($subjectLine, $bladeView, $viewData)
+    //     {
+    //         $this->subjectLine = $subjectLine;
+    //         $this->bladeView = $bladeView ?? 'emails.notification.connection'; // fallback view
+    //         $this->viewData = $viewData;
+    //     }
 
-        public function build()
-        {
-            return $this->view($this->bladeView)
-                        ->with($this->viewData)
-                        ->subject($this->subjectLine);
-        }
-    });
+    //     public function build()
+    //     {
+    //         return $this->view($this->bladeView)
+    //                     ->with($this->viewData)
+    //                     ->subject($this->subjectLine);
+    //     }
+    // });
+
+
+
 }
 
     /**

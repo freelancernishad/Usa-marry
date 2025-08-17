@@ -517,6 +517,10 @@ function calculateMatchPercentageAllFields(User $user, User $matchedUser)
     }
 
     // Marital status again if provided differently (optional, but safe)
+    if ($request->gender) {
+        $query->where('gender', $request->gender);
+    }
+
     if ($request->marital_status) {
         $query->where('marital_status', $request->marital_status);
     }

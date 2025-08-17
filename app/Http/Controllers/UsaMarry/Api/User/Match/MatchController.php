@@ -544,7 +544,12 @@ public function getFullMenuWithCounts()
               ->orWhere('state', $user->profile->state ?? '')
               ->orWhere('country', $user->profile->country ?? '');
         })->count();
-    $recentVisitorsCount = \App\Models\ProfileVisit::where('visited_id', $user->id)->count();
+
+
+    // $recentVisitorsCount = \App\Models\ProfileVisit::where('visited_id', $user->id)->count();
+        $recentVisitorsCount = \App\Models\ProfileVisit::where('visited_id', $user->id)
+        ->distinct('visitor_id')
+        ->count('visitor_id');
 
         // === Connection Counts
 

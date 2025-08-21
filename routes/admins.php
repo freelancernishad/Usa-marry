@@ -11,9 +11,11 @@ use App\Http\Controllers\UsaMarry\Api\Admin\Plans\FeatureController;
 use App\Http\Controllers\Api\Admin\Blogs\Articles\ArticlesController;
 use App\Http\Controllers\Api\Admin\Blogs\Category\CategoryController;
 use App\Http\Controllers\Api\Admin\Transitions\AdminPaymentController;
+use App\Http\Controllers\UsaMarry\Api\Admin\DataEntry\JsonImportController;
 use App\Http\Controllers\UsaMarry\Api\Admin\UserManagement\BlockController;
 use App\Http\Controllers\UsaMarry\Api\Admin\UserManagement\ReportController;
 use App\Http\Controllers\Api\Admin\DashboardMetrics\AdminDashboardController;
+
 
 Route::prefix('auth/admin')->group(function () {
     Route::post('login', [AdminAuthController::class, 'login'])->name('admin.login');
@@ -27,6 +29,10 @@ Route::prefix('auth/admin')->group(function () {
 
     });
 });
+
+
+Route::post('/admin/import/from/shaadi', [JsonImportController::class, 'store']);
+
 
 
 Route::prefix('admin')->group(function () {

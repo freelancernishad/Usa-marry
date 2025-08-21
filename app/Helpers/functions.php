@@ -188,7 +188,7 @@ function getMissingSections(User $user)
     // Define sections and their fields
     $sections = [
         'profile_creation' => ['name', 'email'],
-        'personal_information' => ['name','dob','religion','phone','about'],
+        'personal_information' => ['dob','religion','phone','about'],
         'location_details' => ['country','city','family_location','resident_status','height','diet'],
         'education_career' => ['highest_degree','employed_in','occupation','annual_income'],
         'about_me' => ['about','financial_status','diet','father_status','mother_status','siblings','family_type'],
@@ -289,7 +289,7 @@ function getNextMissingSection(User $user)
     // Define sections and their fields
     $sections = [
         'profile_creation' => ['name', 'email'],
-        'personal_information' => ['name','dob','religion','phone','about'],
+        'personal_information' => ['dob','religion','phone','about'],
         'location_details' => ['country','city','family_location','resident_status','height','diet'],
         'education_career' => ['highest_degree','employed_in','occupation','annual_income'],
         'about_me' => ['about','financial_status','diet','father_status','mother_status','siblings','family_type'],

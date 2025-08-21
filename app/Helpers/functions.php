@@ -288,7 +288,7 @@ function getNextMissingSection(User $user)
 {
     // Define sections and their fields
     $sections = [
-        'profile_creation' => ['profile_for', 'gender','marital_status'],
+        'profile_creation' => ['profile_for', 'marital_status'],
         'personal_information' => ['dob','religion','phone','about'],
         'location_details' => ['city','country','family_location','residency_status','height','diet'],
         'education_career' => ['highest_degree','employed_in','occupation','annual_income'],

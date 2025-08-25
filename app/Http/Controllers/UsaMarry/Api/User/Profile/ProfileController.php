@@ -327,7 +327,7 @@ public function updateProfile(Request $request)
             // 'account_status' => 'sometimes|in:Active,Suspended,Deleted',
 
             // Profile model fields
-            'about' => 'nullable|string|max:1000',
+            'about' => 'nullable|string',
             'highest_degree' => 'sometimes|nullable|string|max:255',
             'institution' => 'nullable|string|max:255',
             'occupation' => 'sometimes|nullable|string|max:255',

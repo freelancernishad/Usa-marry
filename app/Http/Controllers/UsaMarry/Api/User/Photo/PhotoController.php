@@ -22,7 +22,7 @@ class PhotoController extends Controller
     {
 
         $validator = Validator::make($request->all(), [
-            'photo' => 'required|image|mimes:jpeg,png,jpg',
+            'photo' => 'required|image|mimes:jpeg,png,jpg,webp,gif,bmp,tiff',
             'is_primary' => 'sometimes|boolean'
         ]);
 

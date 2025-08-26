@@ -3,10 +3,18 @@
 namespace App\Http\Controllers\UsaMarry\Api\Admin\DataEntry;
 
 use App\Models\User;
+use App\Models\Photo;
 use App\Models\Profile;
+use Illuminate\Http\File;
 use Illuminate\Support\Str;
+
 use Illuminate\Http\Request;
+use App\Models\PartnerPreference;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+
+use App\Http\Resources\UserResource;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 
 class JsonImportController extends Controller
@@ -16,7 +24,9 @@ class JsonImportController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'json_data' => 'required',
+            'json' => 'required',
+            'email' => 'required',
+            'phone' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -27,22 +37,29 @@ class JsonImportController extends Controller
         }
 
 
-        $jsonData = $request->json_data;
+        $jsonData = $request->json;
+        $email = $request->email;
+        $phone = $request->phone;
 
 
 
+        // try {
 
-        try {
-         return   $result = $this->processJsonData($jsonData);
 
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Error processing JSON: ' . $e->getMessage())
-                ->withInput();
-        }
+
+            $result = $this->processJsonData($jsonData,$email,$phone);
+
+            return response()->json($result);
+
+        // } catch (\Exception $e) {
+        //     return redirect()->back()
+        //         ->with('error', 'Error processing JSON: ' . $e->getMessage())
+        //         ->withInput();
+        // }
+
     }
 
-    private function processJsonData($jsonData)
+    private function processJsonData($jsonData,$email,$phone)
     {
         if (!isset($jsonData['data'])) {
             return [
@@ -52,47 +69,60 @@ class JsonImportController extends Controller
         }
 
          $data = $jsonData['data'];
-         $profileId = $data['uid'] ?? strtoupper(Str::random(10));
 
- 
 
-        // Check if user already exists
-        if (User::where('profile_id', $profileId)->exists()) {
-            return [
-                'success' => false,
-                'message' => 'Profile with this ID already exists'
-            ];
-        }
 
-        // Extract user data
-        return $userData = $this->extractUserData($data);
-        $userData['profile_id'] = $profileId;
+
+
+
+
+
+         $userData = $this->extractUserData($data,$email,$phone);
+
+
+
+
 
         // Extract profile data
         $profileData = $this->extractProfileData($data);
-        $profileData['user_id'] = $profileId;
+
+
+
 
         // Create user and profile
         $user = User::create($userData);
+        $profileData['user_id'] = $user->id;
         Profile::create($profileData);
+
+        // Create partner preference
+        $partnerPreferenceData = $this->extractPartnerPreferences($data);
+        $partnerPreferenceData['user_id'] = $user->id;
+        PartnerPreference::create($partnerPreferenceData);
+
+        $photos = $this->saveProfilePhoto($data, $user->id);
+
+
 
         return [
             'success' => true,
-            'profile_id' => $profileId,
+            'user' =>  new UserResource($user),
             'message' => 'Profile imported successfully'
         ];
     }
 
-    private function extractUserData($data)
+    private function extractUserData($data,$email,$phone)
     {
         $contact = $data['contact'] ?? [];
         $flags = $data['flags'] ?? [];
         $family = $flags['family'] ?? [];
 
-        return [
+
+
+        $userdatas =  [
             'name' => $data['name'] ?? null,
-            'email' => $contact['email'] ?? null,
-            'phone' => $contact['contact_number'] ?? null,
+            'password' => \Illuminate\Support\Facades\Hash::make(Str::random(12)),
+            'email' => $email ?? null,
+            'phone' => $phone ?? null,
             'whatsapps' => null, // Not available in JSON
             'gender' => $data['gender'] ?? null,
             'dob' => null, // Not available (masked in JSON)
@@ -106,16 +136,18 @@ class JsonImportController extends Controller
             'family_location' => $family['location'] ?? null,
             'grew_up_in' => $this->extractGrewUpIn($data),
             'hobbies' => $this->extractHobbies($data),
-            'disability' => null, // Not available in JSON
+            'disability' => 0, // Not available in JSON
             'mother_tongue' => $this->extractMotherTongue($data),
             'profile_created_by' => $data['profileCreatedBy'] ?? $data['createdBy'] ?? null,
             'verified' => $contact['mobile_verified'] === 'Y',
-            'profile_completion' => $this->calculateProfileCompletion($data),
             'account_status' => 'active',
-            'photo_privacy' => $data['privacy']['photo'] ?? 'Show All',
-            'photo_visibility' => $contact['contact_details_title_status'] ?? 'when_i_contact',
-            'is_top_profile' => $flags['membershipLevel'] !== 'Free',
+            // 'photo_privacy' => $data['privacy']['photo'] ?? 'Show All',
+            // 'photo_visibility' => $contact['contact_details_title_status'] ?? 'when_i_contact',
+            // 'is_top_profile' => $flags['membershipLevel'] !== 'Free',
         ];
+
+        return $userdatas;
+
     }
 
     private function extractProfileData($data)
@@ -126,12 +158,17 @@ class JsonImportController extends Controller
         $education = $detailed['education'] ?? [];
         $profession = $detailed['profession'] ?? [];
 
-        return [
+
+
+        $profileData = [
             'about' => $detailed['about'] ?? null,
             'highest_degree' => $this->extractHighestDegree($education),
             'institution' => null, // Not available in JSON
             'occupation' => $this->extractOccupation($data),
-            'annual_income' => $family['familyincome'] ?? null,
+
+
+            'annual_income' => $this->convertIncomeToUSD($family['familyincome']) ?? null,
+
             'employed_in' => $profession['working_with'] ?? null,
             'father_status' => $family['father_profession'] ?? null,
             'mother_status' => $family['mother_profession'] ?? null,
@@ -150,10 +187,163 @@ class JsonImportController extends Controller
             'rashi' => $data['astro']['details']['moon_sign'] ?? null,
             'nakshatra' => $data['astro']['details']['birth_star_nakshatra'] ?? null,
             'manglik' => $data['astro']['details']['manglik'] ?? null,
-            'show_contact' => $data['contact']['contact_details_title_status'] ?? 'When I Contact',
-            'visible_to' => $data['privacy']['profile_privacy'] ?? 'Show All',
+            // 'show_contact' => $data['contact']['contact_details_title_status'] ?? 'When I Contact',
+            // 'visible_to' => $data['privacy']['profile_privacy'] ?? 'Show All',
         ];
+
+        return $profileData;
     }
+
+
+
+    private function extractPartnerPreferences($data)
+    {
+        $preferences = $data['detailed']['preferences']['items'] ?? [];
+
+        $result = [
+            'age_min' => null,
+            'age_max' => null,
+            'height_min' => null,
+            'height_max' => null,
+            'marital_status' => [],
+            'religion' => [],
+            'caste' => [],
+            'education' => [],
+            'occupation' => [],
+            'country' => [],
+            'family_type' => [],
+            'state' => [],
+            'city' => [],
+            'mother_tongue' => [],
+        ];
+
+        foreach ($preferences as $item) {
+            $key = $item['preferenceKey'] ?? null;
+            $desc = $item['desc'] ?? null;
+
+            switch ($key) {
+                case 'age':
+                    if (preg_match('/(\d+)\s*to\s*(\d+)/', $desc, $matches)) {
+                        $result['age_min'] = (int) $matches[1];
+                        $result['age_max'] = (int) $matches[2];
+                    }
+                    break;
+
+                case 'height':
+                    if (preg_match_all("/(\d+)'\s*(\d+)?\"?\((\d+)cm\)/", $desc, $matches)) {
+                        $result['height_min'] = isset($matches[3][0]) ? (int) $matches[3][0] : null;
+                        $result['height_max'] = isset($matches[3][1]) ? (int) $matches[3][1] : null;
+                    }
+                    break;
+
+                case 'maritalstatus':
+                    $result['marital_status'] = array_map('trim', explode(',', $desc));
+                    break;
+
+                case 'caste':
+                    $result['caste'] = array_map('trim', explode(',', $desc));
+                    break;
+
+                case 'mothertongue':
+                    $result['mother_tongue'] = array_map('trim', explode(',', $desc));
+                    break;
+
+                case 'country':
+                    $result['country'] = array_map('trim', explode(',', $desc));
+                    break;
+
+                default:
+                    // handle other keys if needed
+                    break;
+            }
+        }
+
+
+        return $result;
+    }
+
+
+    private function saveProfilePhoto($data, $userId)
+    {
+        $photoUrl = $data['largePhoto'] ?? null;
+
+        if (!$photoUrl) {
+            return;
+        }
+
+        try {
+            // Download the image
+            $response = Http::get($photoUrl);
+
+            if (!$response->successful()) {
+                Log::error('Failed to download photo from URL: ' . $photoUrl);
+                return;
+            }
+
+            // Create a temporary file
+            $tempPath = storage_path('app/temp_photo_' . Str::random(10) . '.webp');
+            file_put_contents($tempPath, $response->body());
+
+            // Create UploadedFile instance
+            $file = new \Illuminate\Http\UploadedFile(
+                $tempPath,
+                basename($tempPath),
+                'image/webp',
+                null,
+                true
+            );
+
+            // Upload to S3
+            $s3Path = uploadFileToS3($file, 'profile-photos');
+
+            // Delete temp file
+            @unlink($tempPath);
+
+            // Save to DB
+            Photo::create([
+                'user_id' => $userId,
+                'path' => $s3Path,
+                'is_primary' => true,
+                'is_approved' => true,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error saving profile photo: ' . $e->getMessage());
+        }
+    }
+
+
+
+
+
+
+    private function convertIncomeToUSD($incomeString)
+    {
+        // Approximate exchange rate
+        $exchangeRate = 0.012; // 1 INR = 0.012 USD (update as needed)
+
+        // Match the numbers in the string
+        if (preg_match('/INR\s*([\d.]+)-([\d.]+)\s*lakhs/i', $incomeString, $matches)) {
+            $minInLakh = (float) $matches[1];
+            $maxInLakh = (float) $matches[2];
+
+            // Convert lakhs to INR (1 lakh = 100,000)
+            $minINR = $minInLakh * 100000;
+            $maxINR = $maxInLakh * 100000;
+
+            // Convert to USD
+            $minUSD = $minINR * $exchangeRate;
+            $maxUSD = $maxINR * $exchangeRate;
+
+            // Round for clean format
+            $minUSD = round($minUSD);
+            $maxUSD = round($maxUSD);
+
+            return "$minUSD - $maxUSD";
+        }
+
+        return null;
+    }
+
 
     private function extractReligion($data)
     {
@@ -184,11 +374,22 @@ class JsonImportController extends Controller
     private function extractHeight($data)
     {
         $baseInfo = $data['base']['infoMap'][0]['value'] ?? '';
-        if (preg_match('/(\d+\'\s*\d+")/', $baseInfo, $matches)) {
-            return $matches[1];
+
+        // Match pattern like 5' 1" or 5'1"
+        if (preg_match("/(\d+)'\s*(\d+)?\"?/", $baseInfo, $matches)) {
+            $feet = (int) $matches[1];
+            $inches = isset($matches[2]) ? (int) $matches[2] : 0;
+
+            // Convert to centimeters
+            $cm = ($feet * 30.48) + ($inches * 2.54);
+
+            // Return as rounded integer or float with one decimal
+            return round($cm, 2);
         }
+
         return null;
     }
+
 
     private function extractGrewUpIn($data)
     {
@@ -199,13 +400,19 @@ class JsonImportController extends Controller
     private function extractHobbies($data)
     {
         $hobbies = [];
-        if (isset($data['detailed']['personalityTags'])) {
+
+        if (!empty($data['detailed']['personalityTags'])) {
             foreach ($data['detailed']['personalityTags'] as $tag) {
-                $hobbies[] = $tag['tag_display'] ?? $tag['tag'] ?? '';
+                $value = $tag['tag_display'] ?? $tag['tag'] ?? null;
+                if (!empty($value)) {
+                    $hobbies[] = $value;
+                }
             }
         }
-        return implode(', ', array_filter($hobbies));
+
+        return $hobbies;
     }
+
 
     private function extractMotherTongue($data)
     {
@@ -233,15 +440,16 @@ class JsonImportController extends Controller
 
     private function extractSiblings($family)
     {
-        $siblings = [];
-        if (!empty($family['brothers'])) {
-            $siblings[] = $family['brothers'] . ' Brother(s)';
-        }
-        if (!empty($family['sisters'])) {
-            $siblings[] = $family['sisters'] . ' Sister(s)';
-        }
-        return implode(', ', $siblings);
+        $brothers = isset($family['brothers']) ? (int) $family['brothers'] : 0;
+        $sisters = isset($family['sisters']) ? (int) $family['sisters'] : 0;
+
+        $totalSiblings = $brothers + $sisters;
+
+        Log::info("Extracted siblings: Brothers = $brothers, Sisters = $sisters, Total = $totalSiblings");
+
+        return $totalSiblings;
     }
+
 
     private function extractResidentStatus($data)
     {

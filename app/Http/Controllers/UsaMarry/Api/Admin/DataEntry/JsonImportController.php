@@ -40,6 +40,7 @@ class JsonImportController extends Controller
         $jsonData = $request->json;
         $email = $request->email;
         $phone = $request->phone;
+        $photo = $request->photo ?? null;
 
 
 
@@ -47,7 +48,7 @@ class JsonImportController extends Controller
 
 
 
-            $result = $this->processJsonData($jsonData,$email,$phone);
+            $result = $this->processJsonData($jsonData,$email,$phone,$photo);
 
             return response()->json($result);
 
@@ -59,7 +60,7 @@ class JsonImportController extends Controller
 
     }
 
-    private function processJsonData($jsonData,$email,$phone)
+    private function processJsonData($jsonData,$email,$phone,$photo)
     {
         if (!isset($jsonData['data'])) {
             return [
@@ -99,7 +100,7 @@ class JsonImportController extends Controller
         $partnerPreferenceData['user_id'] = $user->id;
         PartnerPreference::create($partnerPreferenceData);
 
-        $photos = $this->saveProfilePhoto($data, $user->id);
+        $photos = $this->saveProfilePhoto($data, $user->id,$photo);
 
 
 
@@ -263,9 +264,9 @@ class JsonImportController extends Controller
     }
 
 
-    private function saveProfilePhoto($data, $userId)
+    private function saveProfilePhoto($data, $userId,$photo)
     {
-        $photoUrl = $data['largePhoto'] ?? null;
+        $photoUrl = $data['largePhoto'] ?? $photo;
 
         if (!$photoUrl) {
             return;
@@ -391,11 +392,16 @@ class JsonImportController extends Controller
     }
 
 
+
+
     private function extractGrewUpIn($data)
     {
         return $data['base']['infoList'][3]['value'] ??
                $data['summary']['infoMapNonIndian'][4]['value'] ?? null;
     }
+
+
+
 
     private function extractHobbies($data)
     {

@@ -393,11 +393,17 @@ class JsonImportController extends Controller
 
 
 
-
     private function extractGrewUpIn($data)
     {
-        return $data['base']['infoList'][3]['value'] ??
-               $data['summary']['infoMapNonIndian'][4]['value'] ?? null;
+        $value = $data['base']['infoList'][3]['value'] ??
+                $data['summary']['infoMapNonIndian'][4]['value'] ?? null;
+
+        if ($value) {
+            // "Grew up in Bangladesh" → "Bangladesh"
+            return str_replace('Grew up in ', '', $value);
+        }
+
+        return null;
     }
 
 

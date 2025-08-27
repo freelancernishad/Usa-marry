@@ -116,6 +116,8 @@ class JsonImportController extends Controller
         $contact = $data['contact'] ?? [];
         $flags = $data['flags'] ?? [];
         $family = $flags['family'] ?? [];
+        $base = $flags['base']['infoList'] ?? [];
+        $dob = $this->extractDateOfBirthFromAge($data);
 
 
 
@@ -126,7 +128,7 @@ class JsonImportController extends Controller
             'phone' => $phone ?? null,
             'whatsapps' => null, // Not available in JSON
             'gender' => $data['gender'] ?? null,
-            'dob' => null, // Not available (masked in JSON)
+            'dob' => $dob ?? null, // Not available (masked in JSON)
             'religion' => $this->extractReligion($data),
             'caste' => $this->extractCaste($data),
             'sub_caste' => null, // Not explicitly available
@@ -264,6 +266,7 @@ class JsonImportController extends Controller
     }
 
 
+
     private function saveProfilePhoto($data, $userId,$photo)
     {
         $photoUrl = $data['largePhoto'] ?? $photo;
@@ -312,7 +315,27 @@ class JsonImportController extends Controller
         }
     }
 
+private function extractDateOfBirthFromAge($data)
+{
+    $infoList = $data['base']['infoList'] ?? [];
 
+    foreach ($infoList as $item) {
+        if (($item['key'] ?? '') === 'age-height') {
+            $value = $item['value'] ?? '';
+
+            // Extract age from string like "25 yrs, 5' 1\", Muslim, Bengali"
+            if (preg_match('/(\d+)\s*yrs/', $value, $matches)) {
+                $age = (int)$matches[1];
+
+                // Calculate approximate DOB (assuming birthday already occurred this year)
+                $dob = now()->subYears($age)->format('Y-m-d');
+                return $dob;
+            }
+        }
+    }
+
+    return null; // If not found or format doesn't match
+}
 
 
 

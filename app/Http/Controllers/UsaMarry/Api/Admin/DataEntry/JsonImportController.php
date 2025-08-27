@@ -126,7 +126,7 @@ class JsonImportController extends Controller
             'password' => \Illuminate\Support\Facades\Hash::make("Password123"),
             'email' => $email ?? null,
             'phone' => $phone ?? null,
-            'whatsapps' => null, // Not available in JSON
+            'whatsapps' => $phone ?? null, // Not available in JSON
             'gender' => $data['gender'] ?? null,
             'dob' => $dob ?? null, // Not available (masked in JSON)
             'religion' => $this->extractReligion($data),

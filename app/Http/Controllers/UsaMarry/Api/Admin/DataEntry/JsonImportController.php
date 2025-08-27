@@ -121,7 +121,7 @@ class JsonImportController extends Controller
 
         $userdatas =  [
             'name' => $data['name'] ?? null,
-            'password' => \Illuminate\Support\Facades\Hash::make(Str::random(12)),
+            'password' => \Illuminate\Support\Facades\Hash::make("Password123"),
             'email' => $email ?? null,
             'phone' => $phone ?? null,
             'whatsapps' => null, // Not available in JSON

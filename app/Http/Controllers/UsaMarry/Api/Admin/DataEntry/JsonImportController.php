@@ -102,7 +102,7 @@ class JsonImportController extends Controller
 
         $photos = $this->saveProfilePhoto($data, $user->id,$photo);
 
-
+        updateProfileCompletionWithPercentage($user);
 
         return [
             'success' => true,

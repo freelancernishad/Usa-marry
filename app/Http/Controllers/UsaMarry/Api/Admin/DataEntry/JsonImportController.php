@@ -266,25 +266,30 @@ class JsonImportController extends Controller
     }
 
 
-
-   private function saveProfilePhoto($data, $userId, $photos)
+private function saveProfilePhoto($data, $userId, $photo = null)
 {
-    if (!is_array($photos) || empty($photos)) {
-        Log::warning('No photos provided for user ID: ' . $userId);
+    $photos = $data['photos']['photos'] ?? [];
+
+    if (empty($photos)) {
         return;
     }
 
-    foreach ($photos as $index => $photoUrl) {
-        if (!$photoUrl) {
-            continue;
-        }
-
+    foreach ($photos as $index => $photoItem) {
         try {
+            $domain = $photoItem['domain_name'] ?? null;
+            $relativePath = $photoItem['large'] ?? null;
+
+            if (!$domain || !$relativePath) {
+                continue;
+            }
+
+            $photoUrl = $domain . $relativePath;
+
             // Download the image
             $response = Http::get($photoUrl);
 
             if (!$response->successful()) {
-                Log::error("Failed to download photo from URL: $photoUrl");
+                Log::error('Failed to download photo from URL: ' . $photoUrl);
                 continue;
             }
 
@@ -311,11 +316,11 @@ class JsonImportController extends Controller
             Photo::create([
                 'user_id' => $userId,
                 'path' => $s3Path,
-                'is_primary' => $index === 0, // First photo is primary
+                'is_primary' => $index === 0, // First photo is marked as primary
                 'is_approved' => true,
             ]);
         } catch (\Exception $e) {
-            Log::error("Error saving profile photo from URL $photoUrl: " . $e->getMessage());
+            Log::error('Error saving photo [' . $index . ']: ' . $e->getMessage());
         }
     }
 }

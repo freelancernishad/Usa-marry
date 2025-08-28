@@ -267,12 +267,16 @@ class JsonImportController extends Controller
 
 
 
-    private function saveProfilePhoto($data, $userId,$photo)
-    {
-        $photoUrl = $data['largePhoto'] ?? $photo;
+   private function saveProfilePhoto($data, $userId, $photos)
+{
+    if (!is_array($photos) || empty($photos)) {
+        Log::warning('No photos provided for user ID: ' . $userId);
+        return;
+    }
 
+    foreach ($photos as $index => $photoUrl) {
         if (!$photoUrl) {
-            return;
+            continue;
         }
 
         try {
@@ -280,8 +284,8 @@ class JsonImportController extends Controller
             $response = Http::get($photoUrl);
 
             if (!$response->successful()) {
-                Log::error('Failed to download photo from URL: ' . $photoUrl);
-                return;
+                Log::error("Failed to download photo from URL: $photoUrl");
+                continue;
             }
 
             // Create a temporary file
@@ -307,13 +311,15 @@ class JsonImportController extends Controller
             Photo::create([
                 'user_id' => $userId,
                 'path' => $s3Path,
-                'is_primary' => true,
+                'is_primary' => $index === 0, // First photo is primary
                 'is_approved' => true,
             ]);
         } catch (\Exception $e) {
-            Log::error('Error saving profile photo: ' . $e->getMessage());
+            Log::error("Error saving profile photo from URL $photoUrl: " . $e->getMessage());
         }
     }
+}
+
 
 private function extractDateOfBirthFromAge($data)
 {

@@ -21,7 +21,7 @@ class ProfileController extends Controller
     public function show()
     {
         $user = Auth::user()->load(['profile', 'photos', 'partnerPreference']);
-
+        $percentage = updateProfileCompletionWithPercentage($user);
         // Using UserResource to transform the data
         $user = new UserResource($user);
         return response()->json($user);
@@ -113,9 +113,9 @@ class ProfileController extends Controller
             $profileData
         );
 
-        updateProfileCompletionWithPercentage($user);
         $user->load('profile'); // Reload with profile
 
+        updateProfileCompletionWithPercentage($user);
 
 
 

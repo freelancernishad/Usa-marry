@@ -188,7 +188,7 @@ class RegistrationController extends Controller
 
         // Only call if something actually changed
         if ($afterCount > $beforeCount) {
-            updateProfileCompletionWithPercentage($user, 'profile_creation', $percentage);
+            updateProfileCompletionWithPercentage($user);
         }
 
         return response()->json([

@@ -100,12 +100,30 @@ class AuthController extends Controller
 
         $user = Auth::user();
 
+
+        $message = "Login successful";
+        // ✅ Email verification or OTP check
+        if (!$user->email_verified_at) {
+            // Send OTP if not verified
+            $otp = random_int(100000, 999999); // 6-digit OTP
+            $user->otp = Hash::make($otp);
+            $user->otp_expires_at = now()->addMinutes(5);
+            $user->save();
+
+            // Send OTP via email
+            Mail::to($user->email)->send(new OtpNotification($otp));
+
+            $message = 'Email not verified. OTP has been sent to your email.';
+
+        }
+
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
             'user' => new UserLoginResource($user),
             'profile_completion' => $user->profile_completion,
-            'message' => 'Login successful',
+            'message' => $message,
         ]);
     }
 

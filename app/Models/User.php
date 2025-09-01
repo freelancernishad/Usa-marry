@@ -263,18 +263,18 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 
         // visibility: hidden → কিছুই না
         if ($visibility === 'hidden') {
-            return collect();
+            return [];
         }
 
         // privacy: all → সব ছবি
-        if ($privacy === 'all') {
-            return $query->get();
-        }
+        // if ($privacy === 'all') {
+        //     return $query->get();
+        // }
 
         // privacy: premium → যদি viewer premium হয়
-        if ($privacy === 'premium' && $authUser->is_premium) {
-            return $query->get();
-        }
+        // if ($privacy === 'premium' && $authUser->is_premium) {
+        //     return $query->get();
+        // }
 
         // privacy: accepted → যদি accepted request থাকে
         if ($privacy === 'accepted' && $this->hasAcceptedPhotoRequestWith($authUser)) {

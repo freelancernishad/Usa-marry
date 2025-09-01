@@ -113,7 +113,7 @@ class ProfileController extends Controller
             $profileData
         );
 
-        updateProfileCompletion($user, 'basic_info');
+        updateProfileCompletionWithPercentage($user);
         $user->load('profile'); // Reload with profile
 
 
@@ -254,7 +254,7 @@ class ProfileController extends Controller
             $profileFields
         );
 
-        updateProfileCompletion($user, $request->update_step ?? 'profile_creation');
+        updateProfileCompletionWithPercentage($user);
 
 
 

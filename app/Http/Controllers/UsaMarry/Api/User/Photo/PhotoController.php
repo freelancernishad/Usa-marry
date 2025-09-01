@@ -48,7 +48,7 @@ class PhotoController extends Controller
 
         // Update profile completion
         $user = Auth::user();
-        updateProfileCompletion($user, 'photos');
+        updateProfileCompletionWithPercentage($user);
 
         return response()->json([
             'message' => 'Photo uploaded successfully',

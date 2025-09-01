@@ -226,7 +226,7 @@ class RegistrationController extends Controller
             'phone' => $request->phone ?? $user->phone,
         ]);
 
-        updateProfileCompletion($user, 'personal_information');
+        updateProfileCompletionWithPercentage($user);
 
         return response()->json([
             'message' => 'Personal information updated successfully',
@@ -263,7 +263,7 @@ class RegistrationController extends Controller
 
         $user->profile()->updateOrCreate(['user_id' => $user->id], $profileData);
 
-        updateProfileCompletion($user, 'location_details');
+        updateProfileCompletionWithPercentage($user);;
 
         return response()->json([
             'message' => 'Location details updated successfully',
@@ -295,7 +295,7 @@ class RegistrationController extends Controller
         $user = Auth::user();
         $user->profile()->updateOrCreate(['user_id' => $user->id], $profileData);
 
-        updateProfileCompletion($user, 'education_career');
+        updateProfileCompletionWithPercentage($user);
 
         return response()->json([
             'message' => 'Education & career details updated successfully',
@@ -320,7 +320,7 @@ class RegistrationController extends Controller
             ['about' => $request->about]
         );
 
-        updateProfileCompletion($user, 'about_me');
+        updateProfileCompletionWithPercentage($user);
 
         return response()->json([
             'message' => 'Profile completed successfully',

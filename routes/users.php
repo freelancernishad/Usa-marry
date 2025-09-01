@@ -134,7 +134,12 @@ Route::middleware(AuthenticateUser::class)->group(function () {
         Route::get('/profile/more', [MatchController::class, 'moreMatches']);
 
 
+
+        Route::get('/suggested/profiles', [MatchController::class, 'suggestedMatches']);
     });
+
+
+
 
     // Subscription routes
     Route::prefix('subscription')->group(function () {

@@ -18,6 +18,7 @@ use App\Http\Resources\SingleUser\SingleUserPaginationResource;
 class MatchController extends Controller
 {
 
+
 public function getMatches(Request $request)
 {
     $user = Auth::user();
@@ -666,6 +667,35 @@ $requestsCount = $sentPendingCount + $receivedPendingCount;
     ]);
 }
 
+
+    public function suggestedMatches(Request $request)
+    {
+        $user = auth()->user();
+        $limit = $request->limit ?? 6;
+
+        $query = $this->findPotentialMatches($user, false);
+
+        // Apply optional filters if provided
+        $query = applyFilters($query, $request);
+
+        // Remove existing ordering to apply random
+        $query->getQuery()->orders = [];
+
+        $matches = $query
+            ->inRandomOrder()
+            ->with([
+                'profile',
+                'photos' => fn($q) => $q->where('is_primary', true),
+                'partnerPreference'
+            ])
+            ->limit($limit)
+            ->get();
+
+        return response()->json([
+            'suggested_profiles' => $matches,
+            'count' => $matches->count()
+        ]);
+    }
 
 
 

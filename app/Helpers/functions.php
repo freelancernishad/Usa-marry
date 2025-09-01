@@ -189,7 +189,7 @@ function getMissingSections(User $user)
     $sections = [
         'profile_creation' => ['profile_for', 'marital_status'],
         'personal_information' => ['dob','religion','phone','about'],
-        'location_details' => ['state','country','family_location','residency_status','height','diet'],
+        'location_details' => ['state','country','family_location','resident_status','height','diet'],
         'education_career' => ['highest_degree','employed_in','occupation','annual_income'],
         'about_me' => ['about','financial_status','diet','father_status','mother_status','siblings','family_type'],
         'partner_preference' => ['age_min','age_max','height_min','height_max','marital_status','religion','caste','education','occupation','country','family_type','state','city','mother_tongue'],

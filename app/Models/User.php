@@ -278,6 +278,9 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 
         // privacy: accepted → যদি accepted request থাকে
         if ($privacy === 'accepted' && $this->hasAcceptedPhotoRequestWith($authUser)) {
+            if ($visibility === 'profile_only') {
+                return $query->where('is_primary', true)->get();
+            }
             return $query->get();
         }
 

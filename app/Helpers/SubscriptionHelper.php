@@ -3,6 +3,7 @@
 namespace App\Helpers;
 
 use App\Models\ContactView;
+use Illuminate\Support\Facades\Log;
 
 class SubscriptionHelper
 {
@@ -25,9 +26,14 @@ public static function canViewContact($user, $contactId)
     }
 
     $plan = $subscription->plan;
+    $plan_features = $subscription->plan_features;
 
-    $viewLimit = collect($plan['features'])
-        ->firstWhere('key', 'view_contact')['value'] ?? 0;
+
+    $viewLimit = optional(
+        collect($plan_features)->firstWhere('key', 'view_contact')
+    )['value'] ?? 0;
+
+
 
     // ✅ Already viewed check
     $alreadyViewed = ContactView::where('user_id', $user->id)

@@ -3,11 +3,12 @@
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\ContactView;
+use Illuminate\Http\Request;
 use App\Models\TokenBlacklist;
+use App\Models\UserConnection;
 use App\Helpers\NotificationHelper;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 function TokenBlacklist($token){

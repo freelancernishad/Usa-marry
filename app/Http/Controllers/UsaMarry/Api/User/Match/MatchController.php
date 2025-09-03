@@ -691,8 +691,9 @@ $requestsCount = $sentPendingCount + $receivedPendingCount;
             ->limit($limit)
             ->get();
 
+      
         return response()->json([
-            'suggested_profiles' => $matches,
+            'suggested_profiles' => UserResource::collection($matches),
             'count' => $matches->count()
         ]);
     }

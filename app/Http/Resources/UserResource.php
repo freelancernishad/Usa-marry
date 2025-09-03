@@ -7,6 +7,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use App\Models\UserConnection;
 use App\Models\ContactView;
 use App\Models\User;
+use App\Models\PhotoRequest;
 
 class UserResource extends JsonResource
 {
@@ -14,26 +15,28 @@ class UserResource extends JsonResource
     {
         $authUser = $request->user();
         $isAdmin = auth()->guard('admin')->check();
-
         $isOwner = $authUser && $authUser->id === $this->id;
 
-        // Check if contact has been viewed
         $contactViewed = false;
+        $connectionRequestStatus = null;
+        $isPhotoRequestSent = false;
+
         if ($authUser && $authUser->id !== $this->id) {
+            // Check if contact has been viewed
             $contactViewed = ContactView::where('user_id', $authUser->id)
                 ->where('contact_user_id', $this->id)
                 ->exists();
-        }
 
-        // Check if connection request sent
-
-
-        $connectionRequestStatus = null;
-        if ($authUser && $authUser->id !== $this->id) {
+            // Check if connection request sent
             $connection = UserConnection::where('user_id', $authUser->id)
-            ->where('connected_user_id', $this->id)
-            ->first();
+                ->where('connected_user_id', $this->id)
+                ->first();
             $connectionRequestStatus = $connection ? $connection->status : null;
+
+            // Check if photo request sent
+            $isPhotoRequestSent = PhotoRequest::where('sender_id', $authUser->id)
+                ->where('receiver_id', $this->id)
+                ->exists();
         }
 
         // Masking helpers
@@ -49,8 +52,6 @@ class UserResource extends JsonResource
         $maskPhone = fn($phone) => $phone ? substr($phone, 0, 2) . str_repeat('*', strlen($phone) - 4) . substr($phone, -2) : null;
         $maskAddress = fn($value) => $value ? substr($value, 0, 1) . str_repeat('*', max(strlen($value) - 2, 0)) . substr($value, -1) : null;
         $maskWhatsapps = fn($whatsapps) => $whatsapps ? (substr($whatsapps, 0, 2) . str_repeat('*', strlen($whatsapps) - 4) . substr($whatsapps, -2)) : null;
-
-
 
         // Base user data
         $userData = $this->only([
@@ -81,40 +82,31 @@ class UserResource extends JsonResource
 
         $profileData = $this->profile ? $this->profile->only($profileFields) : array_fill_keys($profileFields, null);
 
-        // if (!$isOwner && !$contactViewed && !$isAdmin) {
-        //     foreach (['country', 'state', 'city'] as $field) {
-        //         $profileData[$field] = $maskAddress($profileData[$field]);
-        //     }
-        // }
-
+        // Active subscription
         $userData['active_subscription'] = $isOwner && $this->activeSubscription
             ? new SubscriptionResource($this->activeSubscription)
             : null;
 
-
-            if($isOwner){
-
-                $matchedUser = User::find($this->id);
-                $matchPercentage = calculateMatchPercentageAllFields($authUser, $matchedUser);
-            }else{
-                $matchPercentage = null;
-            }
-
-
+        // Match percentage (only for owner)
+        if ($isOwner) {
+            $matchedUser = User::find($this->id);
+            $matchPercentage = calculateMatchPercentageAllFields($authUser, $matchedUser);
+        } else {
+            $matchPercentage = null;
+        }
 
         return array_merge(
             $userData,
             $profileData,
             [
-                // 'photos' => $this->photos ?? [],
                 'photos' => $this->visiblePhotos() ?? [],
                 'partner_preference' => $this->partnerPreference ?? null,
                 'connection_request_Status' => $connectionRequestStatus,
                 'contact_viewed' => $contactViewed,
                 'match_percentage' => $matchPercentage,
                 'plan_name' => $this->plan_name,
-                'photos_locked' => $this->photos_locked ,
-
+                'photos_locked' => $this->photos_locked,
+                'is_photo_request_sent' => $isPhotoRequestSent,
             ]
         );
     }

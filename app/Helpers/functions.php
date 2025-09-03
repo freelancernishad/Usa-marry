@@ -594,7 +594,7 @@ function calculateMatchPercentageAllFields(User $user, User $matchedUser)
 
 
 
-     public function connectWithUser($connectedUserId)
+ function connectWithUser($connectedUserId)
 {
     $user = Auth::user();
 

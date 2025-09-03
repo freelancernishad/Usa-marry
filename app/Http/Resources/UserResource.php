@@ -18,24 +18,38 @@ class UserResource extends JsonResource
         $isOwner = $authUser && $authUser->id === $this->id;
 
         $contactViewed = false;
-        $connectionRequestStatus = null;
+        $connectionRequestStatus = null; // I sent
+        $receivedConnectionRequestStatus = null; // I received
         $isPhotoRequestSent = false;
+        $isPhotoRequestReceived = false;
 
         if ($authUser && $authUser->id !== $this->id) {
+
             // Check if contact has been viewed
             $contactViewed = ContactView::where('user_id', $authUser->id)
                 ->where('contact_user_id', $this->id)
                 ->exists();
 
-            // Check if connection request sent
+            // Check if connection request sent by auth user
             $connection = UserConnection::where('user_id', $authUser->id)
                 ->where('connected_user_id', $this->id)
                 ->first();
             $connectionRequestStatus = $connection ? $connection->status : null;
 
-            // Check if photo request sent
+            // Check if connection request received by auth user
+            $receivedConnection = UserConnection::where('user_id', $this->id)
+                ->where('connected_user_id', $authUser->id)
+                ->first();
+            $receivedConnectionRequestStatus = $receivedConnection ? $receivedConnection->status : null;
+
+            // Check if photo request sent by auth user
             $isPhotoRequestSent = PhotoRequest::where('sender_id', $authUser->id)
                 ->where('receiver_id', $this->id)
+                ->exists();
+
+            // Check if photo request received by auth user
+            $isPhotoRequestReceived = PhotoRequest::where('sender_id', $this->id)
+                ->where('receiver_id', $authUser->id)
                 ->exists();
         }
 
@@ -88,11 +102,10 @@ class UserResource extends JsonResource
             : null;
 
         // Match percentage (only for owner)
+        $matchPercentage = null;
         if ($isOwner) {
             $matchedUser = User::find($this->id);
             $matchPercentage = calculateMatchPercentageAllFields($authUser, $matchedUser);
-        } else {
-            $matchPercentage = null;
         }
 
         return array_merge(
@@ -101,12 +114,14 @@ class UserResource extends JsonResource
             [
                 'photos' => $this->visiblePhotos() ?? [],
                 'partner_preference' => $this->partnerPreference ?? null,
-                'connection_request_Status' => $connectionRequestStatus,
+                'connection_request_Status' => $connectionRequestStatus, // I sent
+                'received_connection_status' => $receivedConnectionRequestStatus, // I received
                 'contact_viewed' => $contactViewed,
                 'match_percentage' => $matchPercentage,
                 'plan_name' => $this->plan_name,
                 'photos_locked' => $this->photos_locked,
                 'is_photo_request_sent' => $isPhotoRequestSent,
+                'is_photo_request_received' => $isPhotoRequestReceived,
             ]
         );
     }

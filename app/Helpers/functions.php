@@ -594,135 +594,146 @@ function calculateMatchPercentageAllFields(User $user, User $matchedUser)
 
 
 
-     function connectWithUser($connectedUserId)
-    {
-        $user = Auth::user();
+     public function connectWithUser($connectedUserId)
+{
+    $user = Auth::user();
 
-        if ($user->id == $connectedUserId) {
-            return response()->json(['message' => 'You cannot send a connection request to yourself.'], 400);
-        }
-
-        $connectedUser = User::find($connectedUserId);
-        if (!$connectedUser) {
-            return response()->json(['message' => 'User not found.'], 404);
-        }
-
-        $existingConnection = $user->connections()
-            ->where('connected_user_id', $connectedUserId)
-            ->first();
-
-        if ($existingConnection) {
-            switch ($existingConnection->status) {
-                case 'pending':
-                    return response()->json(['message' => 'Connection request is already pending.'], 400);
-
-                case 'accepted':
-                    return response()->json(['message' => 'You are already connected.'], 400);
-
-                case 'disconnected':
-                case 'rejected':
-                case 'cancelled':
-                    $existingConnection->status = 'pending';
-                    $existingConnection->save();
-// Notify receiver using the 'received' blade (they get a new request)
-NotificationHelper::sendUserNotification(
-    $connectedUser, // receiver
-    "{$user->name} has sent you a connection request again.",
-    'Connection Request Re-sent',
-    'User',
-    $user->id,
-    'emails.notification.invitation_received',
-     [
-        'senderName'     => $user->name,
-        'profile_picture'     => $user->profile_picture,
-        'senderCode'     => $user->id ?? '',
-        'senderLocation' => $user->location ?? '',
-        'senderAge'      => $user->age ?? '',
-        'senderHeight'   => $user->height ?? '',
-        'senderReligion' => $user->religion ?? '',
-        'senderCaste'    => $user->caste ?? '',
-        'profileUrl'     => "https://usamarry.com/dashboard/profile/$user->id",
-        'acceptUrl'      => "https://usamarry.com/dashboard/profile/$user->id",
-        'declineUrl'     => "https://usamarry.com/dashboard/profile/$user->id",
-        'recipientName'  => $connectedUser->name,
-    ]
-
-);
-
-// Notify sender using the 'sent' blade (confirmation that request was sent)
-NotificationHelper::sendUserNotification(
-    $user, // sender
-    "You have re-sent a connection request to {$connectedUser->name}.",
-    'Connection Request Re-sent',
-    'User',
-    $connectedUser->id,
-    'emails.notification.invitation_sent',
-        [
-        'user' => $user,
-        'profile_picture' => $connectedUser->profile_picture,
-        'connection_user' => $connectedUser,
-        'profileUrl' => "https://usamarry.com/dashboard/profile/{$connectedUser->id}",
-        'connection_location' => $connectedUser->location ?? 'N/A',
-    ]
-);
-
-                    return response()->json(['message' => 'Connection request has been re-sent.'], 200);
-
-                case 'blocked':
-                    return response()->json(['message' => 'You have blocked this user or have been blocked.'], 400);
-
-                default:
-                    return response()->json(['message' => 'Unknown connection status.'], 400);
-            }
-        }
-
-        // Create new connection request
-        $user->connections()->create([
-            'connected_user_id' => $connectedUserId,
-            'status' => 'pending',
-        ]);
-
-// Notify receiver
-NotificationHelper::sendUserNotification(
-    $connectedUser,
-    "{$user->name} has sent you a connection request.",
-    'New Connection Request',
-    'User',
-    $user->id,
-    'emails.notification.invitation_received',
-         [
-        'senderName'     => $user->name,
-        'senderCode'     => $user->id ?? '',
-        'senderLocation' => $user->location ?? '',
-        'senderAge'      => $user->age ?? '',
-        'senderHeight'   => $user->height ?? '',
-        'senderReligion' => $user->religion ?? '',
-        'senderCaste'    => $user->caste ?? '',
-        'profile_picture'    => $user->profile_picture ?? '',
-        'profileUrl'     => "https://usamarry.com/dashboard/profile/$user->id",
-        'acceptUrl'      => "https://usamarry.com/dashboard/profile/$user->id",
-        'declineUrl'     => "https://usamarry.com/dashboard/profile/$user->id",
-        'recipientName'  => $connectedUser->name,
-    ]
-);
-
-// Notify sender
-NotificationHelper::sendUserNotification(
-    $user,
-    "You have sent a connection request to {$connectedUser->name}.",
-    'Connection Request Sent',
-    'User',
-    $connectedUser->id,
-    'emails.notification.invitation_sent',
-        [
-        'user' => $user,
-        'profile_picture' => $connectedUser->profile_picture,
-        'connection_user' => $connectedUser,
-        'profileUrl' => "https://usamarry.com/dashboard/profile/{$connectedUser->id}",
-        'connection_location' => $connectedUser->location ?? 'N/A',
-    ]
-);
-
-
-        return response()->json(['message' => 'Connection request sent successfully.'], 201);
+    // ✅ Prevent self-connection
+    if ($user->id == $connectedUserId) {
+        return response()->json(['message' => 'You cannot send a connection request to yourself.'], 400);
     }
+
+    // ✅ Make sure receiver exists
+    $connectedUser = User::find($connectedUserId);
+    if (!$connectedUser) {
+        return response()->json(['message' => 'User not found.'], 404);
+    }
+
+    // ✅ Bi-directional connection check
+    $existingConnection = UserConnection::where(function ($query) use ($user, $connectedUserId) {
+        $query->where('user_id', $user->id)
+              ->where('connected_user_id', $connectedUserId);
+    })->orWhere(function ($query) use ($user, $connectedUserId) {
+        $query->where('user_id', $connectedUserId)
+              ->where('connected_user_id', $user->id);
+    })->first();
+
+    // ✅ Handle existing connection
+    if ($existingConnection) {
+        switch ($existingConnection->status) {
+            case 'pending':
+                return response()->json(['message' => 'Connection request is already pending.'], 400);
+
+            case 'accepted':
+                return response()->json(['message' => 'You are already connected.'], 400);
+
+            case 'disconnected':
+            case 'rejected':
+            case 'cancelled':
+                // Re-send the request (update status to pending)
+                $existingConnection->user_id = $user->id;
+                $existingConnection->connected_user_id = $connectedUserId;
+                $existingConnection->status = 'pending';
+                $existingConnection->save();
+
+                // Notify receiver
+                NotificationHelper::sendUserNotification(
+                    $connectedUser,
+                    "{$user->name} has sent you a connection request again.",
+                    'Connection Request Re-sent',
+                    'User',
+                    $user->id,
+                    'emails.notification.invitation_received',
+                    [
+                        'senderName'     => $user->name,
+                        'profile_picture' => $user->profile_picture,
+                        'senderCode'     => $user->id ?? '',
+                        'senderLocation' => $user->location ?? '',
+                        'senderAge'      => $user->age ?? '',
+                        'senderHeight'   => $user->height ?? '',
+                        'senderReligion' => $user->religion ?? '',
+                        'senderCaste'    => $user->caste ?? '',
+                        'profileUrl'     => "https://usamarry.com/dashboard/profile/$user->id",
+                        'acceptUrl'      => "https://usamarry.com/dashboard/profile/$user->id",
+                        'declineUrl'     => "https://usamarry.com/dashboard/profile/$user->id",
+                        'recipientName'  => $connectedUser->name,
+                    ]
+                );
+
+                // Notify sender
+                NotificationHelper::sendUserNotification(
+                    $user,
+                    "You have re-sent a connection request to {$connectedUser->name}.",
+                    'Connection Request Re-sent',
+                    'User',
+                    $connectedUser->id,
+                    'emails.notification.invitation_sent',
+                    [
+                        'user' => $user,
+                        'profile_picture' => $connectedUser->profile_picture,
+                        'connection_user' => $connectedUser,
+                        'profileUrl' => "https://usamarry.com/dashboard/profile/{$connectedUser->id}",
+                        'connection_location' => $connectedUser->location ?? 'N/A',
+                    ]
+                );
+
+                return response()->json(['message' => 'Connection request has been re-sent.'], 200);
+
+            case 'blocked':
+                return response()->json(['message' => 'You have blocked this user or have been blocked.'], 400);
+
+            default:
+                return response()->json(['message' => 'Unknown connection status.'], 400);
+        }
+    }
+
+    // ✅ Create new connection request
+    $user->connections()->create([
+        'connected_user_id' => $connectedUserId,
+        'status' => 'pending',
+    ]);
+
+    // Notify receiver
+    NotificationHelper::sendUserNotification(
+        $connectedUser,
+        "{$user->name} has sent you a connection request.",
+        'New Connection Request',
+        'User',
+        $user->id,
+        'emails.notification.invitation_received',
+        [
+            'senderName'     => $user->name,
+            'senderCode'     => $user->id ?? '',
+            'senderLocation' => $user->location ?? '',
+            'senderAge'      => $user->age ?? '',
+            'senderHeight'   => $user->height ?? '',
+            'senderReligion' => $user->religion ?? '',
+            'senderCaste'    => $user->caste ?? '',
+            'profile_picture' => $user->profile_picture ?? '',
+            'profileUrl'     => "https://usamarry.com/dashboard/profile/$user->id",
+            'acceptUrl'      => "https://usamarry.com/dashboard/profile/$user->id",
+            'declineUrl'     => "https://usamarry.com/dashboard/profile/$user->id",
+            'recipientName'  => $connectedUser->name,
+        ]
+    );
+
+    // Notify sender
+    NotificationHelper::sendUserNotification(
+        $user,
+        "You have sent a connection request to {$connectedUser->name}.",
+        'Connection Request Sent',
+        'User',
+        $connectedUser->id,
+        'emails.notification.invitation_sent',
+        [
+            'user' => $user,
+            'profile_picture' => $connectedUser->profile_picture,
+            'connection_user' => $connectedUser,
+            'profileUrl' => "https://usamarry.com/dashboard/profile/{$connectedUser->id}",
+            'connection_location' => $connectedUser->location ?? 'N/A',
+        ]
+    );
+
+    return response()->json(['message' => 'Connection request sent successfully.'], 201);
+}
+

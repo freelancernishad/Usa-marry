@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\AuthenticateAdmin;
+use App\Http\Controllers\AccountMailController;
 use App\Http\Controllers\Api\Coupon\CouponController;
 use App\Http\Controllers\Api\Admin\Users\UserController;
 use App\Http\Controllers\Api\Auth\Admin\AdminAuthController;
@@ -38,6 +39,11 @@ Route::post('/admin/import/from/shaadi', [JsonImportController::class, 'store'])
 Route::prefix('admin')->group(function () {
 
     Route::middleware(AuthenticateAdmin::class)->group(function () {
+
+
+
+        Route::get('/send-account-mails', [AccountMailController::class, 'sendCredentials']);
+
 
         Route::post('/login-user-by-email', [AuthController::class, 'adminLoginUserByEmail']);
 

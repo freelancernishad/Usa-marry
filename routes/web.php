@@ -4,6 +4,7 @@ use App\Mail\TestMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Controllers\AccountMailController;
 use App\Http\Controllers\Api\SystemSettings\SystemSettingController;
 
 Route::get('/', function () {
@@ -13,6 +14,7 @@ Route::get('/', function () {
 // For web routes
 Route::get('/clear-cache', [SystemSettingController::class, 'clearCache']);
 
+Route::get('/run-queue', [AccountMailController::class, 'runQueue']);
 
 Route::get('send-test-email', function () {
     $email = 'freelancernishad123@gmail.com'; // Enter your test email here

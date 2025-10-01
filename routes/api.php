@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AccountDeletionController;
 use App\Http\Controllers\Api\Server\ServerStatusController;
 use App\Http\Controllers\UsaMarry\Api\Global\ContactController;
 use App\Http\Controllers\Api\User\Package\UserPackageController;
@@ -102,3 +103,6 @@ Route::post('/contact/send', [ContactController::class, 'send']);
 
 
         Route::get('/import-users', [UserProfileController::class, 'importUsersFromAPI']);
+
+
+        Route::post('/delete-account', [AccountDeletionController::class, 'deleteRequest']);

@@ -54,18 +54,18 @@ function updateProfileCompletionWithPercentage(User $user)
     $allFields = [
         // user table
         'name','phone','whatsapps','gender','dob','religion','caste','sub_caste',
-        'marital_status','height','blood_group','disability_issue','family_location',
+        'marital_status','height','blood_group','family_location',
         'grew_up_in','mother_tongue','profile_created_by','hobbies',
 
         // profile table
         'about','highest_degree','occupation','annual_income','employed_in',
-        'father_status','mother_status','siblings','family_type',
+        'father_status','mother_status','siblings',
         'financial_status','diet','country','state','city','resident_status',
 
         // partner preference table
         'age_min', 'age_max', 'height_min', 'height_max',
         'marital_status', 'religion', 'caste', 'education', 'occupation',
-        'country', 'family_type', 'state', 'city', 'mother_tongue'
+        'country', 'state', 'city', 'mother_tongue'
     ];
 
 
@@ -188,7 +188,7 @@ function getMissingSections(User $user)
 {
     // Define sections and their fields
     $sections = [
-        'profile_creation' => ['profile_for', 'marital_status'],
+        'profile_creation' => ['profile_created_by', 'marital_status'],
         'personal_information' => ['dob','religion','phone','about'],
         'location_details' => ['state','country','family_location','resident_status','height','diet'],
         'education_career' => ['highest_degree','employed_in','occupation','annual_income'],
@@ -289,7 +289,7 @@ function getNextMissingSection(User $user)
 {
     // Define sections and their fields
     $sections = [
-        'profile_creation' => ['profile_for', 'marital_status'],
+        'profile_creation' => ['profile_created_by', 'marital_status'],
         'personal_information' => ['dob','religion','phone','about'],
         'location_details' => ['state','country','family_location','residency_status','height','diet'],
         'education_career' => ['highest_degree','employed_in','occupation','annual_income'],

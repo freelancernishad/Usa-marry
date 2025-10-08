@@ -95,6 +95,7 @@ function updateProfileCompletionWithPercentage(User $user)
             $missingFields[] = $field;
         }
     }
+
     
 
     // Calculate percentage

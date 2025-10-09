@@ -433,4 +433,10 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
     {
         return $this->banned_at !== null;
     }
+
+    public function loginLogs()
+    {
+        return $this->hasMany(LoginLog::class);
+    }
+    
 }

@@ -11,7 +11,7 @@ class AccountDeletionController extends Controller
 {
     public function deleteRequest(Request $request)
     {
-        Log::info('Received method: ' . $request->method());
+        // Log::info('Received method: ' . $request->method());
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email',

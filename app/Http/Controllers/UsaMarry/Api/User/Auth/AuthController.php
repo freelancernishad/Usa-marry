@@ -117,6 +117,15 @@ class AuthController extends Controller
 
         }
 
+        // ✅ Add login log
+        \App\Models\LoginLog::create([
+            'user_id' => $user->id,
+            'ip_address' => $request->ip(),
+            'device' => $request->header('User-Agent'),
+            'location' => null, // Optional, use geoip if needed
+            'logged_in_at' => now(),
+        ]);
+
 
         return response()->json([
             'access_token' => $token,

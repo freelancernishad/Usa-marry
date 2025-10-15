@@ -15,7 +15,7 @@ class AccountMailController extends Controller
      */
     public function sendCredentials()
     {
-        $dailyLimit = 2;
+        $dailyLimit = 400;
 
         // Get all users
         $users = User::all();

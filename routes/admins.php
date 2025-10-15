@@ -5,6 +5,7 @@ use App\Http\Middleware\AuthenticateAdmin;
 use App\Http\Controllers\AccountMailController;
 use App\Http\Controllers\Api\Coupon\CouponController;
 use App\Http\Controllers\Api\Admin\Users\UserController;
+use App\Http\Controllers\UsaMarry\Api\Admin\UserManagement\UserController as UserManagementUserController;
 use App\Http\Controllers\Api\Auth\Admin\AdminAuthController;
 use App\Http\Controllers\UsaMarry\Api\User\Auth\AuthController;
 use App\Http\Controllers\UsaMarry\Api\Admin\Plans\PlanController;
@@ -46,6 +47,8 @@ Route::prefix('admin')->group(function () {
 
         Route::post('/login-user-by-email', [AuthController::class, 'adminLoginUserByEmail']);
 
+
+        Route::get('/users/without-subscription', [UserManagementUserController::class, 'usersWithoutSubscription']);
 
 
         Route::get('/dashboard-overview', [AdminDashboardController::class, 'adminDashboardOverview']);

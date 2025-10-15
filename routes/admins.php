@@ -41,7 +41,6 @@ Route::prefix('admin')->group(function () {
     Route::middleware(AuthenticateAdmin::class)->group(function () {
 
 
-
         Route::get('/send-account-mails', [AccountMailController::class, 'sendCredentials']);
 
 

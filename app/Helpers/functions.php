@@ -96,18 +96,13 @@ function updateProfileCompletionWithPercentage(User $user)
         }
     }
 
-    
+
 
     // Calculate percentage
     $totalFields = count($allFields);
     $percentage = $totalFields > 0 ? round(($filledCount / $totalFields) * 100, 2) : 0;
 
-    // Log results
-    Log::info('Missing profile fields:', $missingFields);
-    Log::info('Profile completion percentage calculated', [
-        'user_id' => $user->id,
-        'profile_completion' => $percentage
-    ]);
+
 
     $user->update([
         'profile_completion' => $percentage
@@ -251,9 +246,6 @@ function getMissingSections(User $user)
     // Update in DB
     $user->update(['profile_completion' => $profileCompletion]);
 
-    // Logs
-    Log::info("Profile completion for user {$user->id}: {$profileCompletion}%");
-    Log::info("Missing sections for user {$user->id}:", $missingSections);
 
     return $missingSections;
 }

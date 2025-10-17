@@ -30,13 +30,7 @@ class SendAccountCredentialMail implements ShouldQueue
             Mail::to($this->user->email)
                 ->send(new AccountCredentialMail($this->user, $this->password));
 
-            // Mail successfully sent, log it
-            Log::info("Account mail sent successfully", [
-                'user_id' => $this->user->id,
-                'email' => $this->user->email,
-                'temporary_password' => $this->password,
-                'time' => now()->toDateTimeString(),
-            ]);
+
 
         } catch (\Exception $e) {
             // Mail failed, log the error

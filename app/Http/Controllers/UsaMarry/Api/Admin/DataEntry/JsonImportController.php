@@ -491,7 +491,7 @@ private function extractDateOfBirthFromAge($data)
 
         $totalSiblings = $brothers + $sisters;
 
-        Log::info("Extracted siblings: Brothers = $brothers, Sisters = $sisters, Total = $totalSiblings");
+
 
         return $totalSiblings;
     }

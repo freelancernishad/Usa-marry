@@ -100,11 +100,7 @@ public function subscribe(Request $request)
         }
 
         $couponCode = $coupon->code;
-        Log::info('Coupon applied', [
-            'coupon_code' => $couponCode,
-            'coupon_type' => $coupon->type,
-            'value' => $coupon->value,
-        ]);
+
 
 
         if ($coupon->type == 'percentage') {
@@ -186,10 +182,7 @@ public function webhook(Request $request)
     }
 
 
-   Log::info('Stripe Webhook Event Received', [
-        'type' => $event->type,
-        'data' => $event->data->object,
-    ]);
+
     // Handle the event
     switch ($event->type) {
         case 'checkout.session.completed':

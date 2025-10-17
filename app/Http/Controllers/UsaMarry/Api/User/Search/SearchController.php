@@ -50,7 +50,6 @@ class SearchController extends Controller
         // Religion & Caste
         if ($request->filled('religion')) {
             $religions = $parseMultiValue($request->religion);
-            Log::info('Searching users by religion', $religions);
             $query->whereIn('religion', $religions);
         }
 

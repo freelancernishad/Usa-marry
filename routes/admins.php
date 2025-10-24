@@ -47,6 +47,8 @@ Route::prefix('admin')->group(function () {
 
         Route::post('/login-user-by-email', [AuthController::class, 'adminLoginUserByEmail']);
 
+        Route::post('/get/user/without/photo', [AuthController::class, 'adminGetUserWithoutPhoto']);
+
 
         Route::get('/users/without-subscription', [UserManagementUserController::class, 'usersWithoutSubscription']);
 

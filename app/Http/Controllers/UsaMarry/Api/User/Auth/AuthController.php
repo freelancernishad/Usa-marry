@@ -179,4 +179,24 @@ class AuthController extends Controller
 
 
 
+    function adminGetUserWithoutPhoto() {
+        $users = User::doesntHave('photos')->get();
+
+        // photo_privacy =accepted , photo_visibility = hidden
+        $users->each(function ($user) {
+            $user->photo_privacy = 'accepted';
+            $user->photo_visibility = 'hidden';
+            $user->save();
+        });
+
+
+        return response()->json([
+            'users' => UserLoginResource::collection($users),
+            'message' => 'Users without photo retrieved successfully',
+        ]);
+    }
+
+
+
+
 }

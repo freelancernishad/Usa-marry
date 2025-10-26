@@ -112,22 +112,25 @@ class SearchController extends Controller
             });
         }
 
-        // Sort results
+        // =================================================================
+        // এখানে নতুন লাইনটি যোগ করা হয়েছে
+        // এটি প্রথমে ছবির সংখ্যা অনুযায়ী সাজাবে (যাদের বেশি ছবি তারা আগে)
+        // =================================================================
+        $query->withCount('photos')->orderBy('photos_count', 'desc');
+
+        // Sort results (এটি এখন দ্বিতীয় স্তরের সাজানোর নিয়ম হিসেবে কাজ করবে)
         if ($request->sort_by === 'newest') {
             $query->orderBy('created_at', 'desc');
         } elseif ($request->sort_by === 'match') {
             $query->orderBy('profile_completion', 'desc');
         } else {
-            $query->inRandomOrder();
+            // inRandomOrder() এর সাথে orderBy একসাথে ভালোভাবে কাজ করে না, তাই এক্ষেত্রে আমরা শুধু photos_count দিয়েই সাজাবো
+            // অথবা আপনি চাইলে এটাকেও একটা অর্ডার দিতে পারেন, যেমন: ->orderBy('id', 'desc')
         }
-
-       // Add ordering to put users without photos at the end
-    $query->orderByRaw('(SELECT COUNT(*) FROM photos WHERE photos.user_id = users.id) DESC');
-
 
         // Paginate
         $results = $query->paginate($perPage);
-        $results = new \App\Http\Resources\UserPaginationResource($results);
+        $results = new UserPaginationResource($results);
 
         return response()->json($results);
     }

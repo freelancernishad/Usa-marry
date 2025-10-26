@@ -121,8 +121,9 @@ class SearchController extends Controller
             $query->inRandomOrder();
         }
 
-        // Add ordering to put users without photos at the end
-        $query->orderByRaw('(SELECT COUNT(*) > 0 FROM photos WHERE photos.user_id = users.id) DESC');
+       // Add ordering to put users without photos at the end
+    $query->orderByRaw('(SELECT COUNT(*) FROM photos WHERE photos.user_id = users.id) DESC');
+
 
         // Paginate
         $results = $query->paginate($perPage);

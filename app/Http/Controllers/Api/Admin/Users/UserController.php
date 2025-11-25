@@ -2,14 +2,65 @@
 
 namespace App\Http\Controllers\Api\Admin\Users;
 
+use Locale;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use libphonenumber\PhoneNumberUtil;
+
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use libphonenumber\PhoneNumberFormat;
 use App\Http\Resources\UserPaginationResource;
 
 class UserController extends Controller
 {
+
+
+
+ public function updateCountryFromPhone()
+{
+    $phoneUtil = PhoneNumberUtil::getInstance();
+
+    // Region code → country name map
+    $regionMap = CountryCodes();
+
+    $users = \App\Models\User::whereNull('family_location')->whereNotNull('phone')->get();
+
+    foreach ($users as $user) {
+        $phone = $user->phone;
+        if (empty($phone)) continue;
+
+        try {
+            $numberProto = $phoneUtil->parse($phone, null);
+            $regionCode = $phoneUtil->getRegionCodeForNumber($numberProto); // e.g., BD
+
+            if ($regionCode && isset($regionMap[$regionCode])) {
+                $countryName = $regionMap[$regionCode];
+                Log::info("User ID {$user->id}: Phone {$phone} → Region {$regionCode} → Country {$countryName}");
+
+                $user->profile->update(['country' => $countryName,'state' => null, 'city' => null]);
+
+                // if ($user->country !== $countryName) {
+                //     $user->update(['country' => $countryName]);
+                // }
+            }
+
+        } catch (\libphonenumber\NumberParseException $e) {
+            \Log::warning("Invalid phone for user_id {$user->id}: {$phone}");
+            continue;
+        }
+    }
+
+    return response()->json([
+        'message' => 'Country updated successfully from phone numbers (no Locale class needed).'
+    ]);
+}
+
+
+
+
+
 
     public function updateLocationFromFamily()
     {

@@ -59,7 +59,7 @@ public function getMatches(Request $request)
     $oppositeGender = $user->gender === 'Male' ? 'Female' : 'Male';
 
     $query = User::query()
-    // ->with('photos')
+    ->with('photos')
         ->where('gender', $oppositeGender)
         ->where('account_status', 'Active')
         ->where('id', '!=', $user->id);
@@ -156,30 +156,32 @@ public function getMatches(Request $request)
 
 
 
-
     // Exclude already matched/rejected users
     $existingMatches = $user->matches()->pluck('matched_user_id');
     $query->whereNotIn('id', $existingMatches);
 
     $religions = $user->partnerPreference->religion ?? [];
-    // $query->select('users.*');
-    $query->withCount('photos');
-    // $query->select(['users.*']);
+
+    $query->select('users.*');
 
     if (!empty($religions)) {
         $placeholders = implode(',', array_fill(0, count($religions), '?'));
-
-        // users.* + match_score, **photos_count কে সরাসরি SELECT এ না বসাই** 
-        $query->selectRaw("users.*, (CASE WHEN religion IN ($placeholders) THEN 20 ELSE 0 END + profile_completion * 0.1) AS match_score", $religions);
+        $query->selectRaw(
+            "(CASE WHEN religion IN ($placeholders) THEN 20 ELSE 0 END + profile_completion * 0.1) AS match_score",
+            $religions
+        );
     } else {
-        $query->selectRaw("users.*, (0 + profile_completion * 0.1) AS match_score");
+        $query->selectRaw("(0 + profile_completion * 0.1) AS match_score");
     }
+
+    // $query->orderByDesc('match_score');
+
     // =================================================================
     // এখানে নতুন লাইনটি যোগ করা হয়েছে
     // এটি প্রথমে ছবির সংখ্যা অনুযায়ী সাজাবে (যাদের বেশি ছবি তারা আগে)
     // =================================================================
-    $query->orderBy('photos_count', 'desc');
-    // $query->orderByDesc('match_score');
+    $query->withCount('photos')->orderBy('photos_count', 'desc');
+
 
     return $query;
 }

@@ -10,6 +10,64 @@ use App\Http\Resources\UserPaginationResource;
 
 class UserController extends Controller
 {
+
+
+    public function destroyWithRelations($id)
+    {
+        $user = User::with([
+            'profile',
+            'partnerPreference',
+            'photos',
+            'profileVisit',
+            'matches',
+            'reverseMatches',
+            'subscriptions',
+            'blockedUsers',
+            'reportsFiled',
+            'connections',
+            'connectedUsers',
+            'sentPhotoRequests',
+            'receivedPhotoRequests',
+            'loginLogs'
+        ])->findOrFail($id);
+
+        // সব রিলেশন ডিলিট করা
+        $user->profile()?->delete();
+        $user->partnerPreference()?->delete();
+        $user->photos()->delete();
+        $user->profileVisit()?->delete();
+        $user->matches()->delete();
+        $user->reverseMatches()->delete();
+        $user->subscriptions()->delete();
+        $user->blockedUsers()->delete();
+        $user->reportsFiled()->delete();
+        $user->connections()->delete();
+        $user->connectedUsers()->delete();
+        $user->sentPhotoRequests()->delete();
+        $user->receivedPhotoRequests()->delete();
+        $user->loginLogs()->delete();
+
+         // DELETE Notifications
+        \App\Models\Notification::where('user_id', $user->id)->delete();
+
+          // Contact Views — NEW
+        \App\Models\ContactView::where('user_id', $user->id)->delete();
+        \App\Models\ContactView::where('contact_user_id', $user->id)->delete();
+
+
+
+        // সবশেষে user delete
+        $user->delete();
+
+        return response()->json([
+            'message' => 'User and all related data deleted successfully.'
+        ]);
+    }
+
+
+
+
+
     // ✅ All users with optional search and subscriptions loaded
 public function index(Request $request)
 {

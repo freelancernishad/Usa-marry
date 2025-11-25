@@ -10,6 +10,8 @@ class UserController extends Controller
 {
 
 
+
+
     public function usersWithoutSubscription(Request $request)
     {
         $per_page = $request->per_page == 'all' ? 'all' : 20;

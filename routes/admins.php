@@ -68,6 +68,8 @@ Route::prefix('admin')->group(function () {
             Route::post('/{id}/unban', [UserController::class, 'unban']);
             Route::delete('/{id}', [UserController::class, 'destroy']);
 
+            Route::delete('delete/with/relations/{id}', [UserController::class, 'destroyWithRelations']);
+
             // For API route
             Route::post('/{id}/toggle-top-profile', [UserController::class, 'toggleTopProfile']);
             Route::get('/top/profiles', [UserController::class, 'topProfiles']);

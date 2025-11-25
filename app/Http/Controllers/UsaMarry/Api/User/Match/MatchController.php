@@ -59,7 +59,7 @@ public function getMatches(Request $request)
     $oppositeGender = $user->gender === 'Male' ? 'Female' : 'Male';
 
     $query = User::query()
-    ->with('photos')
+    // ->with('photos')
         ->where('gender', $oppositeGender)
         ->where('account_status', 'Active')
         ->where('id', '!=', $user->id);
@@ -153,11 +153,7 @@ public function getMatches(Request $request)
 
 
 
-    // =================================================================
-    // এখানে নতুন লাইনটি যোগ করা হয়েছে
-    // এটি প্রথমে ছবির সংখ্যা অনুযায়ী সাজাবে (যাদের বেশি ছবি তারা আগে)
-    // =================================================================
-    // $query->withCount('photos')->orderBy('photos_count', 'desc');
+
 
 
 
@@ -168,6 +164,7 @@ public function getMatches(Request $request)
     $religions = $user->partnerPreference->religion ?? [];
 
     $query->select('users.*');
+    // $query->select(['users.*']);
 
     if (!empty($religions)) {
         $placeholders = implode(',', array_fill(0, count($religions), '?'));
@@ -179,6 +176,11 @@ public function getMatches(Request $request)
         $query->selectRaw("(0 + profile_completion * 0.1) AS match_score");
     }
 
+    // =================================================================
+    // এখানে নতুন লাইনটি যোগ করা হয়েছে
+    // এটি প্রথমে ছবির সংখ্যা অনুযায়ী সাজাবে (যাদের বেশি ছবি তারা আগে)
+    // =================================================================
+    $query->withCount('photos')->orderBy('photos_count', 'desc');
     $query->orderByDesc('match_score');
 
     return $query;

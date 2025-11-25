@@ -157,7 +157,7 @@ public function getMatches(Request $request)
     // এখানে নতুন লাইনটি যোগ করা হয়েছে
     // এটি প্রথমে ছবির সংখ্যা অনুযায়ী সাজাবে (যাদের বেশি ছবি তারা আগে)
     // =================================================================
-    $query->withCount('photos')->orderBy('photos_count', 'desc');
+    // $query->withCount('photos')->orderBy('photos_count', 'desc');
 
 
 

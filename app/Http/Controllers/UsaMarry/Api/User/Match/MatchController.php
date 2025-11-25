@@ -162,8 +162,8 @@ public function getMatches(Request $request)
     $query->whereNotIn('id', $existingMatches);
 
     $religions = $user->partnerPreference->religion ?? [];
-
     $query->select('users.*');
+    $query->withCount('photos');
     // $query->select(['users.*']);
 
     if (!empty($religions)) {
@@ -180,7 +180,7 @@ public function getMatches(Request $request)
     // এখানে নতুন লাইনটি যোগ করা হয়েছে
     // এটি প্রথমে ছবির সংখ্যা অনুযায়ী সাজাবে (যাদের বেশি ছবি তারা আগে)
     // =================================================================
-    $query->withCount('photos')->orderBy('photos_count', 'desc');
+    $query->orderBy('photos_count', 'desc');
     $query->orderByDesc('match_score');
 
     return $query;

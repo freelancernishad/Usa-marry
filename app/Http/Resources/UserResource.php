@@ -132,6 +132,7 @@ class UserResource extends JsonResource
                 'photos_locked' => $this->photos_locked,
                 'is_photo_request_sent' => $isPhotoRequestSent,
                 'is_photo_request_received' => $isPhotoRequestReceived,
+                'photos_count' => $this->photos_count,
             ]
         );
     }

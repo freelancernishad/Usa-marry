@@ -179,7 +179,7 @@ public function getMatches(Request $request)
     // এটি প্রথমে ছবির সংখ্যা অনুযায়ী সাজাবে (যাদের বেশি ছবি তারা আগে)
     // =================================================================
     $query->orderBy('photos_count', 'desc');
-    $query->orderByDesc('match_score');
+    // $query->orderByDesc('match_score');
 
     return $query;
 }

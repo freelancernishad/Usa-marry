@@ -150,6 +150,17 @@ public function getMatches(Request $request)
         }
     }
 
+
+
+
+    // =================================================================
+    // এখানে নতুন লাইনটি যোগ করা হয়েছে
+    // এটি প্রথমে ছবির সংখ্যা অনুযায়ী সাজাবে (যাদের বেশি ছবি তারা আগে)
+    // =================================================================
+    $query->withCount('photos')->orderBy('photos_count', 'desc');
+
+
+
     // Exclude already matched/rejected users
     $existingMatches = $user->matches()->pluck('matched_user_id');
     $query->whereNotIn('id', $existingMatches);
@@ -691,7 +702,7 @@ $requestsCount = $sentPendingCount + $receivedPendingCount;
             ->limit($limit)
             ->get();
 
-      
+
         return response()->json([
             'suggested_profiles' => UserResource::collection($matches),
             'count' => $matches->count()

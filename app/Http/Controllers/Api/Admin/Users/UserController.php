@@ -18,44 +18,44 @@ class UserController extends Controller
 
 
 
- public function updateCountryFromPhone()
-{
-    $phoneUtil = PhoneNumberUtil::getInstance();
+    public function updateCountryFromPhone()
+    {
+        $phoneUtil = PhoneNumberUtil::getInstance();
 
-    // Region code → country name map
-    $regionMap = CountryCodes();
+        // Region code → country name map
+        $regionMap = CountryCodes();
 
-    $users = \App\Models\User::whereNull('family_location')->whereNotNull('phone')->get();
+        $users = \App\Models\User::whereNull('family_location')->whereNotNull('phone')->get();
 
-    foreach ($users as $user) {
-        $phone = $user->phone;
-        if (empty($phone)) continue;
+        foreach ($users as $user) {
+            $phone = $user->phone;
+            if (empty($phone)) continue;
 
-        try {
-            $numberProto = $phoneUtil->parse($phone, null);
-            $regionCode = $phoneUtil->getRegionCodeForNumber($numberProto); // e.g., BD
+            try {
+                $numberProto = $phoneUtil->parse($phone, null);
+                $regionCode = $phoneUtil->getRegionCodeForNumber($numberProto); // e.g., BD
 
-            if ($regionCode && isset($regionMap[$regionCode])) {
-                $countryName = $regionMap[$regionCode];
-                Log::info("User ID {$user->id}: Phone {$phone} → Region {$regionCode} → Country {$countryName}");
+                if ($regionCode && isset($regionMap[$regionCode])) {
+                    $countryName = $regionMap[$regionCode];
+                    Log::info("User ID {$user->id}: Phone {$phone} → Region {$regionCode} → Country {$countryName}");
 
-                $user->profile->update(['country' => $countryName,'state' => null, 'city' => null]);
+                    $user->profile->update(['country' => $countryName,'state' => null, 'city' => null]);
 
-                // if ($user->country !== $countryName) {
-                //     $user->update(['country' => $countryName]);
-                // }
+                    // if ($user->country !== $countryName) {
+                    //     $user->update(['country' => $countryName]);
+                    // }
+                }
+
+            } catch (\libphonenumber\NumberParseException $e) {
+                \Log::warning("Invalid phone for user_id {$user->id}: {$phone}");
+                continue;
             }
-
-        } catch (\libphonenumber\NumberParseException $e) {
-            \Log::warning("Invalid phone for user_id {$user->id}: {$phone}");
-            continue;
         }
-    }
 
-    return response()->json([
-        'message' => 'Country updated successfully from phone numbers (no Locale class needed).'
-    ]);
-}
+        return response()->json([
+            'message' => 'Country updated successfully from phone numbers (no Locale class needed).'
+        ]);
+    }
 
 
 

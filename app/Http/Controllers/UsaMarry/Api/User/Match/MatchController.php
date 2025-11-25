@@ -174,7 +174,7 @@ public function getMatches(Request $request)
         $query->selectRaw("(0 + profile_completion * 0.1) AS match_score");
     }
 
-    // $query->orderByDesc('match_score');
+    $query->orderByDesc('match_score');
 
     // =================================================================
     // এখানে নতুন লাইনটি যোগ করা হয়েছে

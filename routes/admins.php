@@ -70,6 +70,8 @@ Route::prefix('admin')->group(function () {
 
             Route::delete('delete/with/relations/{id}', [UserController::class, 'destroyWithRelations']);
 
+            Route::post('update/all/user/family_location', [UserController::class, 'updateLocationFromFamily']);
+
             // For API route
             Route::post('/{id}/toggle-top-profile', [UserController::class, 'toggleTopProfile']);
             Route::get('/top/profiles', [UserController::class, 'topProfiles']);

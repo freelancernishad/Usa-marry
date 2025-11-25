@@ -163,6 +163,41 @@ class JsonImportController extends Controller
 
 
 
+
+
+        // Default values
+        $country = '-';
+        $state   = '-';
+        $city    = '-';
+
+        if (!empty($family)) {
+            // Split by comma
+            $parts = array_map('trim', explode(',', $family));
+
+            if (count($parts) === 3) {
+                // Format: City, State, Country
+                $city    = $parts[0];
+                $state   = $parts[1];
+                $country = $parts[2];
+            } elseif (count($parts) === 2) {
+                // Format: City, Country
+                $city    = $parts[0];
+                $country = $parts[1];
+            } elseif (count($parts) === 1) {
+                // Only City
+                $city = $parts[0];
+            }
+        }
+
+
+
+
+
+
+
+
+
+
         $profileData = [
             'about' => $detailed['about'] ?? null,
             'highest_degree' => $this->extractHighestDegree($education),
@@ -182,9 +217,13 @@ class JsonImportController extends Controller
             'diet' => $lifestyle['diet'] ?? null,
             'drink' => $lifestyle['drink'] ?? null,
             'smoke' => $lifestyle['smoke'] ?? null,
-            'country' => 'Bangladesh', // From location data
-            'state' => 'Dhaka', // From location data
-            'city' => 'Dhaka', // From location data
+
+            'country' => $country, // From location data
+            'state' => $state, // From location data
+            'city' => $city, // From location data
+
+
+
             'resident_status' => $this->extractResidentStatus($data),
             'has_horoscope' => !empty($data['astro']['details']),
             'rashi' => $data['astro']['details']['moon_sign'] ?? null,

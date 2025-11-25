@@ -11,6 +11,66 @@ use App\Http\Resources\UserPaginationResource;
 class UserController extends Controller
 {
 
+    public function updateLocationFromFamily()
+    {
+        // Get all users with family_location not null
+        $users = \App\Models\User::whereNotNull('family_location')->get();
+        // return response()->json([
+        //     'total_users' => $users,
+        // ]);
+
+        foreach ($users as $user) {
+
+            $family = $user->family_location;
+
+            // Default values (optional, keep existing if empty)
+            $city    = $user->city;
+            $state   = $user->state;
+            $country = $user->country;
+
+            if (!empty($family)) {
+                // Split by comma and trim spaces
+                $parts = array_map('trim', explode(',', $family));
+                $count = count($parts);
+
+                if ($count === 3) {
+                    // Format: City, State, Country
+                    $city    = $parts[0];
+                    $state   = $parts[1];
+                    $country = $parts[2];
+                } elseif ($count === 2) {
+                    // Format: City, Country
+                    $city    = $parts[0];
+                    $state   = null;       // optional
+                    $country = $parts[1];
+                } elseif ($count === 1) {
+                    // Format: Only City
+                    $city = null;
+                    $state   = null;
+                    $country    = $parts[0];
+                } else {
+                    // Unexpected format, skip and log
+                    \Log::warning("Invalid family_location format for user_id {$user->id}: {$family}");
+                    continue; // skip this user
+                }
+            }
+
+            // Update user record
+            $user->profile->update([
+                'city'    => $city,
+                'state'   => $state,
+                'country' => $country,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'All users location updated successfully from family_location.'
+        ]);
+    }
+
+
+
+
 
     public function destroyWithRelations($id)
     {

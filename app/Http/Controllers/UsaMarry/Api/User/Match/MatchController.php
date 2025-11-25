@@ -162,20 +162,18 @@ public function getMatches(Request $request)
     $query->whereNotIn('id', $existingMatches);
 
     $religions = $user->partnerPreference->religion ?? [];
-    $query->select('users.*');
+    // $query->select('users.*');
     $query->withCount('photos');
     // $query->select(['users.*']);
 
     if (!empty($religions)) {
         $placeholders = implode(',', array_fill(0, count($religions), '?'));
-        $query->selectRaw(
-            "(CASE WHEN religion IN ($placeholders) THEN 20 ELSE 0 END + profile_completion * 0.1) AS match_score",
-            $religions
-        );
-    } else {
-        $query->selectRaw("(0 + profile_completion * 0.1) AS match_score");
-    }
 
+        // users.* + match_score, **photos_count কে সরাসরি SELECT এ না বসাই** 
+        $query->selectRaw("users.*, (CASE WHEN religion IN ($placeholders) THEN 20 ELSE 0 END + profile_completion * 0.1) AS match_score", $religions);
+    } else {
+        $query->selectRaw("users.*, (0 + profile_completion * 0.1) AS match_score");
+    }
     // =================================================================
     // এখানে নতুন লাইনটি যোগ করা হয়েছে
     // এটি প্রথমে ছবির সংখ্যা অনুযায়ী সাজাবে (যাদের বেশি ছবি তারা আগে)

@@ -160,7 +160,9 @@ class JsonImportController extends Controller
         $family = $data['flags']['family'] ?? [];
         $education = $detailed['education'] ?? [];
         $profession = $detailed['profession'] ?? [];
-
+        Log::info('Family location data: ' . json_encode($family));
+       $location =  $family['location'] ?? '';
+       $located =  $family['located'] ?? '';
 
 
 
@@ -170,9 +172,11 @@ class JsonImportController extends Controller
         $state   = '-';
         $city    = '-';
 
-        if (!empty($family)) {
+
+        if (!empty($location)) {
+            Log::info('Family location data: ' . json_encode($location));
             // Split by comma
-            $parts = array_map('trim', explode(',', $family));
+            $parts = array_map('trim', explode(',', $location));
 
             if (count($parts) === 3) {
                 // Format: City, State, Country
@@ -187,7 +191,31 @@ class JsonImportController extends Controller
                 // Only City
                 $city = $parts[0];
             }
+        }elseif(empty($location)){
+
+            if(!empty($located)){
+                Log::info('Family location data: ' . json_encode($located));
+                // Split by comma
+                $parts = array_map('trim', explode(',', $located));
+
+                if (count($parts) === 3) {
+                    // Format: City, State, Country
+                    $city    = $parts[0];
+                    $state   = $parts[1];
+                    $country = $parts[2];
+                } elseif (count($parts) === 2) {
+                    // Format: City, Country
+                    $city    = $parts[0];
+                    $country = $parts[1];
+                } elseif (count($parts) === 1) {
+                    // Only City
+                    $city = $parts[0];
+                }
+            }
+
         }
+
+
 
 
 

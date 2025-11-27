@@ -72,6 +72,7 @@ Route::prefix('admin')->group(function () {
 
             Route::post('update/all/user/family_location', [UserController::class, 'updateLocationFromFamily']);
             Route::post('update/all/user/country_from_phone', [UserController::class, 'updateCountryFromPhone']);
+            Route::post('update/all/user/country_from_grew_up', [UserController::class, 'updateCountryFromgrewUp']);
 
             // For API route
             Route::post('/{id}/toggle-top-profile', [UserController::class, 'toggleTopProfile']);

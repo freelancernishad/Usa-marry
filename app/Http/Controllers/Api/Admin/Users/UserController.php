@@ -18,6 +18,41 @@ class UserController extends Controller
 
 
 
+   public function updateCountryFromgrewUp()
+{
+    return $users = \App\Models\User::with('profile')
+        ->where('phone', '+8801711111111')
+        ->get();
+
+    foreach ($users as $user) {
+        try {
+            $grewUpIn = $user->grew_up_in;
+
+            if (!$grewUpIn) continue;
+
+            // Multiple country দিলে প্রথম country নিবে
+            $countryList = explode(',', $grewUpIn);
+            $country = trim($countryList[0]); // প্রথম country clean করে নিবে
+
+            $user->profile->update([
+                'country' => $country,
+                'state'   => null,
+                'city'    => null
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::warning("Invalid grew_up_in for user_id {$user->id}");
+            continue;
+        }
+    }
+
+    return response()->json([
+        'message' => 'Country updated successfully from grew_up_in field.'
+    ]);
+}
+
+
+
     public function updateCountryFromPhone()
     {
         $phoneUtil = PhoneNumberUtil::getInstance();

@@ -160,61 +160,58 @@ class JsonImportController extends Controller
         $family = $data['flags']['family'] ?? [];
         $education = $detailed['education'] ?? [];
         $profession = $detailed['profession'] ?? [];
-        Log::info('Family location data: ' . json_encode($family));
+
+
        $location =  $family['location'] ?? '';
        $located =  $family['located'] ?? '';
 
 
 
+// Step 1: Initialize default values
+$country = '-';
+$state   = '-';
+$city    = '-';
 
-        // Default values
-        $country = '-';
-        $state   = '-';
-        $city    = '-';
+// Step 2: First check $location and $located
+$locationData = null;
 
+if (!empty($location)) {
+    $locationData = GetLocationFromJson($location);
+} elseif (!empty($located)) {
+    $locationData = GetLocationFromJson($located);
+} else {
+    // Step 3: Prepare fallback arrays
+    $fallbacks = [
+        $data['base']['infoMap'] ?? [],
+        $data['base']['infoList'] ?? [],
+        $data['base']['miniNriList'] ?? [],
+        $data['base']['miniList'] ?? [],
+        $data['base']['cardInfo'] ?? [],
+        $data['base']['detailList'] ?? [],
+        $data['base']['premiumInfo'] ?? [],
+        $data['summary']['infoMap'] ?? [],
+        $data['summary']['infoMapNonIndian'] ?? [],
+        $data['summary']['infoMapIndian'] ?? [],
+        $data['summary']['infoMapNri'] ?? [],
+        $data['summary']['infoMapPremiumCarousel'] ?? [],
+    ];
 
-        if (!empty($location)) {
-            Log::info('Family location data: ' . json_encode($location));
-            // Split by comma
-            $parts = array_map('trim', explode(',', $location));
-
-            if (count($parts) === 3) {
-                // Format: City, State, Country
-                $city    = $parts[0];
-                $state   = $parts[1];
-                $country = $parts[2];
-            } elseif (count($parts) === 2) {
-                // Format: City, Country
-                $city    = $parts[0];
-                $country = $parts[1];
-            } elseif (count($parts) === 1) {
-                // Only City
-                $city = $parts[0];
-            }
-        }elseif(empty($location)){
-
-            if(!empty($located)){
-                Log::info('Family location data: ' . json_encode($located));
-                // Split by comma
-                $parts = array_map('trim', explode(',', $located));
-
-                if (count($parts) === 3) {
-                    // Format: City, State, Country
-                    $city    = $parts[0];
-                    $state   = $parts[1];
-                    $country = $parts[2];
-                } elseif (count($parts) === 2) {
-                    // Format: City, Country
-                    $city    = $parts[0];
-                    $country = $parts[1];
-                } elseif (count($parts) === 1) {
-                    // Only City
-                    $city = $parts[0];
-                }
-            }
-
+    // Step 4: Loop through fallback arrays and get first non-empty location
+    foreach ($fallbacks as $list) {
+        $locValue = getlocaltionValue($list, 'location'); // Call your function
+        if (!empty($locValue)) {
+            $locationData = GetLocationFromJson($locValue);
+            break; // Stop at first found
         }
+    }
+}
 
+// Step 5: Assign country/state/city
+if (!empty($locationData)) {
+    $country = $locationData['country'] ?? '-';
+    $state   = $locationData['state'] ?? '-';
+    $city    = $locationData['city'] ?? '-';
+}
 
 
 

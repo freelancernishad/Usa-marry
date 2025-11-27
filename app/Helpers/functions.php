@@ -12,6 +12,66 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 
+function getlocaltionValue($datas,$key) {
+    $located = '';
+
+    if (!empty($datas)) {
+        foreach ($datas as $item) {
+
+            if (($item['key'] ?? '') === $key) {
+                $located = $item['value'] ?? '';
+                break; // location পেয়ে গেলে loop stop
+            }elseif(($item['namedKey'] ?? '') === $key){
+                $located = $item['value'] ?? '';
+                break; // location পেয়ে গেলে loop stop
+            }
+
+
+        }
+    }
+
+    return $located; // Output: New York, USA
+}
+
+
+function GetLocationFromJson($location){
+
+        // Default values
+        $country = '-';
+        $state   = '-';
+        $city    = '-';
+
+        if (!empty($location)) {
+            Log::info('Family location data: ' . json_encode($location));
+            // Split by comma
+            $parts = array_map('trim', explode(',', $location));
+
+            if (count($parts) === 3) {
+                // Format: City, State, Country
+                $city    = $parts[0];
+                $state   = $parts[1];
+                $country = $parts[2];
+            } elseif (count($parts) === 2) {
+                // Format: City, Country
+                $city    = $parts[0];
+                $country = $parts[1];
+            } elseif (count($parts) === 1) {
+                // Only City
+                $city = $parts[0];
+            }
+        }
+
+
+        return [
+            'country' => $country,
+            'state'   => $state,
+            'city'    => $city,
+        ];
+
+
+}
+
+
 
 function CountryCodes(){
     return [

@@ -20,7 +20,7 @@ class UserController extends Controller
 
    public function updateCountryFromgrewUp()
 {
-    return $users = \App\Models\User::with('profile')
+     $users = \App\Models\User::with('profile')
         ->where('phone', '+8801711111111')
         ->get();
 

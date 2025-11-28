@@ -31,7 +31,7 @@ class SubscriptionController extends Controller
     // Fetch the list of available plans from the database
     public function plans()
     {
-        $plans = Plan::all(); // Fetch all plans from the database
+        $plans = Plan::orderBy('index_no', 'asc')->get(); // Get all plans ordered by index_no
 
         return response()->json([
             'plans' => $plans

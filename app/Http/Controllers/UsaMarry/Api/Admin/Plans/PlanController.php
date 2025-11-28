@@ -12,13 +12,10 @@ class PlanController extends Controller
     // Fetch all plans (list of plans)
     public function index()
     {
-        $plans = Plan::orderBy('index_no', 'asc')->get();
-        
+        $plans = Plan::orderBy('created_at', 'desc')->get(); // Get all plans ordered by latest
         return response()->json([
-            'message' => 'Plans retrieved successfully',
-            'plans' => $plans,
-            'count' => $plans->count()
-        ], 200);
+            'plans' => $plans
+        ]);
     }
 
     // Fetch a single plan by ID

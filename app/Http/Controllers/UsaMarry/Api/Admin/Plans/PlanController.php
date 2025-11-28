@@ -12,7 +12,7 @@ class PlanController extends Controller
     // Fetch all plans (list of plans)
     public function index()
     {
-        $plans = Plan::orderBy('index_no', 'desc')->get(); 
+        $plans = Plan::orderBy('index_no', 'asc')->get(); 
         return response()->json([
             'plans' => $plans
         ]);

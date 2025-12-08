@@ -76,15 +76,9 @@ public function subscribe(Request $request)
     $discountPercent = 0;
     $couponCode = null;
     $finalAmount = $originalAmount;
-    $coupon_code = $request->coupon_code;
 
-
-    Log::info(
-        "Subscription request received for user: {$user->id}, plan: {$plan->id}. Original amount: {$originalAmount}, Final amount (before coupon): {$finalAmount},Coupon code {$coupon_code}"
-
-    );
     // Coupon logic
-    if ($request->filled('coupon_code')) {
+    if ($request->coupon_code) {
         $coupon = Coupon::where('code', $request->coupon_code)
             ->where('is_active', true)
             ->where(function ($query) {
@@ -97,6 +91,8 @@ public function subscribe(Request $request)
             })
             ->first();
 
+            Log::info("Processing coupon code: " . $request->coupon_code);
+            Log::info("Processing coupon result: " . json_encode($coupon));
         if (
             !$coupon ||
             (!is_null($coupon->valid_from) && now()->lt($coupon->valid_from)) ||

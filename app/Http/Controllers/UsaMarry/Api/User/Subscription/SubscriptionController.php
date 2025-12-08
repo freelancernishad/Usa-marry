@@ -111,6 +111,9 @@ public function subscribe(Request $request)
         } elseif ($coupon->type == 'fixed') {
             $discountAmount = $coupon->value;
             $discountPercent = ($discountAmount / $originalAmount) * 100;
+        } elseif ($coupon->type == 'flat') {
+            $discountAmount = $coupon->value;
+            $discountPercent = ($discountAmount / $originalAmount) * 100;
         }
 
         $finalAmount = max($originalAmount - $discountAmount, 0);

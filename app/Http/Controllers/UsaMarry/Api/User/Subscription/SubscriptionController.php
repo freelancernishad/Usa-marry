@@ -114,10 +114,10 @@ public function subscribe(Request $request)
         }
 
         $finalAmount = max($originalAmount - $discountAmount, 0);
-    }else{
-        Log::info("coupon not found");
-    }
 
+        Log::info("Final amount after coupon application: " . $finalAmount);
+
+    }
     // Create subscription
     $subscription = Subscription::create([
         'user_id' => $user->id,

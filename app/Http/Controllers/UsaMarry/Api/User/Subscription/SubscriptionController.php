@@ -112,6 +112,8 @@ public function subscribe(Request $request)
         }
 
         $finalAmount = max($originalAmount - $discountAmount, 0);
+    }else{
+        Log::info("coupon not found");
     }
 
     // Create subscription

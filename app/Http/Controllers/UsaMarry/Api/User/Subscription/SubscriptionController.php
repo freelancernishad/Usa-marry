@@ -77,6 +77,10 @@ public function subscribe(Request $request)
     $couponCode = null;
     $finalAmount = $originalAmount;
 
+    Log::info(
+        "Subscription request received for user: {$user->id}, plan: {$plan->id}. Original amount: {$originalAmount}, Final amount (before coupon): {$finalAmount}"
+
+    );
     // Coupon logic
     if ($request->filled('coupon_code')) {
         $coupon = Coupon::where('code', $request->coupon_code)

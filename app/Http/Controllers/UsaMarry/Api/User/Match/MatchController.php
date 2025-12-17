@@ -524,30 +524,6 @@ public function getMatchesWithLimit(Request $request)
     ]);
 }
 
-// ✅ 5. Near Me
-private function nearMeQuery($user)
-{
-
-
-    $page = $request->page ?? 1;
-    $location = $user->profile;
-
-    $query = $this->findPotentialMatches($user, false)
-        ->whereHas('profile', function ($q) use ($location) {
-            $q->where('city', $location->city ?? '')
-              ->orWhere('state', $location->state ?? '')
-              ->orWhere('country', $location->country ?? '');
-        });
-
-
-    $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-                     ->get();
-
-        return $matches;
-
-
-}
-
 
 
 public function getFullMenuWithCounts()
@@ -574,15 +550,15 @@ public function getFullMenuWithCounts()
 
 
 
-    $nearMeCount = $this->nearMeQuery($user);
 
 
-    // $nearMeCount = $this->findPotentialMatches($user, false)
-    //     ->whereHas('profile', function ($q) use ($user) {
-    //         $q->where('city', $user->profile->city ?? '')
-    //           ->orWhere('state', $user->profile->state ?? '')
-    //           ->orWhere('country', $user->profile->country ?? '');
-    //     })->count();
+
+    $nearMeCount = $this->findPotentialMatches($user, false)
+        ->whereHas('profile', function ($q) use ($user) {
+            $q->where('city', $user->profile->city ?? '')
+              ->orWhere('state', $user->profile->state ?? '')
+              ->orWhere('country', $user->profile->country ?? '');
+        })->count();
 
 
 
@@ -673,7 +649,7 @@ $requestsCount = $sentPendingCount + $receivedPendingCount;
             'href' => "#my-matches",
             'label' => "Matches",
             'label_mob' => "Matches",
-            'count' => $myMatchCount + $newMatchesCount + $todayMatchesCount  + $recentVisitorsCount,
+            'count' => $myMatchCount + $newMatchesCount + $todayMatchesCount + $nearMeCount + $recentVisitorsCount,
             'subCategories' => [
                 [ 'label' => "My Match", 'href' => "/dashboard/my-matches/my", 'count' => $myMatchCount ],
                 [ 'label' => "New Matches", 'href' => "/dashboard/my-matches/new", 'count' => $newMatchesCount ],

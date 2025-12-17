@@ -526,8 +526,17 @@ public function getMatchesWithLimit(Request $request)
 
 
 
+private function nearMeQuery($user)
+{
+    $location = $user->profile;
 
-
+    return $this->findPotentialMatches($user, false)
+        ->whereHas('profile', function ($q) use ($location) {
+            $q->where('city', $location->city ?? '')
+              ->orWhere('state', $location->state ?? '')
+              ->orWhere('country', $location->country ?? '');
+        });
+}
 
 
 
@@ -552,12 +561,21 @@ public function getFullMenuWithCounts()
 
 
 
-    $nearMeCount = $this->findPotentialMatches($user, false)
-        ->whereHas('profile', function ($q) use ($user) {
-            $q->where('city', $user->profile->city ?? '')
-              ->orWhere('state', $user->profile->state ?? '')
-              ->orWhere('country', $user->profile->country ?? '');
-        })->count();
+
+
+
+    $nearMeCount = $this->nearMeQuery($user)->count();
+
+
+    // $nearMeCount = $this->findPotentialMatches($user, false)
+    //     ->whereHas('profile', function ($q) use ($user) {
+    //         $q->where('city', $user->profile->city ?? '')
+    //           ->orWhere('state', $user->profile->state ?? '')
+    //           ->orWhere('country', $user->profile->country ?? '');
+    //     })->count();
+
+
+
 
 
     // $recentVisitorsCount = \App\Models\ProfileVisit::where('visited_id', $user->id)->count();

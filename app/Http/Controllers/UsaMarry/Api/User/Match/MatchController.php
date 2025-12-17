@@ -541,7 +541,7 @@ private function nearMeQuery($user)
 
 
     $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-                     ->count();
+                     ->get();
 
         return $matches;
 
@@ -673,7 +673,7 @@ $requestsCount = $sentPendingCount + $receivedPendingCount;
             'href' => "#my-matches",
             'label' => "Matches",
             'label_mob' => "Matches",
-            'count' => $myMatchCount + $newMatchesCount + $todayMatchesCount + $nearMeCount + $recentVisitorsCount,
+            'count' => $myMatchCount + $newMatchesCount + $todayMatchesCount  + $recentVisitorsCount,
             'subCategories' => [
                 [ 'label' => "My Match", 'href' => "/dashboard/my-matches/my", 'count' => $myMatchCount ],
                 [ 'label' => "New Matches", 'href' => "/dashboard/my-matches/new", 'count' => $newMatchesCount ],

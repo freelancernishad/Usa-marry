@@ -7,6 +7,7 @@ use App\Models\Notification;
 use App\Models\Subscription;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Mail;
+use App\Services\Twilio\TwilioService as Twilio;
 
 class NotificationHelper
 {
@@ -46,7 +47,11 @@ class NotificationHelper
         }
     });
 
-    Twilio::sendSMS($user->phone, $message);
+    try {
+        app(Twilio::class)->sendSMS($user->phone, $message);
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('SMS sending failed: ' . $e->getMessage());
+    }
 
 
 }

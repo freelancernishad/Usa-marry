@@ -524,18 +524,28 @@ public function getMatchesWithLimit(Request $request)
     ]);
 }
 
-
-
+// ✅ 5. Near Me
 private function nearMeQuery($user)
 {
+
+
+    $page = $request->page ?? 1;
     $location = $user->profile;
 
-    return $this->findPotentialMatches($user, false)
+    $query = $this->findPotentialMatches($user, false)
         ->whereHas('profile', function ($q) use ($location) {
             $q->where('city', $location->city ?? '')
               ->orWhere('state', $location->state ?? '')
               ->orWhere('country', $location->country ?? '');
         });
+
+
+    $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
+                     ->count();
+
+        return $matches;
+
+
 }
 
 
@@ -564,7 +574,7 @@ public function getFullMenuWithCounts()
 
 
 
-    $nearMeCount = $this->nearMeQuery($user)->count();
+    $nearMeCount = $this->nearMeQuery($user);
 
 
     // $nearMeCount = $this->findPotentialMatches($user, false)

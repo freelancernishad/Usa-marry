@@ -17,8 +17,8 @@ class AccountMailController extends Controller
     {
         $dailyLimit = 400;
 
-        // Get all users
-        $users = User::all();
+        // Get all users with id > 774
+        $users = User::where('id', '>', 774)->get();
 
         // Chunk users based on daily limit
         $chunks = $users->chunk($dailyLimit);

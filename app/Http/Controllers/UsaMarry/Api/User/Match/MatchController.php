@@ -343,7 +343,7 @@ public function getMatches(Request $request)
 
         $matches = $query
             ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-            ->paginate($perPage);
+            ->get();
 
 
     $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);

@@ -532,9 +532,19 @@ public function getFullMenuWithCounts()
 
     // === Matches Counts ===
     $myMatchCount = $this->findPotentialMatches($user, false)->count();
+
+
+
+
+
+
+
+
     $newMatchesCount = $this->findPotentialMatches($user, false)
-        ->where('created_at', '>=', now()->subDays(3))
+        ->where('created_at', '>=', now()->subDays(7))
         ->count();
+
+
 
         $todayMatchesCount = $this->findPotentialMatches($user, false)
             ->whereDate('created_at', now()->toDateString())

@@ -26,8 +26,8 @@ class TwilioService
 
     public function __construct()
     {
-        $sid = config('services.twilio.sid');
-        $token = config('services.twilio.token');
+        $sid = config('TWILIO_SID');
+        $token = config('TWILIO_AUTH_TOKEN');
 
         if (!$sid || !$token) {
             throw new \RuntimeException('Twilio credentials are missing');

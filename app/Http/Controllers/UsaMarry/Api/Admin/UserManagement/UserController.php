@@ -60,5 +60,26 @@ class UserController extends Controller
         ]);
     }
 
+    function subscribedUserNotFound(Request $request)
+    {
+        $per_page = $request->per_page == 'all' ? 'all' : 20;
+
+        // Find users who have an active subscription but the user record is missing
+        $usersQuery = User::whereHas('activeSubscription')
+            ->whereNull('name') // Assuming 'name' is a required field for user records
+            ->select('id', 'email', 'phone', 'created_at')
+            ->orderBy('id', 'desc');
+
+        $users = $per_page == 'all' ? $usersQuery->get() : $usersQuery->paginate($per_page);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subscribed users not found fetched successfully',
+            'data' => $users
+        ]);
+    }
+
+
+
 
 }

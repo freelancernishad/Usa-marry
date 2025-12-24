@@ -52,6 +52,8 @@ Route::prefix('admin')->group(function () {
 
         Route::get('/users/without-subscription', [UserManagementUserController::class, 'usersWithoutSubscription']);
 
+        Route::get('/subscribed/user/not/found', [UserManagementUserController::class, 'subscribedUserNotFound']);
+
 
         Route::get('/dashboard-overview', [AdminDashboardController::class, 'adminDashboardOverview']);
 

@@ -10,12 +10,12 @@ class TwilioService
     protected Client $client;
 
     /**
-     * Default country (ISO code)
+     * Default country (ISO)
      */
     protected string $defaultCountry = 'US';
 
     /**
-     * Supported countries
+     * Supported country codes
      */
     protected array $countryCodes = [
         'BD' => '+880',
@@ -55,7 +55,7 @@ class TwilioService
         } catch (\Throwable $e) {
             Log::error('Twilio SMS Error', [
                 'error' => $e->getMessage(),
-                'to' => $to ?? null,
+                'to'    => $to ?? null,
             ]);
 
             return false;
@@ -67,8 +67,8 @@ class TwilioService
      *
      * Rules:
      * 1. + থাকলে → unchanged
-     * 2. country code আছে কিন্তু + নাই → only + add
-     * 3. country code নাই → + & country code add
+     * 2. + না থাকলে কিন্তু known country code থাকলে → only +
+     * 3. country code নাই → default country code add
      */
     private function formatPhoneNumber(string $number, string $country): string
     {
@@ -80,29 +80,29 @@ class TwilioService
             return $this->validateE164($number);
         }
 
-        // Country support check
+        // 2️⃣ Starts with ANY known country code → just add +
+        foreach ($this->countryCodes as $code) {
+            $plainCode = ltrim($code, '+'); // 880, 1, 91, 44
+            if (str_starts_with($number, $plainCode)) {
+                return $this->validateE164('+' . $number);
+            }
+        }
+
+        // 3️⃣ No country code → use default country
         if (!isset($this->countryCodes[$country])) {
             throw new \InvalidArgumentException('Unsupported country: ' . $country);
         }
 
-        $countryCode = ltrim($this->countryCodes[$country], '+'); // e.g. 1, 880
-
-        // 2️⃣ Has country code but missing +
-        if (str_starts_with($number, $countryCode)) {
-            return $this->validateE164('+' . $number);
-        }
-
-        // 3️⃣ Bangladesh local number (starts with 0)
+        // Bangladesh local number starts with 0
         if ($country === 'BD' && str_starts_with($number, '0')) {
             $number = substr($number, 1);
         }
 
-        // 4️⃣ No country code → add + & country code
         return $this->validateE164($this->countryCodes[$country] . $number);
     }
 
     /**
-     * Generic E.164 validation
+     * E.164 validation
      */
     private function validateE164(string $number): string
     {

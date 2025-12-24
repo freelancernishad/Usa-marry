@@ -26,7 +26,7 @@ class TwilioService
 
     public function __construct()
     {
-        $sid = config('TWILIO_SID');
+        $sid   = config('TWILIO_SID');
         $token = config('TWILIO_AUTH_TOKEN');
 
         if (!$sid || !$token) {
@@ -37,17 +37,21 @@ class TwilioService
     }
 
     /**
-     * Send SMS
+     * Send SMS (Production Safe using Messaging Service)
      */
     public function sendSMS(string $to, string $message, ?string $country = null): bool
     {
         try {
+            // Format & validate number
             $to = $this->formatPhoneNumber($to, $country ?? $this->defaultCountry);
 
-            Log::info('Sending Twilio SMS', ['to' => $to]);
+            Log::info('Sending Twilio SMS', [
+                'to' => $to,
+                'via' => 'messaging_service'
+            ]);
 
             $this->client->messages->create($to, [
-                'from' => config('TWILIO_PHONE_NUMBER'),
+                'messagingServiceSid' => 'MGeb0dbcf2d43dbfc27b9a708a10935fd5',
                 'body' => $message,
             ]);
 
@@ -72,7 +76,7 @@ class TwilioService
      */
     private function formatPhoneNumber(string $number, string $country): string
     {
-        // Remove spaces, dashes, brackets
+        // Clean input
         $number = preg_replace('/[^0-9+]/', '', $number);
 
         // 1️⃣ Already has +

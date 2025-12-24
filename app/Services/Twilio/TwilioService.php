@@ -47,7 +47,7 @@ class TwilioService
             Log::info('Sending Twilio SMS', ['to' => $to]);
 
             $this->client->messages->create($to, [
-                'from' => config('services.twilio.from'),
+                'from' => config('TWILIO_PHONE_NUMBER'),
                 'body' => $message,
             ]);
 

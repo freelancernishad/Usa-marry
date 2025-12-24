@@ -7,10 +7,10 @@ use Illuminate\Support\Facades\Log;
 
 class TwilioService
 {
-    protected $client;
-  /**
+    protected Client $client;
+
+    /**
      * Default country (ISO code)
-     * Change if needed
      */
     protected string $defaultCountry = 'US';
 
@@ -23,22 +23,25 @@ class TwilioService
         'US' => '+1',
         'UK' => '+44',
     ];
+
     public function __construct()
     {
-        $this->client = new Client(config('TWILIO_SID'), config('TWILIO_AUTH_TOKEN'));
+        $sid = config('services.twilio.sid');
+        $token = config('services.twilio.token');
+
+        if (!$sid || !$token) {
+            throw new \RuntimeException('Twilio credentials are missing');
+        }
+
+        $this->client = new Client($sid, $token);
     }
 
     /**
-     * Send SMS globally
-     *
-     * @param string $to   Recipient number with country code, e.g. +8801XXXXXXXXX
-     * @param string $message
-     * @return bool
+     * Send SMS
      */
     public function sendSMS(string $to, string $message, ?string $country = null): bool
     {
         try {
-            // Format & validate phone number
             $to = $this->formatPhoneNumber($to, $country ?? $this->defaultCountry);
 
             Log::info('Sending Twilio SMS', ['to' => $to]);
@@ -59,15 +62,20 @@ class TwilioService
         }
     }
 
-      /**
+    /**
      * Normalize + validate phone number
+     *
+     * Rules:
+     * 1. + থাকলে → unchanged
+     * 2. country code আছে কিন্তু + নাই → only + add
+     * 3. country code নাই → + & country code add
      */
     private function formatPhoneNumber(string $number, string $country): string
     {
         // Remove spaces, dashes, brackets
         $number = preg_replace('/[^0-9+]/', '', $number);
 
-        // If already international → just validate
+        // 1️⃣ Already has +
         if (str_starts_with($number, '+')) {
             return $this->validateE164($number);
         }
@@ -77,15 +85,20 @@ class TwilioService
             throw new \InvalidArgumentException('Unsupported country: ' . $country);
         }
 
-        // Bangladesh local number (starts with 0)
+        $countryCode = ltrim($this->countryCodes[$country], '+'); // e.g. 1, 880
+
+        // 2️⃣ Has country code but missing +
+        if (str_starts_with($number, $countryCode)) {
+            return $this->validateE164('+' . $number);
+        }
+
+        // 3️⃣ Bangladesh local number (starts with 0)
         if ($country === 'BD' && str_starts_with($number, '0')) {
             $number = substr($number, 1);
         }
 
-        // Add country code
-        $number = $this->countryCodes[$country] . $number;
-
-        return $this->validateE164($number);
+        // 4️⃣ No country code → add + & country code
+        return $this->validateE164($this->countryCodes[$country] . $number);
     }
 
     /**
@@ -93,12 +106,10 @@ class TwilioService
      */
     private function validateE164(string $number): string
     {
-        // E.164: + followed by 10–15 digits
         if (!preg_match('/^\+[1-9]\d{9,14}$/', $number)) {
             throw new \InvalidArgumentException('Invalid phone number format: ' . $number);
         }
 
         return $number;
     }
-
 }

@@ -4,22 +4,19 @@ namespace App\Services\Twilio;
 
 use Twilio\Rest\Client;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 
 class TwilioService
 {
     protected Client $client;
 
     /**
-     * Messaging Service Friendly Name
-     */
-    protected string $messagingServiceName = 'USAMARRY';
-
-    /**
-     * Default country
+     * Default country (ISO)
      */
     protected string $defaultCountry = 'US';
 
+    /**
+     * Supported country codes
+     */
     protected array $countryCodes = [
         'BD' => '+880',
         'IN' => '+91',
@@ -40,22 +37,21 @@ class TwilioService
     }
 
     /**
-     * Send SMS using Messaging Service NAME
+     * Send SMS (Production Safe using Messaging Service)
      */
     public function sendSMS(string $to, string $message, ?string $country = null): bool
     {
         try {
+            // Format & validate number
             $to = $this->formatPhoneNumber($to, $country ?? $this->defaultCountry);
-            $messagingServiceSid = $this->getMessagingServiceSid();
 
             Log::info('Sending Twilio SMS', [
                 'to' => $to,
-                'service' => $this->messagingServiceName,
-                'sid' => $messagingServiceSid,
+                'via' => 'messaging_service'
             ]);
 
             $this->client->messages->create($to, [
-                'messagingServiceSid' => $messagingServiceSid,
+                'messagingServiceSid' => 'MGeb0dbcf2d43dbfc27b9a708a10935fd5',
                 'body' => $message,
             ]);
 
@@ -63,7 +59,7 @@ class TwilioService
         } catch (\Throwable $e) {
             Log::error('Twilio SMS Error', [
                 'error' => $e->getMessage(),
-                'to' => $to ?? null,
+                'to'    => $to ?? null,
             ]);
 
             return false;
@@ -71,52 +67,37 @@ class TwilioService
     }
 
     /**
-     * Resolve Messaging Service SID from Friendly Name (cached)
-     */
- private function getMessagingServiceSid(): string
-{
-    return Cache::rememberForever(
-        'twilio.messaging_service_sid.' . $this->messagingServiceName,
-        function () {
-            // Correct read() usage
-            $services = $this->client->messaging->services->read(20);
-
-            foreach ($services as $service) {
-                if ($service->friendlyName === $this->messagingServiceName) {
-                    return $service->sid; // MGxxxx
-                }
-            }
-
-            throw new \RuntimeException(
-                'Messaging Service not found: ' . $this->messagingServiceName
-            );
-        }
-    );
-}
-
-
-    /**
-     * Phone number normalization
+     * Normalize + validate phone number
+     *
+     * Rules:
+     * 1. + থাকলে → unchanged
+     * 2. + না থাকলে কিন্তু known country code থাকলে → only +
+     * 3. country code নাই → default country code add
      */
     private function formatPhoneNumber(string $number, string $country): string
     {
+        // Clean input
         $number = preg_replace('/[^0-9+]/', '', $number);
 
+        // 1️⃣ Already has +
         if (str_starts_with($number, '+')) {
             return $this->validateE164($number);
         }
 
+        // 2️⃣ Starts with ANY known country code → just add +
         foreach ($this->countryCodes as $code) {
-            $plainCode = ltrim($code, '+');
+            $plainCode = ltrim($code, '+'); // 880, 1, 91, 44
             if (str_starts_with($number, $plainCode)) {
                 return $this->validateE164('+' . $number);
             }
         }
 
+        // 3️⃣ No country code → use default country
         if (!isset($this->countryCodes[$country])) {
             throw new \InvalidArgumentException('Unsupported country: ' . $country);
         }
 
+        // Bangladesh local number starts with 0
         if ($country === 'BD' && str_starts_with($number, '0')) {
             $number = substr($number, 1);
         }
@@ -124,6 +105,9 @@ class TwilioService
         return $this->validateE164($this->countryCodes[$country] . $number);
     }
 
+    /**
+     * E.164 validation
+     */
     private function validateE164(string $number): string
     {
         if (!preg_match('/^\+[1-9]\d{9,14}$/', $number)) {

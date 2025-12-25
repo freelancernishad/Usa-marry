@@ -51,7 +51,7 @@ class TwilioService
             ]);
 
             $this->client->messages->create($to, [
-                'messagingServiceSid' => 'MGeb0dbcf2d43dbfc27b9a708a10935fd5',
+                'messagingServiceSid' => 'VA5307c0979bc73fb9a1687f39cc608daa',
                 'body' => $message,
             ]);
 

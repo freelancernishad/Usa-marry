@@ -73,25 +73,27 @@ class TwilioService
     /**
      * Resolve Messaging Service SID from Friendly Name (cached)
      */
-    private function getMessagingServiceSid(): string
-    {
-        return Cache::rememberForever(
-            'twilio.messaging_service_sid.' . $this->messagingServiceName,
-            function () {
-                $services = $this->client->messaging->services->read([], 20);
+ private function getMessagingServiceSid(): string
+{
+    return Cache::rememberForever(
+        'twilio.messaging_service_sid.' . $this->messagingServiceName,
+        function () {
+            // Correct read() usage
+            $services = $this->client->messaging->services->read(20);
 
-                foreach ($services as $service) {
-                    if ($service->friendlyName === $this->messagingServiceName) {
-                        return $service->sid; // MGxxxx
-                    }
+            foreach ($services as $service) {
+                if ($service->friendlyName === $this->messagingServiceName) {
+                    return $service->sid; // MGxxxx
                 }
-
-                throw new \RuntimeException(
-                    'Messaging Service not found: ' . $this->messagingServiceName
-                );
             }
-        );
-    }
+
+            throw new \RuntimeException(
+                'Messaging Service not found: ' . $this->messagingServiceName
+            );
+        }
+    );
+}
+
 
     /**
      * Phone number normalization

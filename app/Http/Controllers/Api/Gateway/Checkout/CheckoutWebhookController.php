@@ -13,6 +13,7 @@ class CheckoutWebhookController extends Controller
 {
     public function webhook(Request $request)
     {
+        Log::info('Checkout.com Webhook Invoked');
         $payload   = $request->getContent();
         $signature = $request->header('Cko-Signature');
         $secret    = config('CHECKOUT_WEBHOOK_SECRET');

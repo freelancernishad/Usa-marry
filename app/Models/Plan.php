@@ -18,6 +18,7 @@ class Plan extends Model
         'monthly_price',
         'discount_percentage',
         'features',  // stored as JSON
+        'index_no',
     ];
 
     protected $casts = [

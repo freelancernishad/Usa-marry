@@ -16,10 +16,13 @@ class ArticlesController extends Controller
      */
 public function index()
 {
-    $articles = Article::with('categories')->get()->map(function ($article) {
-        $article->content = Str::limit(strip_tags($article->content), 100); // Limit to 100 characters
-        return $article;
-    });
+    $articles = Article::with('categories')
+        ->latest()
+        ->get()
+        ->map(function ($article) {
+            $article->content = Str::limit(strip_tags($article->content), 100);
+            return $article;
+        });
 
     return response()->json($articles, 200);
 }

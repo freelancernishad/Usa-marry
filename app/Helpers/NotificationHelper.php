@@ -7,6 +7,7 @@ use App\Models\Notification;
 use App\Models\Subscription;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Mail;
+use App\Services\Twilio\TwilioService as Twilio;
 
 class NotificationHelper
 {
@@ -26,26 +27,31 @@ class NotificationHelper
 
 
     // Send email
-    // Mail::to($user->email)->send(new class($subject, $bladeView, $viewData) extends \Illuminate\Mail\Mailable {
-    //     public $subjectLine;
-    //     public $bladeView;
-    //     public $viewData;
+    Mail::to($user->email)->send(new class($subject, $bladeView, $viewData) extends \Illuminate\Mail\Mailable {
+        public $subjectLine;
+        public $bladeView;
+        public $viewData;
 
-    //     public function __construct($subjectLine, $bladeView, $viewData)
-    //     {
-    //         $this->subjectLine = $subjectLine;
-    //         $this->bladeView = $bladeView ?? 'emails.notification.connection'; // fallback view
-    //         $this->viewData = $viewData;
-    //     }
+        public function __construct($subjectLine, $bladeView, $viewData)
+        {
+            $this->subjectLine = $subjectLine;
+            $this->bladeView = $bladeView ?? 'emails.notification.connection'; // fallback view
+            $this->viewData = $viewData;
+        }
 
-    //     public function build()
-    //     {
-    //         return $this->view($this->bladeView)
-    //                     ->with($this->viewData)
-    //                     ->subject($this->subjectLine);
-    //     }
-    // });
+        public function build()
+        {
+            return $this->view($this->bladeView)
+                        ->with($this->viewData)
+                        ->subject($this->subjectLine);
+        }
+    });
 
+    try {
+        app(Twilio::class)->sendSMS($user->phone, $message);
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('SMS sending failed: ' . $e->getMessage());
+    }
 
 
 }

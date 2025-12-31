@@ -105,7 +105,7 @@ function handleAppleAuth(Request $request)
         $appleToken = $request->identity_token;
         $name = $request->name;
         $appleUserInfo = decodeAppleIdentityToken($appleToken);
-        Log::info($appleUserInfo);
+      
 
         if (!$appleUserInfo || !isset($appleUserInfo['email'])) {
             return response()->json(['error' => 'Invalid Apple token'], 400);

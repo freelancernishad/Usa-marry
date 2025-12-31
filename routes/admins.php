@@ -47,8 +47,12 @@ Route::prefix('admin')->group(function () {
 
         Route::post('/login-user-by-email', [AuthController::class, 'adminLoginUserByEmail']);
 
+        Route::post('/get/user/without/photo', [AuthController::class, 'adminGetUserWithoutPhoto']);
+
 
         Route::get('/users/without-subscription', [UserManagementUserController::class, 'usersWithoutSubscription']);
+
+        Route::get('/subscribed/user/not/found', [UserManagementUserController::class, 'subscribedUserNotFound']);
 
 
         Route::get('/dashboard-overview', [AdminDashboardController::class, 'adminDashboardOverview']);
@@ -65,6 +69,12 @@ Route::prefix('admin')->group(function () {
             Route::post('/{id}/ban', [UserController::class, 'ban']);
             Route::post('/{id}/unban', [UserController::class, 'unban']);
             Route::delete('/{id}', [UserController::class, 'destroy']);
+
+            Route::delete('delete/with/relations/{id}', [UserController::class, 'destroyWithRelations']);
+
+            Route::post('update/all/user/family_location', [UserController::class, 'updateLocationFromFamily']);
+            Route::post('update/all/user/country_from_phone', [UserController::class, 'updateCountryFromPhone']);
+            Route::post('update/all/user/country_from_grew_up', [UserController::class, 'updateCountryFromgrewUp']);
 
             // For API route
             Route::post('/{id}/toggle-top-profile', [UserController::class, 'toggleTopProfile']);

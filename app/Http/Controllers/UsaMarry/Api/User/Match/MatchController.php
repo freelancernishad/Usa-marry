@@ -150,6 +150,12 @@ public function getMatches(Request $request)
         }
     }
 
+
+
+
+
+
+
     // Exclude already matched/rejected users
     $existingMatches = $user->matches()->pluck('matched_user_id');
     $query->whereNotIn('id', $existingMatches);
@@ -169,6 +175,13 @@ public function getMatches(Request $request)
     }
 
     $query->orderByDesc('match_score');
+
+    // =================================================================
+    // এখানে নতুন লাইনটি যোগ করা হয়েছে
+    // এটি প্রথমে ছবির সংখ্যা অনুযায়ী সাজাবে (যাদের বেশি ছবি তারা আগে)
+    // =================================================================
+    $query->withCount('photos')->orderBy('photos_count', 'desc');
+
 
     return $query;
 }
@@ -330,7 +343,7 @@ public function getMatches(Request $request)
 
         $matches = $query
             ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-            ->paginate($perPage);
+            ->get();
 
 
     $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);
@@ -442,7 +455,7 @@ public function nearMe(Request $request)
     $query = applyFilters($query, $request);
 
     $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-                     ->paginate($perPage);
+                     ->get();
 
     $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);
 
@@ -464,7 +477,7 @@ public function moreMatches(Request $request)
     $query = applyFilters($query, $request);
 
     $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-                     ->paginate($perPage);
+                     ->get();
 
 
     $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);
@@ -513,20 +526,25 @@ public function getMatchesWithLimit(Request $request)
 
 
 
-
-
-
-
-
 public function getFullMenuWithCounts()
 {
     $user = Auth::user();
 
     // === Matches Counts ===
     $myMatchCount = $this->findPotentialMatches($user, false)->count();
+
+
+
+
+
+
+
+
     $newMatchesCount = $this->findPotentialMatches($user, false)
-        ->where('created_at', '>=', now()->subDays(3))
+        ->where('created_at', '>=', now()->subDays(7))
         ->count();
+
+
 
         $todayMatchesCount = $this->findPotentialMatches($user, false)
             ->whereDate('created_at', now()->toDateString())
@@ -539,12 +557,21 @@ public function getFullMenuWithCounts()
 
 
 
+
+
+
+
+
+
     $nearMeCount = $this->findPotentialMatches($user, false)
         ->whereHas('profile', function ($q) use ($user) {
             $q->where('city', $user->profile->city ?? '')
               ->orWhere('state', $user->profile->state ?? '')
               ->orWhere('country', $user->profile->country ?? '');
         })->count();
+
+
+
 
 
     // $recentVisitorsCount = \App\Models\ProfileVisit::where('visited_id', $user->id)->count();
@@ -691,7 +718,7 @@ $requestsCount = $sentPendingCount + $receivedPendingCount;
             ->limit($limit)
             ->get();
 
-      
+
         return response()->json([
             'suggested_profiles' => UserResource::collection($matches),
             'count' => $matches->count()

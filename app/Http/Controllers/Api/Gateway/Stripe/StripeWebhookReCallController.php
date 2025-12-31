@@ -100,11 +100,7 @@ class StripeWebhookReCallController extends Controller
         // Create the signature string: t=timestamp,v1=payload
         $dataToSign = 't=' . $timestamp . ',v1=' . $payload;
 
-        // Log the signature generation for debugging
-        Log::info('Generating signature:', [
-            'dataToSign' => $dataToSign,
-            'stripeSecret' => $stripeSecret
-        ]);
+
 
         // Generate the signature using HMAC with SHA256
         return "t={$timestamp},v1=" . hash_hmac('sha256', $dataToSign, $stripeSecret);
@@ -130,20 +126,17 @@ class StripeWebhookReCallController extends Controller
     // Use the event body directly as an object
     $payload = $eventBody;
 
-    // Log the payload for debugging
-    Log::info('Payload being sent:', ['payload' => $payload]);
+
 
     // Get the current Unix timestamp
     $timestamp = time();
 
-    // Log the timestamp for debugging
-    Log::info('Timestamp:', ['timestamp' => $timestamp]);
+
 
     // Generate the Stripe-Signature header
     $signature = $this->generateStripeSignature(json_encode($payload), $timestamp, $stripeSecret);
 
-    // Log the generated signature for debugging
-    Log::info('Generated Stripe Signature:', ['signature' => $signature]);
+
 
     // Send the POST request to the webhook URL with the signature
     $response = Http::withHeaders([
@@ -151,8 +144,7 @@ class StripeWebhookReCallController extends Controller
         'Stripe-Signature' => $signature
     ])->post($webhookUrl, $payload);
 
-    // Log the response or return it as JSON
-    Log::info('Webhook sent response:', ['response' => $response->body()]);
+
 
     return response()->json([
         'message' => 'Webhook sent successfully.',

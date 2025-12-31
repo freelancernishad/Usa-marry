@@ -57,15 +57,25 @@ class UserResource extends JsonResource
         $maskEmail = function ($email) {
             $parts = explode('@', $email);
             if (count($parts) !== 2) return null;
+
             $name = $parts[0];
             $domain = $parts[1];
-            return substr($name, 0, 1) . str_repeat('*', strlen($name) - 1) .
-                '@' . substr($domain, 0, 1) . str_repeat('*', strlen($domain) - 2) . substr($domain, -1);
+
+            $nameMasked = substr($name, 0, 1) . str_repeat('*', max(strlen($name) - 1, 0));
+            $domainMasked = substr($domain, 0, 1) . str_repeat('*', max(strlen($domain) - 2, 0)) . substr($domain, -1);
+
+            return $nameMasked . '@' . $domainMasked;
         };
 
-        $maskPhone = fn($phone) => $phone ? substr($phone, 0, 2) . str_repeat('*', strlen($phone) - 4) . substr($phone, -2) : null;
-        $maskAddress = fn($value) => $value ? substr($value, 0, 1) . str_repeat('*', max(strlen($value) - 2, 0)) . substr($value, -1) : null;
-        $maskWhatsapps = fn($whatsapps) => $whatsapps ? (substr($whatsapps, 0, 2) . str_repeat('*', strlen($whatsapps) - 4) . substr($whatsapps, -2)) : null;
+
+        $maskPhone = fn($phone) =>
+            $phone ? substr($phone, 0, 2) . str_repeat('*', max(strlen($phone) - 4, 0)) . substr($phone, -2) : null;
+
+        $maskAddress = fn($value) =>
+            $value ? substr($value, 0, 1) . str_repeat('*', max(strlen($value) - 2, 0)) . substr($value, -1) : null;
+
+        $maskWhatsapps = fn($whatsapps) =>
+            $whatsapps ? substr($whatsapps, 0, 2) . str_repeat('*', max(strlen($whatsapps) - 4, 0)) . substr($whatsapps, -2) : null;
 
         // Base user data
         $userData = $this->only([
@@ -122,6 +132,7 @@ class UserResource extends JsonResource
                 'photos_locked' => $this->photos_locked,
                 'is_photo_request_sent' => $isPhotoRequestSent,
                 'is_photo_request_received' => $isPhotoRequestReceived,
+                'photos_count' => $this->photos_count,
             ]
         );
     }

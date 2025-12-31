@@ -31,7 +31,7 @@ class SubscriptionController extends Controller
     // Fetch the list of available plans from the database
     public function plans()
     {
-        $plans = Plan::all(); // Fetch all plans from the database
+        $plans = Plan::orderBy('index_no', 'asc')->get(); // Get all plans ordered by index_no
 
         return response()->json([
             'plans' => $plans
@@ -144,7 +144,7 @@ public function subscribe(Request $request)
     $finalAmount = $originalAmount;
 
     // Coupon logic
-    if ($request->filled('coupon_code')) {
+    if ($request->coupon_code) {
         $coupon = Coupon::where('code', $request->coupon_code)
             ->where('is_active', true)
             ->where(function ($query) {
@@ -157,6 +157,8 @@ public function subscribe(Request $request)
             })
             ->first();
 
+            Log::info("Processing coupon code: " . $request->coupon_code);
+            Log::info("Processing coupon result: " . json_encode($coupon));
         if (
             !$coupon ||
             (!is_null($coupon->valid_from) && now()->lt($coupon->valid_from)) ||
@@ -166,11 +168,7 @@ public function subscribe(Request $request)
         }
 
         $couponCode = $coupon->code;
-        Log::info('Coupon applied', [
-            'coupon_code' => $couponCode,
-            'coupon_type' => $coupon->type,
-            'value' => $coupon->value,
-        ]);
+
 
 
         if ($coupon->type == 'percentage') {
@@ -179,11 +177,16 @@ public function subscribe(Request $request)
         } elseif ($coupon->type == 'fixed') {
             $discountAmount = $coupon->value;
             $discountPercent = ($discountAmount / $originalAmount) * 100;
+        } elseif ($coupon->type == 'flat') {
+            $discountAmount = $coupon->value;
+            $discountPercent = ($discountAmount / $originalAmount) * 100;
         }
 
         $finalAmount = max($originalAmount - $discountAmount, 0);
-    }
 
+        Log::info("Final amount after coupon application: " . $finalAmount);
+
+    }
     // Create subscription
     $subscription = Subscription::create([
         'user_id' => $user->id,
@@ -273,10 +276,7 @@ public function webhook(Request $request)
     }
 
 
-   Log::info('Stripe Webhook Event Received', [
-        'type' => $event->type,
-        'data' => $event->data->object,
-    ]);
+
     // Handle the event
     switch ($event->type) {
         case 'checkout.session.completed':

@@ -2,14 +2,218 @@
 
 namespace App\Http\Controllers\Api\Admin\Users;
 
+use Locale;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use libphonenumber\PhoneNumberUtil;
+
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use libphonenumber\PhoneNumberFormat;
 use App\Http\Resources\UserPaginationResource;
 
 class UserController extends Controller
 {
+
+
+
+   public function updateCountryFromgrewUp()
+{
+     $users = \App\Models\User::with('profile')
+        ->where('phone', '+8801711111111')
+        ->get();
+
+    foreach ($users as $user) {
+        try {
+            $grewUpIn = $user->grew_up_in;
+
+            if (!$grewUpIn) continue;
+
+            // Multiple country দিলে প্রথম country নিবে
+            $countryList = explode(',', $grewUpIn);
+            $country = trim($countryList[0]); // প্রথম country clean করে নিবে
+
+            $user->profile->update([
+                'country' => $country,
+                'state'   => null,
+                'city'    => null
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::warning("Invalid grew_up_in for user_id {$user->id}");
+            continue;
+        }
+    }
+
+    return response()->json([
+        'message' => 'Country updated successfully from grew_up_in field.'
+    ]);
+}
+
+
+
+    public function updateCountryFromPhone()
+    {
+        $phoneUtil = PhoneNumberUtil::getInstance();
+
+        // Region code → country name map
+        $regionMap = CountryCodes();
+
+        $users = \App\Models\User::whereNull('family_location')->whereNotNull('phone')->get();
+
+        foreach ($users as $user) {
+            $phone = $user->phone;
+            if (empty($phone)) continue;
+
+            try {
+                $numberProto = $phoneUtil->parse($phone, null);
+                $regionCode = $phoneUtil->getRegionCodeForNumber($numberProto); // e.g., BD
+
+                if ($regionCode && isset($regionMap[$regionCode])) {
+                    $countryName = $regionMap[$regionCode];
+                    Log::info("User ID {$user->id}: Phone {$phone} → Region {$regionCode} → Country {$countryName}");
+
+                    $user->profile->update(['country' => $countryName,'state' => null, 'city' => null]);
+
+                    // if ($user->country !== $countryName) {
+                    //     $user->update(['country' => $countryName]);
+                    // }
+                }
+
+            } catch (\libphonenumber\NumberParseException $e) {
+                \Log::warning("Invalid phone for user_id {$user->id}: {$phone}");
+                continue;
+            }
+        }
+
+        return response()->json([
+            'message' => 'Country updated successfully from phone numbers (no Locale class needed).'
+        ]);
+    }
+
+
+
+
+
+
+    public function updateLocationFromFamily()
+    {
+        // Get all users with family_location not null
+        $users = \App\Models\User::whereNotNull('family_location')->get();
+        // return response()->json([
+        //     'total_users' => $users,
+        // ]);
+
+        foreach ($users as $user) {
+
+            $family = $user->family_location;
+
+            // Default values (optional, keep existing if empty)
+            $city    = $user->city;
+            $state   = $user->state;
+            $country = $user->country;
+
+            if (!empty($family)) {
+                // Split by comma and trim spaces
+                $parts = array_map('trim', explode(',', $family));
+                $count = count($parts);
+
+                if ($count === 3) {
+                    // Format: City, State, Country
+                    $city    = $parts[0];
+                    $state   = $parts[1];
+                    $country = $parts[2];
+                } elseif ($count === 2) {
+                    // Format: City, Country
+                    $city    = $parts[0];
+                    $state   = null;       // optional
+                    $country = $parts[1];
+                } elseif ($count === 1) {
+                    // Format: Only City
+                    $city = null;
+                    $state   = null;
+                    $country    = $parts[0];
+                } else {
+                    // Unexpected format, skip and log
+                    \Log::warning("Invalid family_location format for user_id {$user->id}: {$family}");
+                    continue; // skip this user
+                }
+            }
+
+            // Update user record
+            $user->profile->update([
+                'city'    => $city,
+                'state'   => $state,
+                'country' => $country,
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'All users location updated successfully from family_location.'
+        ]);
+    }
+
+
+
+
+
+    public function destroyWithRelations($id)
+    {
+        $user = User::with([
+            'profile',
+            'partnerPreference',
+            'photos',
+            'profileVisit',
+            'matches',
+            'reverseMatches',
+            'subscriptions',
+            'blockedUsers',
+            'reportsFiled',
+            'connections',
+            'connectedUsers',
+            'sentPhotoRequests',
+            'receivedPhotoRequests',
+            'loginLogs'
+        ])->findOrFail($id);
+
+        // সব রিলেশন ডিলিট করা
+        $user->profile()?->delete();
+        $user->partnerPreference()?->delete();
+        $user->photos()->delete();
+        $user->profileVisit()?->delete();
+        $user->matches()->delete();
+        $user->reverseMatches()->delete();
+        $user->subscriptions()->delete();
+        $user->blockedUsers()->delete();
+        $user->reportsFiled()->delete();
+        $user->connections()->delete();
+        $user->connectedUsers()->delete();
+        $user->sentPhotoRequests()->delete();
+        $user->receivedPhotoRequests()->delete();
+        $user->loginLogs()->delete();
+
+         // DELETE Notifications
+        \App\Models\Notification::where('user_id', $user->id)->delete();
+
+          // Contact Views — NEW
+        \App\Models\ContactView::where('user_id', $user->id)->delete();
+        \App\Models\ContactView::where('contact_user_id', $user->id)->delete();
+
+
+
+        // সবশেষে user delete
+        $user->delete();
+
+        return response()->json([
+            'message' => 'User and all related data deleted successfully.'
+        ]);
+    }
+
+
+
+
+
     // ✅ All users with optional search and subscriptions loaded
 public function index(Request $request)
 {

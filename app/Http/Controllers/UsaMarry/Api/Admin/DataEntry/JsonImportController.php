@@ -162,6 +162,66 @@ class JsonImportController extends Controller
         $profession = $detailed['profession'] ?? [];
 
 
+       $location =  $family['location'] ?? '';
+       $located =  $family['located'] ?? '';
+
+
+
+// Step 1: Initialize default values
+$country = '-';
+$state   = '-';
+$city    = '-';
+
+// Step 2: First check $location and $located
+$locationData = null;
+
+if (!empty($location)) {
+    $locationData = GetLocationFromJson($location);
+} elseif (!empty($located)) {
+    $locationData = GetLocationFromJson($located);
+} else {
+    // Step 3: Prepare fallback arrays
+    $fallbacks = [
+        $data['base']['infoMap'] ?? [],
+        $data['base']['infoList'] ?? [],
+        $data['base']['miniNriList'] ?? [],
+        $data['base']['miniList'] ?? [],
+        $data['base']['cardInfo'] ?? [],
+        $data['base']['detailList'] ?? [],
+        $data['base']['premiumInfo'] ?? [],
+        $data['summary']['infoMap'] ?? [],
+        $data['summary']['infoMapNonIndian'] ?? [],
+        $data['summary']['infoMapIndian'] ?? [],
+        $data['summary']['infoMapNri'] ?? [],
+        $data['summary']['infoMapPremiumCarousel'] ?? [],
+    ];
+
+    // Step 4: Loop through fallback arrays and get first non-empty location
+    foreach ($fallbacks as $list) {
+        $locValue = getlocaltionValue($list, 'location'); // Call your function
+        if (!empty($locValue)) {
+            $locationData = GetLocationFromJson($locValue);
+            break; // Stop at first found
+        }
+    }
+}
+
+// Step 5: Assign country/state/city
+if (!empty($locationData)) {
+    $country = $locationData['country'] ?? '-';
+    $state   = $locationData['state'] ?? '-';
+    $city    = $locationData['city'] ?? '-';
+}
+
+
+
+
+
+
+
+
+
+
 
         $profileData = [
             'about' => $detailed['about'] ?? null,
@@ -182,9 +242,13 @@ class JsonImportController extends Controller
             'diet' => $lifestyle['diet'] ?? null,
             'drink' => $lifestyle['drink'] ?? null,
             'smoke' => $lifestyle['smoke'] ?? null,
-            'country' => 'Bangladesh', // From location data
-            'state' => 'Dhaka', // From location data
-            'city' => 'Dhaka', // From location data
+
+            'country' => $country, // From location data
+            'state' => $state, // From location data
+            'city' => $city, // From location data
+
+
+
             'resident_status' => $this->extractResidentStatus($data),
             'has_horoscope' => !empty($data['astro']['details']),
             'rashi' => $data['astro']['details']['moon_sign'] ?? null,
@@ -491,7 +555,7 @@ private function extractDateOfBirthFromAge($data)
 
         $totalSiblings = $brothers + $sisters;
 
-        Log::info("Extracted siblings: Brothers = $brothers, Sisters = $sisters, Total = $totalSiblings");
+
 
         return $totalSiblings;
     }

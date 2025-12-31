@@ -248,7 +248,7 @@ class StripeController extends Controller
     try {
         // Retrieve the Stripe customer
         $stripeCustomer = \Stripe\Customer::retrieve($stripeCustomerId);
-        Log::info("Stripe Customer: " . json_encode($stripeCustomer));
+
 
         // Retrieve the customer's subscriptions
         $subscriptions = \Stripe\Subscription::all([
@@ -268,12 +268,12 @@ class StripeController extends Controller
             // Retrieve the payment method used for the payment intent
             if ($paymentIntent->payment_method) {
                 $paymentMethod = \Stripe\PaymentMethod::retrieve($paymentIntent->payment_method);
-                Log::info("Payment Method from PaymentIntent: " . json_encode($paymentMethod));
+
 
                 // Attach the payment method to the customer (if not already attached)
                 if ($paymentMethod->customer !== $stripeCustomerId) {
                     $paymentMethod->attach(['customer' => $stripeCustomerId]);
-                    Log::info("Payment method attached to customer: " . $stripeCustomerId);
+
                 }
 
                 // Save payment method details to the UserPackage

@@ -17,6 +17,7 @@ use App\Helpers\NotificationHelper;
     use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 use Stripe\Checkout\Session as CheckoutSession;
@@ -42,7 +43,7 @@ private function createStripeCheckoutSession($plan, $finalAmount, $subscription,
 {
     \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
-    $session = StripeSession::create([
+    $session = \Stripe\Checkout\Session::create([
         'payment_method_types' => ['card'],
         'line_items' => [[
             'price_data' => [

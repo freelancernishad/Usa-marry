@@ -66,46 +66,78 @@ private function createStripeCheckoutSession($plan, $finalAmount, $subscription,
     return $session->url;
 }
 
-private function createCheckoutPaymentLink($user, $plan, $finalAmount, $subscription,$successUrl)
+
+private function createCheckoutPaymentLink($user, $plan, $finalAmount, $subscription, $successUrl)
 {
-    $response = Http::withToken(config('CHECKOUT_SECRET'))
-        ->post('https://api.sandbox.checkout.com/payment-links', [
-            'amount' => (int) ($finalAmount * 100),
-            'currency' => 'USD',
-            'reference' => 'SUB-' . $subscription->id,
-            'description' => 'Subscription payment for ' . $plan->name,
-            'display_name' => config('app.name'),
-            'expires_in' => 604800, // 7 days
-            'processing_channel_id' => config('CHECKOUT_PROCESSING_CHANNEL_ID'),
+    $profile = $user->profile;
 
-            'customer' => [
-                'email' => $user->email,
-                'name' => $user->name,
-            ],
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . config('CHECKOUT_SECRET'),
+        'Content-Type'  => 'application/json',
+    ])->post('https://api.sandbox.checkout.com/payment-links', [
 
-            'products' => [
-                [
-                    'reference' => 'PLAN-' . $plan->id,
-                    'name' => $plan->name,
-                    'quantity' => 1,
-                    'price' => (int) ($finalAmount * 100),
-                ]
-            ],
+        'amount' => (int) ($finalAmount * 100),
+        'currency' => 'USD',
+        'reference' => 'SUB-' . $subscription->id,
+        'description' => 'Subscription payment for ' . $plan->name,
+        'display_name' => config('app.name'),
+        'expires_in' => 604800,
+        'processing_channel_id' => config('CHECKOUT_PROCESSING_CHANNEL_ID'),
 
-            'allow_payment_methods' => [
-                'card',
-                'applepay',
-                'googlepay'
+        'customer' => [
+            'email' => $user->email,
+            'name'  => $user->name,
+        ],
+
+        'products' => [
+            [
+                'reference' => 'PLAN-' . $plan->id,
+                'name'      => $plan->name,
+                'quantity'  => 1,
+                'price'     => (int) ($finalAmount * 100),
+            ]
+        ],
+
+        'allow_payment_methods' => [
+            'card',
+            'applepay',
+            'googlepay'
+        ],
+
+        // ✅ AUTO BILLING FROM MODELS
+        'billing' => [
+            'address' => [
+                'address_line1' => $profile->institution
+                    ?? $profile->occupation
+                    ?? 'User Address',
+
+                'address_line2' => $profile->family_location ?? null,
+                'city'          => $profile->city ?? 'Unknown',
+                'state'         => $profile->state ?? 'NA',
+                'zip'           => '00000',
+                'country'       => 'US',
             ],
-            'return_url' => $successUrl . '?session_id={CHECKOUT_SESSION_ID}',
-        ]);
+            'phone' => [
+                'country_code' => '+1',
+                'number' => preg_replace('/\D/', '', $user->phone ?? '0000000000'),
+            ],
+        ],
+
+        'return_url' => $successUrl . '?subscription_id=' . $subscription->id,
+    ]);
 
     if (!$response->successful()) {
-        throw new \Exception('Checkout.com payment link creation failed');
+        Log::error('Checkout.com Error', [
+            'status'   => $response->status(),
+            'response' => $response->json(),
+        ]);
+
+        throw new \Exception($response->body());
     }
 
-    return $response->json('links.payment.href');
+    return $response->json('_links.redirect.href');
 }
+
 
      // Handle the subscription request
 public function subscribe(Request $request)
@@ -217,13 +249,13 @@ $url = $this->createStripeCheckoutSession(
 ) ?? '';
 
 // Checkout.com Payment Link (CURRENT GATEWAY)
-// $CheckoutUrl = $this->createCheckoutPaymentLink(
-//     $user,
-//     $plan,
-//     $finalAmount,
-//     $subscription,
-//     $request->success_url
-// )?? '';
+$CheckoutUrl = $this->createCheckoutPaymentLink(
+    $user,
+    $plan,
+    $finalAmount,
+    $subscription,
+    $request->success_url
+)?? '';
 
     // Stripe Checkout
     // $checkoutSession = \Stripe\Checkout\Session::create([
@@ -248,7 +280,7 @@ $url = $this->createStripeCheckoutSession(
 
     return response()->json([
         'url' => $url,
-        // 'checkout_url' => $CheckoutUrl,
+        'checkout_url' => $CheckoutUrl,
 
     ]);
 }

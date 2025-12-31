@@ -214,7 +214,7 @@ $url = $this->createStripeCheckoutSession(
     $subscription,
     $request->success_url,
     $request->cancel_url
-);
+) ?? '';
 
 // Checkout.com Payment Link (CURRENT GATEWAY)
 $CheckoutUrl = $this->createCheckoutPaymentLink(
@@ -223,7 +223,7 @@ $CheckoutUrl = $this->createCheckoutPaymentLink(
     $finalAmount,
     $subscription,
     $request->success_url
-);
+)?? '';
 
     // Stripe Checkout
     // $checkoutSession = \Stripe\Checkout\Session::create([

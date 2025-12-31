@@ -41,7 +41,7 @@ class SubscriptionController extends Controller
 
 private function createStripeCheckoutSession($plan, $finalAmount, $subscription, $successUrl, $cancelUrl)
 {
-    \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+   
 
     $session = \Stripe\Checkout\Session::create([
         'payment_method_types' => ['card'],

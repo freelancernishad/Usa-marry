@@ -41,7 +41,7 @@ class SubscriptionController extends Controller
 
 private function createStripeCheckoutSession($plan, $finalAmount, $subscription, $successUrl, $cancelUrl)
 {
-   
+
 
     $session = \Stripe\Checkout\Session::create([
         'payment_method_types' => ['card'],
@@ -217,13 +217,13 @@ $url = $this->createStripeCheckoutSession(
 ) ?? '';
 
 // Checkout.com Payment Link (CURRENT GATEWAY)
-$CheckoutUrl = $this->createCheckoutPaymentLink(
-    $user,
-    $plan,
-    $finalAmount,
-    $subscription,
-    $request->success_url
-)?? '';
+// $CheckoutUrl = $this->createCheckoutPaymentLink(
+//     $user,
+//     $plan,
+//     $finalAmount,
+//     $subscription,
+//     $request->success_url
+// )?? '';
 
     // Stripe Checkout
     // $checkoutSession = \Stripe\Checkout\Session::create([
@@ -248,7 +248,7 @@ $CheckoutUrl = $this->createCheckoutPaymentLink(
 
     return response()->json([
         'url' => $url,
-        'checkout_url' => $CheckoutUrl,
+        // 'checkout_url' => $CheckoutUrl,
 
     ]);
 }

@@ -15,7 +15,7 @@ class CheckoutWebhookController extends Controller
     {
         $payload   = $request->getContent();
         $signature = $request->header('Cko-Signature');
-        $secret    = config('services.checkout.webhook_secret');
+        $secret    = config('CHECKOUT_WEBHOOK_SECRET');
 
         // 🔐 Verify signature (HMAC SHA256)
         if (!$this->verifyCheckoutSignature($payload, $signature, $secret)) {

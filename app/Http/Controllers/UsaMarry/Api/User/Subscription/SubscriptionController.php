@@ -38,7 +38,73 @@ class SubscriptionController extends Controller
         ]);
     }
 
+private function createStripeCheckoutSession($plan, $finalAmount, $subscription, $successUrl, $cancelUrl)
+{
+    \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
+    $session = StripeSession::create([
+        'payment_method_types' => ['card'],
+        'line_items' => [[
+            'price_data' => [
+                'currency' => 'usd',
+                'product_data' => [
+                    'name' => $plan->name,
+                ],
+                'unit_amount' => (int) ($finalAmount * 100),
+            ],
+            'quantity' => 1,
+        ]],
+        'mode' => 'payment',
+        'success_url' => $successUrl . '?session_id={CHECKOUT_SESSION_ID}',
+        'cancel_url' => $cancelUrl . '?session_id={CHECKOUT_SESSION_ID}',
+        'metadata' => [
+            'subscription_id' => $subscription->id,
+        ],
+    ]);
+
+    return $session->url;
+}
+
+private function createCheckoutPaymentLink($user, $plan, $finalAmount, $subscription,$successUrl)
+{
+    $response = Http::withToken(config('CHECKOUT_SECRET'))
+        ->post('https://api.sandbox.checkout.com/payment-links', [
+            'amount' => (int) ($finalAmount * 100),
+            'currency' => 'USD',
+            'reference' => 'SUB-' . $subscription->id,
+            'description' => 'Subscription payment for ' . $plan->name,
+            'display_name' => config('app.name'),
+            'expires_in' => 604800, // 7 days
+            'processing_channel_id' => config('CHECKOUT_PROCESSING_CHANNEL_ID'),
+
+            'customer' => [
+                'email' => $user->email,
+                'name' => $user->name,
+            ],
+
+            'products' => [
+                [
+                    'reference' => 'PLAN-' . $plan->id,
+                    'name' => $plan->name,
+                    'quantity' => 1,
+                    'price' => (int) ($finalAmount * 100),
+                ]
+            ],
+
+            'allow_payment_methods' => [
+                'card',
+                'applepay',
+                'googlepay'
+            ],
+            'return_url' => $successUrl . '?session_id={CHECKOUT_SESSION_ID}',
+        ]);
+
+    if (!$response->successful()) {
+        throw new \Exception('Checkout.com payment link creation failed');
+    }
+
+    return $response->json('links.payment.href');
+}
 
      // Handle the subscription request
 public function subscribe(Request $request)
@@ -136,29 +202,50 @@ public function subscribe(Request $request)
         'discount_percent' => $discountPercent,
     ]);
 
+
+
+$url = $this->createStripeCheckoutSession(
+    $plan,
+    $finalAmount,
+    $subscription,
+    $request->success_url,
+    $request->cancel_url
+);
+
+// Checkout.com Payment Link (CURRENT GATEWAY)
+$CheckoutUrl = $this->createCheckoutPaymentLink(
+    $user,
+    $plan,
+    $finalAmount,
+    $subscription,
+    $request->success_url
+);
+
     // Stripe Checkout
-    $checkoutSession = \Stripe\Checkout\Session::create([
-        'payment_method_types' => ['card'],
-        'line_items' => [[
-            'price_data' => [
-                'currency' => 'usd',
-                'product_data' => [
-                    'name' => $plan->name,
-                ],
-                'unit_amount' => $finalAmount * 100,
-            ],
-            'quantity' => 1,
-        ]],
-        'mode' => 'payment',
-        'success_url' => $request->success_url . '?session_id={CHECKOUT_SESSION_ID}',
-        'cancel_url' => $request->cancel_url . '?session_id={CHECKOUT_SESSION_ID}',
-        'metadata' => [
-            'subscription_id' => $subscription->id,
-        ],
-    ]);
+    // $checkoutSession = \Stripe\Checkout\Session::create([
+    //     'payment_method_types' => ['card'],
+    //     'line_items' => [[
+    //         'price_data' => [
+    //             'currency' => 'usd',
+    //             'product_data' => [
+    //                 'name' => $plan->name,
+    //             ],
+    //             'unit_amount' => $finalAmount * 100,
+    //         ],
+    //         'quantity' => 1,
+    //     ]],
+    //     'mode' => 'payment',
+    //     'success_url' => $request->success_url . '?session_id={CHECKOUT_SESSION_ID}',
+    //     'cancel_url' => $request->cancel_url . '?session_id={CHECKOUT_SESSION_ID}',
+    //     'metadata' => [
+    //         'subscription_id' => $subscription->id,
+    //     ],
+    // ]);
 
     return response()->json([
-        'url' => $checkoutSession->url
+        'url' => $url,
+        'checkout_url' => $CheckoutUrl,
+
     ]);
 }
 

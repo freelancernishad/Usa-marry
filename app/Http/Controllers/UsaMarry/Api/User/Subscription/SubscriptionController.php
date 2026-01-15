@@ -17,6 +17,7 @@ use App\Helpers\NotificationHelper;
     use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 use Stripe\Checkout\Session as CheckoutSession;
@@ -38,6 +39,104 @@ class SubscriptionController extends Controller
         ]);
     }
 
+private function createStripeCheckoutSession($plan, $finalAmount, $subscription, $successUrl, $cancelUrl)
+{
+
+
+    $session = \Stripe\Checkout\Session::create([
+        'payment_method_types' => ['card'],
+        'line_items' => [[
+            'price_data' => [
+                'currency' => 'usd',
+                'product_data' => [
+                    'name' => $plan->name,
+                ],
+                'unit_amount' => (int) ($finalAmount * 100),
+            ],
+            'quantity' => 1,
+        ]],
+        'mode' => 'payment',
+        'success_url' => $successUrl . '?session_id={CHECKOUT_SESSION_ID}',
+        'cancel_url' => $cancelUrl . '?session_id={CHECKOUT_SESSION_ID}',
+        'metadata' => [
+            'subscription_id' => $subscription->id,
+        ],
+    ]);
+
+    return $session->url;
+}
+
+
+private function createCheckoutPaymentLink($user, $plan, $finalAmount, $subscription, $successUrl)
+{
+    $profile = $user->profile;
+
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . config('CHECKOUT_SECRET'),
+        'Content-Type'  => 'application/json',
+    ])->post('https://api.sandbox.checkout.com/payment-links', [
+
+        'amount' => (int) ($finalAmount * 100),
+        'currency' => 'USD',
+        'reference' => 'SUB-' . $subscription->id,
+        'description' => 'Subscription payment for ' . $plan->name,
+        'display_name' => config('app.name'),
+        'expires_in' => 604800,
+        'processing_channel_id' => config('CHECKOUT_PROCESSING_CHANNEL_ID'),
+
+        'customer' => [
+            'email' => $user->email,
+            'name'  => $user->name,
+        ],
+
+        'products' => [
+            [
+                'reference' => 'PLAN-' . $plan->id,
+                'name'      => $plan->name,
+                'quantity'  => 1,
+                'price'     => (int) ($finalAmount * 100),
+            ]
+        ],
+
+        'allow_payment_methods' => [
+            'card',
+            'applepay',
+            'googlepay'
+        ],
+
+        // ✅ AUTO BILLING FROM MODELS
+        'billing' => [
+            'address' => [
+                'address_line1' => $profile->institution
+                    ?? $profile->occupation
+                    ?? 'User Address',
+
+                'address_line2' => $profile->family_location ?? null,
+                'city'          => $profile->city ?? 'Unknown',
+                'state'         => $profile->state ?? 'NA',
+                'zip'           => '00000',
+                'country'       => 'US',
+            ],
+            'phone' => [
+                'country_code' => '+1',
+                'number' => preg_replace('/\D/', '', $user->phone ?? '0000000000'),
+            ],
+        ],
+
+        'return_url' => $successUrl . '?subscription_id=' . $subscription->id,
+    ]);
+
+    if (!$response->successful()) {
+        Log::error('Checkout.com Error', [
+            'status'   => $response->status(),
+            'response' => $response->json(),
+        ]);
+
+        throw new \Exception($response->body());
+    }
+
+    return $response->json('_links.redirect.href');
+}
 
 
      // Handle the subscription request
@@ -139,29 +238,50 @@ public function subscribe(Request $request)
         'discount_percent' => $discountPercent,
     ]);
 
+
+
+$url = $this->createStripeCheckoutSession(
+    $plan,
+    $finalAmount,
+    $subscription,
+    $request->success_url,
+    $request->cancel_url
+) ?? '';
+
+// Checkout.com Payment Link (CURRENT GATEWAY)
+$CheckoutUrl = $this->createCheckoutPaymentLink(
+    $user,
+    $plan,
+    $finalAmount,
+    $subscription,
+    $request->success_url
+)?? '';
+
     // Stripe Checkout
-    $checkoutSession = \Stripe\Checkout\Session::create([
-        'payment_method_types' => ['card'],
-        'line_items' => [[
-            'price_data' => [
-                'currency' => 'usd',
-                'product_data' => [
-                    'name' => $plan->name,
-                ],
-                'unit_amount' => $finalAmount * 100,
-            ],
-            'quantity' => 1,
-        ]],
-        'mode' => 'payment',
-        'success_url' => $request->success_url . '?session_id={CHECKOUT_SESSION_ID}',
-        'cancel_url' => $request->cancel_url . '?session_id={CHECKOUT_SESSION_ID}',
-        'metadata' => [
-            'subscription_id' => $subscription->id,
-        ],
-    ]);
+    // $checkoutSession = \Stripe\Checkout\Session::create([
+    //     'payment_method_types' => ['card'],
+    //     'line_items' => [[
+    //         'price_data' => [
+    //             'currency' => 'usd',
+    //             'product_data' => [
+    //                 'name' => $plan->name,
+    //             ],
+    //             'unit_amount' => $finalAmount * 100,
+    //         ],
+    //         'quantity' => 1,
+    //     ]],
+    //     'mode' => 'payment',
+    //     'success_url' => $request->success_url . '?session_id={CHECKOUT_SESSION_ID}',
+    //     'cancel_url' => $request->cancel_url . '?session_id={CHECKOUT_SESSION_ID}',
+    //     'metadata' => [
+    //         'subscription_id' => $subscription->id,
+    //     ],
+    // ]);
 
     return response()->json([
-        'url' => $checkoutSession->url
+        'url' => $url,
+        'checkout_url' => $CheckoutUrl,
+
     ]);
 }
 

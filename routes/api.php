@@ -85,10 +85,11 @@ Route::post('/contact/send', [ContactController::class, 'send']);
         Route::group(['prefix' => 'blogs/categories',], function () {
             Route::get('/', [CategoryController::class, 'index']);
             Route::get('/{id}', [CategoryController::class, 'show']);
+
             Route::get('/all/list', [CategoryController::class, 'list']);
 
         });
-
+        Route::get('blogs/category/{slug}', [CategoryController::class, 'showBySlug']);
 
 
         Route::prefix('blogs/articles')->group(function () {
@@ -96,7 +97,9 @@ Route::post('/contact/send', [ContactController::class, 'send']);
             Route::get('{id}', [ArticlesController::class, 'show']);
             Route::get('/by-category/with-child-articles', [ArticlesController::class, 'getArticlesByCategory']);
 
-        });
+            });
+
+        Route::get('blogs/article/{slug}', [ArticlesController::class, 'showBySlug']);
 
 
 

@@ -74,6 +74,20 @@ public function index()
     }
 
     /**
+     * Display the specified article with its categories.
+     */
+    public function showBySlug($slug)
+    {
+        $article = Article::with('categories')->where('slug', $slug)->first();
+
+        if (!$article) {
+            return response()->json(['message' => 'Article not found'], 404);
+        }
+
+        return response()->json($article, 200);
+    }
+
+    /**
      * Update the specified article in storage.
      */
     public function update(Request $request, $id)

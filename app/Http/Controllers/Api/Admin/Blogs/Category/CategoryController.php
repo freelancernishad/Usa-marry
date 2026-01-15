@@ -57,6 +57,22 @@ class CategoryController extends Controller
     }
 
     /**
+     * Display the specified category with its children.
+     */
+    public function showBySlug($slug)
+    {
+        $category = Category::with('children')->where('slug', $slug)->first();
+
+        if (!$category) {
+            return response()->json(['message' => 'Category not found'], 404);
+        }
+
+        return response()->json($category, 200);
+    }
+
+
+
+    /**
      * Update the specified category in storage.
      */
     public function update(Request $request, $id)

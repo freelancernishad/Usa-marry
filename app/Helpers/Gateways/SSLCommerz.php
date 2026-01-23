@@ -39,10 +39,11 @@ class SSLCommerz
         */
         $post_data = [];
 
-        $post_data['total_amount'] = $orderData['amount'];
+        $post_data['total_amount'] = number_format($orderData['amount'], 2, '.', '');
         $post_data['currency']     = $orderData['currency'] ?? 'BDT';
-        $post_data['tran_id']      = $orderData['transaction_id']
-                                    ?? Str::uuid()->toString();
+        $post_data['tran_id'] = is_string($orderData['transaction_id'])
+        ? $orderData['transaction_id']
+        : (string) $orderData['transaction_id'];
 
         /*
         |--------------------------------------------------------------------------

@@ -274,7 +274,7 @@ private function createSSLCommerzCheckoutSession(
             'success' => $successUrl . '?subscription_id=' . $subscription->id,
             'fail'    => $cancelUrl  . '?subscription_id=' . $subscription->id,
             'cancel'  => $cancelUrl  . '?subscription_id=' . $subscription->id,
-            'ipn'     => url('/payment/ipn/' . $subscription->transaction_id),
+            'ipn'     => url("/subscribe/plan/webhook/sslcommerz?tran_id={$subscription->transaction_id}"),
         ],
 
         'meta' => [

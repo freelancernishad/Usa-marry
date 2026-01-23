@@ -119,6 +119,7 @@ class SSLCommerz
         */
         $sslc = new SslCommerzNotification();
 
+        Log::info('Redirecting to SSLCommerz gateway', $post_data);
         // hosted = direct redirect to gateway
         return $sslc->makePayment($post_data, 'checkout');
     }

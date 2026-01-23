@@ -42,3 +42,5 @@ Route::get('send-stripe-webhook/{invoiceId}', [StripeWebhookReCallController::cl
 
 
 Route::post('/subscribe/plan/webhook', [SubscriptionController::class, 'webhook'])->name('subscribe.webhook');
+
+Route::post('/subscribe/plan/webhook/sslcommerz', [SubscriptionController::class, 'sslcommerzWebhook'])->name('subscribe.webhook');

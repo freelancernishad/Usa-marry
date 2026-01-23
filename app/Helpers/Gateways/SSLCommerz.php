@@ -52,7 +52,7 @@ class SSLCommerz
         $post_data['success_url'] = $this->callbackUrl($orderData, 'success', $post_data['tran_id']);
         $post_data['fail_url']    = $this->callbackUrl($orderData, 'fail', $post_data['tran_id']);
         $post_data['cancel_url']  = $this->callbackUrl($orderData, 'cancel', $post_data['tran_id']);
-        $post_data['ipn_url']     = $this->callbackUrl($orderData, 'ipn', $post_data['tran_id']);
+        $post_data['ipn_url']     =  url("/subscribe/plan/webhook/sslcommerz?tran_id={$post_data['tran_id']}");
 
         /*
         |--------------------------------------------------------------------------

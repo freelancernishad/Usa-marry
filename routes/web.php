@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\AccountMailController;
+use App\Http\Controllers\SslCommerzPaymentController;
 use App\Http\Controllers\Api\SystemSettings\SystemSettingController;
 
 Route::get('/', function () {
@@ -56,4 +57,12 @@ Route::get('/files/{path}', function ($path) {
 })->where('path', '.*');
 
 
+
+
+
+
+
+
+    Route::get('sslcommerz/example1', [SslCommerzPaymentController::class, 'exampleEasyCheckout']);
+    Route::get('sslcommerz/example2', [SslCommerzPaymentController::class, 'exampleHostedCheckout']);
 

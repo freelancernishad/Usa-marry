@@ -15,9 +15,11 @@ use App\Helpers\NotificationHelper;
 
 
     use Illuminate\Support\Facades\Log;
+use App\Helpers\Gateways\SSLCommerz;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use App\Helpers\Gateways\PayPalService;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\Response;
 use Stripe\Checkout\Session as CheckoutSession;
@@ -138,11 +140,187 @@ private function createCheckoutPaymentLink($user, $plan, $finalAmount, $subscrip
     return $response->json('_links.redirect.href');
 }
 
+private function createPayPalPaymentLink(
+    $user,
+    $plan,
+    float $finalAmount,
+    $subscription,
+    string $successUrl,
+    string $cancelUrl = ''
+): string
+{
+    $profile = $user->profile;
+
+    $paypalPayload = [
+        'intent' => 'CAPTURE',
+
+        'purchase_units' => [
+            [
+                'reference_id' => 'SUB-' . $subscription->id,
+
+                'description' => 'Subscription payment for ' . $plan->name,
+
+                'custom_id' => 'PLAN-' . $plan->id,
+
+                'amount' => [
+                    'currency_code' => 'USD',
+                    'value' => number_format($finalAmount, 2, '.', ''),
+                    'breakdown' => [
+                        'item_total' => [
+                            'currency_code' => 'USD',
+                            'value' => number_format($finalAmount, 2, '.', ''),
+                        ],
+                    ],
+                ],
+
+                'items' => [
+                    [
+                        'name' => $plan->name,
+                        'description' => 'Subscription plan',
+                        'quantity' => '1',
+                        'unit_amount' => [
+                            'currency_code' => 'USD',
+                            'value' => number_format($finalAmount, 2, '.', ''),
+                        ],
+                        'category' => 'DIGITAL_GOODS',
+                    ],
+                ],
+
+                // Optional: billing/shipping style info
+                'shipping' => [
+                    'name' => [
+                        'full_name' => $user->name,
+                    ],
+                    'address' => [
+                        'address_line_1' => $profile->institution
+                            ?? $profile->occupation
+                            ?? 'User Address',
+
+                        'address_line_2' => $profile->family_location ?? null,
+                        'admin_area_2' => $profile->city ?? 'Unknown',
+                        'admin_area_1' => $profile->state ?? 'NA',
+                        'postal_code' => '00000',
+                        'country_code' => 'US',
+                    ],
+                ],
+            ],
+        ],
+
+        'application_context' => [
+            'brand_name' => config('app.name'),
+            'landing_page' => 'BILLING',
+            'user_action' => 'PAY_NOW',
+            'shipping_preference' => 'SET_PROVIDED_ADDRESS',
+
+            'return_url' => $successUrl . '?subscription_id=' . $subscription->id,
+            'cancel_url' => $cancelUrl . '?subscription_id=' . $subscription->id,
+        ],
+    ];
+
+    /** @var \App\Services\PayPalService $paypal */
+    $paypal = app(PayPalService::class);
+
+    $response = $paypal->createOrder($paypalPayload);
+
+    if (!$response['success'] || empty($response['approval_url'])) {
+        Log::error('PayPal Create Order Failed', [
+            'response' => $response,
+        ]);
+
+        throw new \Exception('Unable to create PayPal payment link');
+    }
+
+    // ✅ This is equivalent to Checkout.com redirect link
+    return $response['approval_url'];
+}
+
+
+
+private function createSSLCommerzCheckoutSession(
+    $user,
+    $plan,
+    float $finalAmount,
+    $subscription,
+    string $successUrl,
+    string $cancelUrl
+): ?string
+{
+    $sslGateway = new \App\Helpers\Gateways\SSLCommerz();
+
+    $response = $sslGateway->checkout([
+        'amount' => $finalAmount,
+        'currency' => 'BDT',
+        'transaction_id' => $subscription->transaction_id,
+
+        'customer' => [
+            'name'    => $user->name,
+            'email'   => $user->email,
+            'phone'   => preg_replace('/\D/', '', $user->phone ?? '01700000000'),
+            'address' => $user->profile->institution
+                        ?? $user->profile->occupation
+                        ?? 'User Address',
+            'city'    => $user->profile->city ?? 'Dhaka',
+            'country' => 'Bangladesh',
+        ],
+
+        'product' => [
+            'name' => $plan->name,
+            'category' => 'Subscription',
+            'profile' => 'general',
+        ],
+
+        'callback_urls' => [
+            'success' => $successUrl . '?subscription_id=' . $subscription->id,
+            'fail'    => $cancelUrl  . '?subscription_id=' . $subscription->id,
+            'cancel'  => $cancelUrl  . '?subscription_id=' . $subscription->id,
+            'ipn'     => url('/payment/ipn/' . $subscription->transaction_id),
+        ],
+
+        'meta' => [
+            'ref_a' => 'SUB-' . $subscription->id,
+        ],
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Normalize SSLCommerz Response
+    |--------------------------------------------------------------------------
+    | Possible return types:
+    | 1. Direct URL string
+    | 2. JSON string { status, data }
+    | 3. Array
+    */
+
+    // Case 1: Already URL
+    if (is_string($response) && str_starts_with($response, 'http')) {
+        return $response;
+    }
+
+    // Case 2: JSON string
+    if (is_string($response)) {
+        $decoded = json_decode($response, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && isset($decoded['data'])) {
+            return $decoded['data'];
+        }
+    }
+
+    // Case 3: Array
+    if (is_array($response) && isset($response['data'])) {
+        return $response['data'];
+    }
+
+    return null;
+}
+
+
+
 
      // Handle the subscription request
 public function subscribe(Request $request)
 {
     $validator = Validator::make($request->all(), [
+        'method' => 'nullable||in:stripe,checkout,paypal,sslcommerz',
         'plan_id' => 'required|exists:plans,id',
         'success_url' => 'required',
         'cancel_url' => 'required',
@@ -220,6 +398,9 @@ public function subscribe(Request $request)
         Log::info("Final amount after coupon application: " . $finalAmount);
 
     }
+
+
+
     // Create subscription
     $subscription = Subscription::create([
         'user_id' => $user->id,
@@ -229,7 +410,7 @@ public function subscribe(Request $request)
         'original_amount' => $originalAmount,
         'final_amount' => $finalAmount,
         'amount' => $finalAmount,
-        'payment_method' => 'Stripe Checkout',
+        'payment_method' => $request->method ?? 'Stripe Checkout',
         'transaction_id' => $transaction_id,
         'status' => 'Pending',
         'plan_features' => $plan->features,
@@ -240,22 +421,48 @@ public function subscribe(Request $request)
 
 
 
-$url = $this->createStripeCheckoutSession(
-    $plan,
-    $finalAmount,
-    $subscription,
-    $request->success_url,
-    $request->cancel_url
-) ?? '';
+// $url = $this->createStripeCheckoutSession(
+//     $plan,
+//     $finalAmount,
+//     $subscription,
+//     $request->success_url,
+//     $request->cancel_url
+// ) ?? '';
 
 // Checkout.com Payment Link (CURRENT GATEWAY)
-$CheckoutUrl = $this->createCheckoutPaymentLink(
-    $user,
-    $plan,
-    $finalAmount,
-    $subscription,
-    $request->success_url
-)?? '';
+// $CheckoutUrl = $this->createCheckoutPaymentLink(
+//     $user,
+//     $plan,
+//     $finalAmount,
+//     $subscription,
+//     $request->success_url
+// )?? '';
+
+
+// $paypalUrl = $this->createPayPalPaymentLink(
+//     $user,
+//     $plan,
+//     $finalAmount,
+//     $subscription,
+//     $request->success_url
+// ) ?? '';
+
+
+
+    if ($request->method === 'sslcommerz') {
+        $sslGateway = new SSLCommerz();
+        $finalAmount = $sslGateway->convertToBDT($finalAmount, 'USD');
+        // $originalAmount = $sslGateway->convertToBDT($originalAmount, 'USD');
+    }
+    $sslRedirectUrl = $this->createSSLCommerzCheckoutSession(
+        $user,
+        $plan,
+        $finalAmount,
+        $subscription,
+        $request->success_url,
+        $request->cancel_url
+    );
+
 
     // Stripe Checkout
     // $checkoutSession = \Stripe\Checkout\Session::create([
@@ -279,8 +486,11 @@ $CheckoutUrl = $this->createCheckoutPaymentLink(
     // ]);
 
     return response()->json([
-        'url' => $url,
-        'checkout_url' => $CheckoutUrl,
+        'url' => $sslRedirectUrl,
+        // 'url' => $url,
+        // 'checkout_url' => $CheckoutUrl,
+        // 'paypal_url' => $paypalUrl,
+        // 'sslRedirectUrl' => $sslRedirectUrl,
 
     ]);
 }

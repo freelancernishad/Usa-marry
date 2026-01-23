@@ -19,7 +19,7 @@ class ApiResponse
     public function handle(Request $request, Closure $next)
     {
         // Skip ApiResponse middleware for the /files/{path} route
-        if ($request->is('files/*')) {
+        if ($request->is('files/*') || $request->is('sslcommerz/example1') || $request->is('sslcommerz/example2')) {
             return $next($request);
         }
 
@@ -31,7 +31,7 @@ class ApiResponse
             // Decode the response content if it's JSON
 
             $responseData = json_decode($response->getContent(), true) ?? [];
-          
+
 
 
 

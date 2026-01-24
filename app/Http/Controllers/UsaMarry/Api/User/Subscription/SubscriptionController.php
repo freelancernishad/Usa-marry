@@ -593,7 +593,12 @@ public function sslcommerzWebhook(Request $request)
     // }
 
     $subscription->update([
-        'status' => 'Success'
+        'status'        => 'Success',
+        'card_issuer'   => $request->card_issuer ?? null,
+        'store_amount'  => isset($request->store_amount)
+                            ? round((float) $request->store_amount, 2)
+                            : null,
+        'payment_method'=> $request->card_type ?? $subscription->payment_method,
     ]);
 
     return response()->json([

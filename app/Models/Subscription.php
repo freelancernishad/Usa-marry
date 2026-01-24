@@ -21,8 +21,10 @@ class Subscription extends Model
         'discount_amount',
         'discount_percent',
         'amount',
+         'store_amount',   // ✅ new
         'currency',
         'payment_method',
+         'card_issuer',    // ✅ new
         'transaction_id',
         'status',
         'plan_features',
@@ -32,6 +34,7 @@ class Subscription extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'amount' => 'decimal:2',
+            'store_amount' => 'decimal:2', // ✅
         'plan_features' => 'array',
     ];
 

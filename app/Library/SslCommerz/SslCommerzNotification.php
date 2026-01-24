@@ -78,7 +78,7 @@ class SslCommerzNotification extends AbstractSslCommerz
     $merchantAmount = round((float) $merchant_trans_amount, 2);
 
     if (
-        trim($merchant_trans_id) === trim($result->tran_id)
+        trim($merchant_trans_id) == trim($result->tran_id)
         && abs($merchantAmount - $sslAmount) < 1
     ) {
         return true;

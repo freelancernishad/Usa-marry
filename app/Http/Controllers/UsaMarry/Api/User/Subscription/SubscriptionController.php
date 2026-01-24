@@ -46,7 +46,7 @@ class SubscriptionController extends Controller
 
    public function plans(Request $request)
 {
-    $ip = $request->ip();
+  
 
 
     $sslGateway = new SslCommerz();

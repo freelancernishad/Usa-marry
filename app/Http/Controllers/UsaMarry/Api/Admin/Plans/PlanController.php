@@ -6,6 +6,7 @@ use App\Models\Plan;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
+use App\Helpers\Gateways\SSLCommerz;
 
 class PlanController extends Controller
 {
@@ -21,14 +22,21 @@ class PlanController extends Controller
     // Fetch a single plan by ID
     public function show($id)
     {
+        $sslGateway = new SslCommerz();
         $plan = Plan::find($id); // Find plan by ID
 
         if (!$plan) {
             return response()->json(['message' => 'Plan not found'], 404);
         }
 
+        $plan->original_price_bdt = $sslGateway->convertToBDT($plan->original_price, 'USD');
+        $plan->discounted_price_bdt = $sslGateway->convertToBDT($plan->discounted_price, 'USD');
+        $plan->monthly_price_bdt = $sslGateway->convertToBDT($plan->monthly_price, 'USD');
         return response()->json($plan);
     }
+
+
+
 
     // Create a new plan
     public function store(Request $request)

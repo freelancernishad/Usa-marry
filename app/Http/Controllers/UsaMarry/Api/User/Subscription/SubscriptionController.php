@@ -534,6 +534,112 @@ public function subscribe(Request $request)
 
 
 
+public function subscribeByPaypal(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'plan_id' => 'required|exists:plans,id',
+        'paypal_order' => 'required|array',
+        'paypal_order.id' => 'required|string',
+        'paypal_order.status' => 'required|string',
+        'paypal_order.purchase_units' => 'required|array',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['errors' => $validator->errors()], 422);
+    }
+
+    $user = Auth::user();
+    $plan = Plan::findOrFail($request->plan_id);
+    $paypalData = $request->paypal_order;
+
+    /** ----------------------------
+     * 1️⃣ PAYMENT STATUS CHECK
+     * ---------------------------- */
+    if ($paypalData['status'] !== 'COMPLETED') {
+        return response()->json([
+            'message' => 'PayPal payment not completed'
+        ], 400);
+    }
+
+    /** ----------------------------
+     * 2️⃣ AMOUNT & CURRENCY CHECK
+     * ---------------------------- */
+    $capture = $paypalData['purchase_units'][0]['payments']['captures'][0] ?? null;
+
+    if (!$capture || $capture['status'] !== 'COMPLETED') {
+        return response()->json([
+            'message' => 'Invalid PayPal capture'
+        ], 400);
+    }
+
+    $paidAmount = (float) $capture['amount']['value'];
+    $currency   = $capture['amount']['currency_code'];
+
+    if ($currency !== 'USD') {
+        return response()->json([
+            'message' => 'Invalid currency'
+        ], 400);
+    }
+
+    if ($paidAmount != (float) $plan->discounted_price) {
+        return response()->json([
+            'message' => 'Amount mismatch'
+        ], 400);
+    }
+
+    /** ----------------------------
+     * 3️⃣ END DATE CALCULATION
+     * ---------------------------- */
+    if (is_numeric($plan->duration)) {
+        $endDate = now()->addMonths((int) $plan->duration);
+    } elseif (preg_match('/^(\d+)\s*(year|years)$/i', $plan->duration, $m)) {
+        $endDate = now()->addYears((int) $m[1]);
+    } elseif (strtolower($plan->duration) === 'lifetime') {
+        $endDate = null;
+    } else {
+        $endDate = now()->addMonth();
+    }
+
+    /** ----------------------------
+     * 4️⃣ DUPLICATE CHECK
+     * ---------------------------- */
+    $exists = Subscription::where('transaction_id', $paypalData['id'])->first();
+    if ($exists) {
+        return response()->json([
+            'message' => 'Payment already processed'
+        ], 409);
+    }
+
+    /** ----------------------------
+     * 5️⃣ CREATE SUBSCRIPTION (ACTIVE)
+     * ---------------------------- */
+    $subscription = Subscription::create([
+        'user_id'         => $user->id,
+        'plan_id'         => $plan->id,
+        'start_date'      => now(),
+        'end_date'        => $endDate,
+        'original_amount' => $paidAmount,
+        'final_amount'    => $paidAmount,
+        'amount'          => $paidAmount,
+        'currency'        => 'USD',
+        'payment_method'  => 'PayPal',
+        'transaction_id'  => $paypalData['id'],
+        'status'          => 'Success',
+        'plan_features'   => $plan->features,
+    ]);
+
+    /** ----------------------------
+     * 6️⃣ SUCCESS RESPONSE
+     * ---------------------------- */
+    return response()->json([
+        'message' => 'Subscription activated successfully',
+        'subscription' => $subscription
+    ], 201);
+}
+
+
+
+
 public function sslcommerzWebhook(Request $request)
 {
     Log::info('Received SSLCommerz IPN', $request->all());

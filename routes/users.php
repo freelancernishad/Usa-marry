@@ -145,6 +145,7 @@ Route::middleware(AuthenticateUser::class)->group(function () {
     Route::prefix('subscription')->group(function () {
         Route::get('/', [SubscriptionController::class, 'mySubscription']);
         Route::post('/subscribe', [SubscriptionController::class, 'subscribe']);
+        Route::post('/subscribe/paypal', [SubscriptionController::class, 'subscribeByPaypal']);
     });
 
     Route::get('/transaction-history', [SubscriptionController::class, 'subscriptionHistory']);

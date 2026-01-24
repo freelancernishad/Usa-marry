@@ -536,124 +536,57 @@ public function subscribe(Request $request)
 
 public function sslcommerzWebhook(Request $request)
 {
-
     Log::info('Received SSLCommerz IPN', $request->all());
 
-    /*
-    |--------------------------------------------------------------------------
-    | 1. Basic Validation
-    |--------------------------------------------------------------------------
-    */
-    if (!$request->has('tran_id')) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Transaction ID missing'
-        ], Response::HTTP_BAD_REQUEST);
+    if (!$request->filled('tran_id') || !$request->filled('val_id')) {
+        return response()->json(['error' => 'Invalid IPN'], 400);
     }
 
-    $tranId = $request->input('tran_id');
+    $tranId = $request->tran_id;
 
-    /*
-    |--------------------------------------------------------------------------
-    | 2. Find Subscription by Transaction ID
-    |--------------------------------------------------------------------------
-    */
     $subscription = Subscription::where('transaction_id', $tranId)->first();
 
     if (!$subscription) {
-        Log::warning('SSLCommerz IPN: Subscription not found', [
-            'tran_id' => $tranId,
-        ]);
-
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Subscription not found'
-        ], Response::HTTP_NOT_FOUND);
+        Log::error('Subscription not found', ['tran_id' => $tranId]);
+        return response()->json(['error' => 'Subscription not found'], 404);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | 3. Skip if already successful
-    |--------------------------------------------------------------------------
-    */
-    if (in_array($subscription->status, ['Success', 'Processing'])) {
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Subscription already processed'
-        ], Response::HTTP_OK);
+    if ($subscription->status === 'Success') {
+        return response()->json(['status' => 'Already processed'], 200);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | 4. Validate Payment with SSLCommerz
-    |--------------------------------------------------------------------------
-    */
     $sslc = new SslCommerzNotification();
+
+    $amount = round($subscription->amount, 2);
 
     $isValid = $sslc->orderValidate(
         $request->all(),
         $tranId,
-        $subscription->amount,
+        $amount,
         'BDT'
     );
 
     if (!$isValid) {
         Log::error('SSLCommerz IPN validation failed', [
             'tran_id' => $tranId,
-            'payload' => $request->all(),
+            'db_amount' => $amount,
+            'ssl_amount' => $request->amount ?? null
         ]);
 
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Payment validation failed'
-        ], Response::HTTP_BAD_REQUEST);
+        return response()->json(['error' => 'Validation failed'], 400);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | 5. Update Subscription Status
-    |--------------------------------------------------------------------------
-    */
-    $subscription->status = 'Success';
-    $subscription->save();
+    $subscription->update([
+        'status' => 'Success'
+    ]);
 
-    /*
-    |--------------------------------------------------------------------------
-    | 6. Optional: Send Notification
-    |--------------------------------------------------------------------------
-    */
-    try {
-        $user = $subscription->user;
-        $planName = $subscription->plan->name ?? 'Subscription';
-        $amount = $subscription->amount;
-
-        if ($user) {
-            NotificationHelper::sendPlanPurchaseNotification(
-                $user,
-                $planName,
-                $amount,
-                'subscriptions',
-                $subscription->id
-            );
-        }
-    } catch (\Throwable $e) {
-        Log::error('SSLCommerz Notification Failed', [
-            'error' => $e->getMessage()
-        ]);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | 7. Final Response (Webhook Style)
-    |--------------------------------------------------------------------------
-    */
     return response()->json([
         'status' => 'success',
-        'message' => 'SSLCommerz payment processed successfully',
         'subscription_id' => $subscription->id,
-        'transaction_id' => $tranId
-    ], Response::HTTP_OK);
+        'tran_id' => $tranId
+    ]);
 }
+
 
 
 public function webhook(Request $request)

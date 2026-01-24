@@ -37,106 +37,58 @@ class SslCommerzNotification extends AbstractSslCommerz
 
     # VALIDATE SSLCOMMERZ TRANSACTION
     protected function validate($merchant_trans_id, $merchant_trans_amount, $merchant_trans_currency, $post_data)
-    {
-        # MERCHANT SYSTEM INFO
-        if (!empty($merchant_trans_id) && !empty($merchant_trans_amount)) {
-
-            # CALL THE FUNCTION TO CHECK THE RESULT
-            $post_data['store_id'] = $this->getStoreId();
-            $post_data['store_pass'] = $this->getStorePassword();
-
-            $val_id = urlencode($post_data['val_id']);
-            $store_id = urlencode($this->getStoreId());
-            $store_passwd = urlencode($this->getStorePassword());
-            $requested_url = ($this->config['apiDomain'] . $this->config['apiUrl']['order_validate'] . "?val_id=" . $val_id . "&store_id=" . $store_id . "&store_passwd=" . $store_passwd . "&v=1&format=json");
-
-            $handle = curl_init();
-            curl_setopt($handle, CURLOPT_URL, $requested_url);
-            curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
-
-            if ($this->config['connect_from_localhost']) {
-                curl_setopt($handle, CURLOPT_SSL_VERIFYHOST, 0);
-                curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, 0);
-            } else {
-                curl_setopt($handle, CURLOPT_SSL_VERIFYHOST, 2);
-                curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, 2);
-            }
-
-
-            $result = curl_exec($handle);
-
-            $code = curl_getinfo($handle, CURLINFO_HTTP_CODE);
-
-            if ($code == 200 && !(curl_errno($handle))) {
-
-                # TO CONVERT AS ARRAY
-                # $result = json_decode($result, true);
-                # $status = $result['status'];
-
-                # TO CONVERT AS OBJECT
-                $result = json_decode($result);
-                $this->sslc_data = $result;
-
-                # TRANSACTION INFO
-                $status = $result->status;
-                $tran_date = $result->tran_date;
-                $tran_id = $result->tran_id;
-                $val_id = $result->val_id;
-                $amount = $result->amount;
-                $store_amount = $result->store_amount;
-                $bank_tran_id = $result->bank_tran_id;
-                $card_type = $result->card_type;
-                $currency_type = $result->currency_type;
-                $currency_amount = $result->currency_amount;
-
-                # ISSUER INFO
-                $card_no = $result->card_no;
-                $card_issuer = $result->card_issuer;
-                $card_brand = $result->card_brand;
-                $card_issuer_country = $result->card_issuer_country;
-                $card_issuer_country_code = $result->card_issuer_country_code;
-
-                # API AUTHENTICATION
-                $APIConnect = $result->APIConnect;
-                $validated_on = $result->validated_on;
-                $gw_version = $result->gw_version;
-
-                # GIVE SERVICE
-                if ($status == "VALID" || $status == "VALIDATED") {
-                    if ($merchant_trans_currency == "BDT") {
-                        if (trim($merchant_trans_id) == trim($tran_id) && (abs($merchant_trans_amount - $amount) < 1) && trim($merchant_trans_currency) == trim('BDT')) {
-                            return true;
-                        } else {
-                            # DATA TEMPERED
-                            $this->error = "Data has been tempered";
-                            return false;
-                        }
-                    } else {
-                        //echo "trim($merchant_trans_id) == trim($tran_id) && ( abs($merchant_trans_amount-$currency_amount) < 1 ) && trim($merchant_trans_currency)==trim($currency_type)";
-                        if (trim($merchant_trans_id) == trim($tran_id) && (abs($merchant_trans_amount - $currency_amount) < 1) && trim($merchant_trans_currency) == trim($currency_type)) {
-                            return true;
-                        } else {
-                            # DATA TEMPERED
-                            $this->error = "Data has been tempered";
-                            return false;
-                        }
-                    }
-                } else {
-                    # FAILED TRANSACTION
-                    $this->error = "Failed Transaction";
-                    return false;
-                }
-            } else {
-                # Failed to connect with SSLCOMMERZ
-                $this->error = "Faile to connect with SSLCOMMERZ";
-                return false;
-            }
-        } else {
-            # INVALID DATA
-            $this->error = "Invalid data";
-            return false;
-        }
+{
+    if (empty($merchant_trans_id) || empty($merchant_trans_amount)) {
+        return false;
     }
+
+    $post_data['store_id'] = $this->getStoreId();
+    $post_data['store_pass'] = $this->getStorePassword();
+
+    $val_id = urlencode($post_data['val_id']);
+    $store_id = urlencode($this->getStoreId());
+    $store_passwd = urlencode($this->getStorePassword());
+
+    $requested_url = $this->config['apiDomain']
+        . $this->config['apiUrl']['order_validate']
+        . "?val_id={$val_id}&store_id={$store_id}&store_passwd={$store_passwd}&v=1&format=json";
+
+    $handle = curl_init($requested_url);
+    curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
+
+    if ($this->config['connect_from_localhost']) {
+        curl_setopt($handle, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, 0);
+    }
+
+    $result = curl_exec($handle);
+    $httpCode = curl_getinfo($handle, CURLINFO_HTTP_CODE);
+    curl_close($handle);
+
+    if ($httpCode !== 200 || !$result) {
+        return false;
+    }
+
+    $result = json_decode($result);
+
+    if (!in_array($result->status, ['VALID', 'VALIDATED'])) {
+        return false;
+    }
+
+    $sslAmount = round((float) $result->store_amount, 2);
+    $merchantAmount = round((float) $merchant_trans_amount, 2);
+
+    if (
+        trim($merchant_trans_id) === trim($result->tran_id)
+        && abs($merchantAmount - $sslAmount) < 1
+        && trim($merchant_trans_currency) === 'BDT'
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
 
     # FUNCTION TO CHECK HASH VALUE
     protected function SSLCOMMERZ_hash_verify($post_data, $store_passwd = "")

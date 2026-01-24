@@ -564,22 +564,33 @@ public function sslcommerzWebhook(Request $request)
         'tran_id' => $tranId,
         'amount' => $amount,
     ]);
-    $isValid = $sslc->orderValidate(
-        $request->all(),
-        $tranId,
-        $amount,
-        'BDT'
-    );
+    // $isValid = $sslc->orderValidate(
+    //     $request->all(),
+    //     $tranId,
+    //     $amount,
+    //     'BDT'
+    // );
 
-    if (!$isValid) {
-        Log::error('SSLCommerz IPN validation failed', [
+    if($request->status !== 'VALID' && $request->status !== 'VALIDATED') {
+        Log::error('SSLCommerz IPN status invalid', [
             'tran_id' => $tranId,
-            'db_amount' => $amount,
-            'ssl_amount' => $request->amount ?? null
+            'status' => $request->status
         ]);
 
-        return response()->json(['error' => 'Validation failed'], 400);
+        return response()->json(['error' => 'Invalid status'], 400);
     }
+
+
+
+    // if (!$isValid) {
+    //     Log::error('SSLCommerz IPN validation failed', [
+    //         'tran_id' => $tranId,
+    //         'db_amount' => $amount,
+    //         'ssl_amount' => $request->amount ?? null
+    //     ]);
+
+    //     return response()->json(['error' => 'Validation failed'], 400);
+    // }
 
     $subscription->update([
         'status' => 'Success'

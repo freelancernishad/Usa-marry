@@ -86,16 +86,16 @@ class SslCommerzNotification extends AbstractSslCommerz
     // Log::info('SSLCommerz validation response', (array) $result);
 
     // ✅ Status check
-    if (!in_array($post_data->status, ['VALID', 'VALIDATED'])) {
+    if (!in_array($post_data['status'], ['VALID', 'VALIDATED'])) {
         return false;
     }
 
     // ✅ Amount check (ONLY amount)
-    $sslAmount = round((float) $post_data->amount, 2);
+    $sslAmount = round((float) $post_data['amount'], 2);
     $merchantAmount = round((float) $merchant_trans_amount, 2);
 
     if (
-        trim($merchant_trans_id) == trim($post_data->tran_id)
+        trim($merchant_trans_id) == trim($post_data['tran_id'])
         && abs($merchantAmount - $sslAmount) < 1
     ) {
         return true;

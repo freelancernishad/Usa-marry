@@ -2,6 +2,10 @@
 
 namespace App\Library\SslCommerz;
 
+use Illuminate\Support\Facades\Log;
+
+
+
 class SslCommerzNotification extends AbstractSslCommerz
 {
     protected $data = [];
@@ -38,6 +42,11 @@ class SslCommerzNotification extends AbstractSslCommerz
     # VALIDATE SSLCOMMERZ TRANSACTION
   protected function validate($merchant_trans_id, $merchant_trans_amount, $merchant_trans_currency, $post_data)
 {
+
+
+
+
+
     if (empty($merchant_trans_id) || empty($merchant_trans_amount)) {
         return false;
     }
@@ -67,6 +76,7 @@ class SslCommerzNotification extends AbstractSslCommerz
     }
 
     $result = json_decode($result);
+    Log::info('SSLCommerz validation response', (array) $result);
 
     // ✅ Status check
     if (!in_array($result->status, ['VALID', 'VALIDATED'])) {

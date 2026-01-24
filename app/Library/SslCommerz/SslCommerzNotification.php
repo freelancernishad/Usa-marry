@@ -34,7 +34,6 @@ class SslCommerzNotification extends AbstractSslCommerz
             $this->error = "Please provide valid transaction ID and post request data";
             return $this->error;
         }
-        Log::info('SSLCommerz order validation initiated', ['trx_id' => $trx_id, 'amount' => $amount, 'currency' => $currency, 'post_data' => $post_data]);
 
         return $this->validate($trx_id, $amount, $currency, $post_data);
     }
@@ -44,6 +43,12 @@ class SslCommerzNotification extends AbstractSslCommerz
   protected function validate($merchant_trans_id, $merchant_trans_amount, $merchant_trans_currency, $post_data)
 {
 
+       Log::info('Starting SSLCommerz validation', [
+        'merchant_trans_id' => $merchant_trans_id,
+        'merchant_trans_amount' => $merchant_trans_amount,
+        'merchant_trans_currency' => $merchant_trans_currency,
+        'post_data' => $post_data
+    ]);
 
 
 

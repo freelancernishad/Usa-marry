@@ -559,6 +559,11 @@ public function sslcommerzWebhook(Request $request)
 
     $amount = round($subscription->amount, 2);
 
+    Log::info('Validating SSLCommerz IPN', [
+        'request_data' => $request->all(),
+        'tran_id' => $tranId,
+        'amount' => $amount,
+    ]);
     $isValid = $sslc->orderValidate(
         $request->all(),
         $tranId,

@@ -65,6 +65,7 @@ class SslCommerzNotification extends AbstractSslCommerz
         $this->config['apiDomain']
         . $this->config['apiUrl']['order_validate']
         . "?val_id={$val_id}&store_id={$store_id}&store_passwd={$store_passwd}&v=1&format=json";
+    Log::info('SSLCommerz validation URL', ['url' => $requested_url]);
 
     $handle = curl_init($requested_url);
     curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);

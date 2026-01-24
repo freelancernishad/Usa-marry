@@ -195,6 +195,19 @@ class SSLCommerz
         return $this->convertCurrency($amount, $fromCurrency, 'BDT');
     }
 
+    public function detectCountryFromIp($ip)
+    {
+        try {
+            $response = file_get_contents("http://ip-api.com/json/{$ip}");
+            Log::info("IP Geolocation response: " . $response);
+            $data = json_decode($response, true);
+
+            return strtolower($data['countryCode'] ?? '');
+        } catch (\Exception $e) {
+            return '';
+        }
+    }
+
 
 
 }

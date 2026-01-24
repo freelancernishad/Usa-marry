@@ -21,6 +21,7 @@ class Subscription extends Model
         'discount_amount',
         'discount_percent',
         'amount',
+        'currency',
         'payment_method',
         'transaction_id',
         'status',

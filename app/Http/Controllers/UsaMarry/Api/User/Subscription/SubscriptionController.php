@@ -32,15 +32,47 @@ class SubscriptionController extends Controller
         Stripe::setApiKey(env('STRIPE_SECRET'));
     }
 
-    // Fetch the list of available plans from the database
-    public function plans()
-    {
-        $plans = Plan::orderBy('index_no', 'asc')->get(); // Get all plans ordered by index_no
 
-        return response()->json([
-            'plans' => $plans
-        ]);
-    }
+
+    // Fetch the list of available plans from the database
+    // public function plans()
+    // {
+    //     $plans = Plan::orderBy('index_no', 'asc')->get(); // Get all plans ordered by index_no
+
+    //     return response()->json([
+    //         'plans' => $plans
+    //     ]);
+    // }
+
+   public function plans(Request $request)
+{
+    $ip = $request->ip();
+
+
+    $sslGateway = new SslCommerz();
+
+
+
+
+    $plans = Plan::orderBy('index_no', 'asc')->get();
+
+        $plans = $plans->map(function ($plan) use ($sslGateway) {
+
+                    // Convert prices to BDT
+        $plan->original_price_bdt = $sslGateway->convertToBDT($plan->original_price, 'USD');
+        $plan->discounted_price_bdt = $sslGateway->convertToBDT($plan->discounted_price, 'USD');
+        $plan->monthly_price_bdt = $sslGateway->convertToBDT($plan->monthly_price, 'USD');
+
+
+            return $plan;
+        });
+
+
+    return response()->json([
+        'plans' => $plans
+    ]);
+}
+
 
 private function createStripeCheckoutSession($plan, $finalAmount, $subscription, $successUrl, $cancelUrl)
 {
@@ -400,6 +432,12 @@ public function subscribe(Request $request)
 
     }
 
+    if ($request->method === 'sslcommerz') {
+        $sslGateway = new SSLCommerz();
+        $finalAmount = $sslGateway->convertToBDT($finalAmount, 'USD');
+        $originalAmount = $sslGateway->convertToBDT($originalAmount, 'USD');
+
+    }
 
 
     // Create subscription
@@ -411,6 +449,7 @@ public function subscribe(Request $request)
         'original_amount' => $originalAmount,
         'final_amount' => $finalAmount,
         'amount' => $finalAmount,
+        'currency' => $request->method === 'sslcommerz' ? 'BDT' : 'USD',
         'payment_method' => $request->method ?? 'Stripe Checkout',
         'transaction_id' => $transaction_id,
         'status' => 'Pending',
@@ -450,11 +489,7 @@ public function subscribe(Request $request)
 
 
 
-    if ($request->method === 'sslcommerz') {
-        $sslGateway = new SSLCommerz();
-        $finalAmount = $sslGateway->convertToBDT($finalAmount, 'USD');
-        // $originalAmount = $sslGateway->convertToBDT($originalAmount, 'USD');
-    }
+
     $sslRedirectUrl = $this->createSSLCommerzCheckoutSession(
         $user,
         $plan,

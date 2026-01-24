@@ -1,13 +1,43 @@
-
 [
-    2026-01-24 05: 45: 46
-] local.INFO: Starting SSLCommerz validation {
-    "merchant_trans_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
-    "merchant_trans_amount": 1221.84,
-    "merchant_trans_currency": "BDT",
-    "post_data": {
+    2026-01-24 05: 48: 33
+] local.INFO: Received SSLCommerz IPN {
+    "amount": "1221.84",
+    "bank_tran_id": "260124114831oa9jYTm6cYAli4E",
+    "base_fair": null,
+    "card_brand": "MOBILEBANKING",
+    "card_issuer": "BKash Mobile Banking",
+    "card_issuer_country": "Bangladesh",
+    "card_issuer_country_code": "BD",
+    "card_no": null,
+    "card_sub_brand": "Classic",
+    "card_type": "BKASH-BKash",
+    "currency": "BDT",
+    "currency_amount": null,
+    "currency_rate": null,
+    "currency_type": null,
+    "error": null,
+    "risk_level": "1",
+    "risk_title": "Not Safe",
+    "status": "VALID",
+    "store_amount": "1191.29",
+    "store_id": "usama697373897e2c6",
+    "tran_date": "2026-01-24 11:48:31",
+    "tran_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
+    "val_id": "260124114831UIIkFJUkQoUgACm",
+    "value_a": null,
+    "value_b": null,
+    "value_c": null,
+    "value_d": null,
+    "verify_sign": "1905c8ae6af251c14fc7ca30a13df54a",
+    "verify_sign_sha2": "2daaf5569d2ae4e675aa1c3463b3f57ea6667d24864a6fd0841e22268c50f76e",
+    "verify_key": "amount,bank_tran_id,base_fair,card_brand,card_issuer,card_issuer_country,card_issuer_country_code,card_no,card_sub_brand,card_type,currency,currency_amount,currency_rate,currency_type,error,risk_level,risk_title,status,store_amount,store_id,tran_date,tran_id,val_id,value_a,value_b,value_c,value_d"
+}
+[
+    2026-01-24 05: 48: 33
+] local.INFO: Validating SSLCommerz IPN {
+    "request_data": {
         "amount": "1221.84",
-        "bank_tran_id": "260124114545IbKsngWu9kJk9uE",
+        "bank_tran_id": "260124114831oa9jYTm6cYAli4E",
         "base_fair": null,
         "card_brand": "MOBILEBANKING",
         "card_issuer": "BKash Mobile Banking",
@@ -26,20 +56,184 @@
         "status": "VALID",
         "store_amount": "1191.29",
         "store_id": "usama697373897e2c6",
-        "tran_date": "2026-01-24 11:45:45",
+        "tran_date": "2026-01-24 11:48:31",
         "tran_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
-        "val_id": "260124114545sLOBJK1Wl3QH7Wg",
+        "val_id": "260124114831UIIkFJUkQoUgACm",
         "value_a": null,
         "value_b": null,
         "value_c": null,
         "value_d": null,
-        "verify_sign": "0e75c152a6a749d5fabf2cce0f01596c",
-        "verify_sign_sha2": "1baf2c4d568acb51753a715b386fc25221beae3f5856f3f74dd7db01cf22910b",
+        "verify_sign": "1905c8ae6af251c14fc7ca30a13df54a",
+        "verify_sign_sha2": "2daaf5569d2ae4e675aa1c3463b3f57ea6667d24864a6fd0841e22268c50f76e",
+        "verify_key": "amount,bank_tran_id,base_fair,card_brand,card_issuer,card_issuer_country,card_issuer_country_code,card_no,card_sub_brand,card_type,currency,currency_amount,currency_rate,currency_type,error,risk_level,risk_title,status,store_amount,store_id,tran_date,tran_id,val_id,value_a,value_b,value_c,value_d"
+    },
+    "tran_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
+    "amount": 1221.84
+}
+[
+    2026-01-24 05: 48: 33
+] local.INFO: Starting SSLCommerz validation {
+    "merchant_trans_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
+    "merchant_trans_amount": 1221.84,
+    "merchant_trans_currency": "BDT",
+    "post_data": {
+        "amount": "1221.84",
+        "bank_tran_id": "260124114831oa9jYTm6cYAli4E",
+        "base_fair": null,
+        "card_brand": "MOBILEBANKING",
+        "card_issuer": "BKash Mobile Banking",
+        "card_issuer_country": "Bangladesh",
+        "card_issuer_country_code": "BD",
+        "card_no": null,
+        "card_sub_brand": "Classic",
+        "card_type": "BKASH-BKash",
+        "currency": "BDT",
+        "currency_amount": null,
+        "currency_rate": null,
+        "currency_type": null,
+        "error": null,
+        "risk_level": "1",
+        "risk_title": "Not Safe",
+        "status": "VALID",
+        "store_amount": "1191.29",
+        "store_id": "usama697373897e2c6",
+        "tran_date": "2026-01-24 11:48:31",
+        "tran_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
+        "val_id": "260124114831UIIkFJUkQoUgACm",
+        "value_a": null,
+        "value_b": null,
+        "value_c": null,
+        "value_d": null,
+        "verify_sign": "1905c8ae6af251c14fc7ca30a13df54a",
+        "verify_sign_sha2": "2daaf5569d2ae4e675aa1c3463b3f57ea6667d24864a6fd0841e22268c50f76e",
         "verify_key": "amount,bank_tran_id,base_fair,card_brand,card_issuer,card_issuer_country,card_issuer_country_code,card_no,card_sub_brand,card_type,currency,currency_amount,currency_rate,currency_type,error,risk_level,risk_title,status,store_amount,store_id,tran_date,tran_id,val_id,value_a,value_b,value_c,value_d"
     }
 }
 [
-    2026-01-24 05: 45: 47
+    2026-01-24 05: 48: 34
+] local.ERROR: SSLCommerz IPN validation failed {
+    "tran_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
+    "db_amount": 1221.84,
+    "ssl_amount": "1221.84"
+}
+[
+    2026-01-24 05: 48: 38
+] local.INFO: Received SSLCommerz IPN {
+    "amount": "1221.84",
+    "bank_tran_id": "260124114837gJoEjeJz3Ewhh6x",
+    "base_fair": null,
+    "card_brand": "MOBILEBANKING",
+    "card_issuer": "BKash Mobile Banking",
+    "card_issuer_country": "Bangladesh",
+    "card_issuer_country_code": "BD",
+    "card_no": null,
+    "card_sub_brand": "Classic",
+    "card_type": "BKASH-BKash",
+    "currency": "BDT",
+    "currency_amount": null,
+    "currency_rate": null,
+    "currency_type": null,
+    "error": null,
+    "risk_level": "1",
+    "risk_title": "Not Safe",
+    "status": "VALID",
+    "store_amount": "1191.29",
+    "store_id": "usama697373897e2c6",
+    "tran_date": "2026-01-24 11:48:37",
+    "tran_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
+    "val_id": "260124114837EX3OBrqW6jfADdz",
+    "value_a": null,
+    "value_b": null,
+    "value_c": null,
+    "value_d": null,
+    "verify_sign": "191ac503ec4605603718415af54fc378",
+    "verify_sign_sha2": "0f0d8a102b57f16cab7d5c33827f5fc140fa2781ef1cb9bb4903d92487472f40",
+    "verify_key": "amount,bank_tran_id,base_fair,card_brand,card_issuer,card_issuer_country,card_issuer_country_code,card_no,card_sub_brand,card_type,currency,currency_amount,currency_rate,currency_type,error,risk_level,risk_title,status,store_amount,store_id,tran_date,tran_id,val_id,value_a,value_b,value_c,value_d"
+}
+[
+    2026-01-24 05: 48: 38
+] local.INFO: Validating SSLCommerz IPN {
+    "request_data": {
+        "amount": "1221.84",
+        "bank_tran_id": "260124114837gJoEjeJz3Ewhh6x",
+        "base_fair": null,
+        "card_brand": "MOBILEBANKING",
+        "card_issuer": "BKash Mobile Banking",
+        "card_issuer_country": "Bangladesh",
+        "card_issuer_country_code": "BD",
+        "card_no": null,
+        "card_sub_brand": "Classic",
+        "card_type": "BKASH-BKash",
+        "currency": "BDT",
+        "currency_amount": null,
+        "currency_rate": null,
+        "currency_type": null,
+        "error": null,
+        "risk_level": "1",
+        "risk_title": "Not Safe",
+        "status": "VALID",
+        "store_amount": "1191.29",
+        "store_id": "usama697373897e2c6",
+        "tran_date": "2026-01-24 11:48:37",
+        "tran_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
+        "val_id": "260124114837EX3OBrqW6jfADdz",
+        "value_a": null,
+        "value_b": null,
+        "value_c": null,
+        "value_d": null,
+        "verify_sign": "191ac503ec4605603718415af54fc378",
+        "verify_sign_sha2": "0f0d8a102b57f16cab7d5c33827f5fc140fa2781ef1cb9bb4903d92487472f40",
+        "verify_key": "amount,bank_tran_id,base_fair,card_brand,card_issuer,card_issuer_country,card_issuer_country_code,card_no,card_sub_brand,card_type,currency,currency_amount,currency_rate,currency_type,error,risk_level,risk_title,status,store_amount,store_id,tran_date,tran_id,val_id,value_a,value_b,value_c,value_d"
+    },
+    "tran_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
+    "amount": 1221.84
+}
+[
+    2026-01-24 05: 48: 38
+] local.INFO: Starting SSLCommerz validation {
+    "merchant_trans_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
+    "merchant_trans_amount": 1221.84,
+    "merchant_trans_currency": "BDT",
+    "post_data": {
+        "amount": "1221.84",
+        "bank_tran_id": "260124114837gJoEjeJz3Ewhh6x",
+        "base_fair": null,
+        "card_brand": "MOBILEBANKING",
+        "card_issuer": "BKash Mobile Banking",
+        "card_issuer_country": "Bangladesh",
+        "card_issuer_country_code": "BD",
+        "card_no": null,
+        "card_sub_brand": "Classic",
+        "card_type": "BKASH-BKash",
+        "currency": "BDT",
+        "currency_amount": null,
+        "currency_rate": null,
+        "currency_type": null,
+        "error": null,
+        "risk_level": "1",
+        "risk_title": "Not Safe",
+        "status": "VALID",
+        "store_amount": "1191.29",
+        "store_id": "usama697373897e2c6",
+        "tran_date": "2026-01-24 11:48:37",
+        "tran_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
+        "val_id": "260124114837EX3OBrqW6jfADdz",
+        "value_a": null,
+        "value_b": null,
+        "value_c": null,
+        "value_d": null,
+        "verify_sign": "191ac503ec4605603718415af54fc378",
+        "verify_sign_sha2": "0f0d8a102b57f16cab7d5c33827f5fc140fa2781ef1cb9bb4903d92487472f40",
+        "verify_key": "amount,bank_tran_id,base_fair,card_brand,card_issuer,card_issuer_country,card_issuer_country_code,card_no,card_sub_brand,card_type,currency,currency_amount,currency_rate,currency_type,error,risk_level,risk_title,status,store_amount,store_id,tran_date,tran_id,val_id,value_a,value_b,value_c,value_d"
+    }
+}
+[
+    2026-01-24 05: 48: 38
+] local.INFO: SSLCommerz validation URL {
+    "url": "https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php?val_id=260124114837EX3OBrqW6jfADdz&store_id=usama697373897e2c6&store_passwd=usama697373897e2c6%40ssl&v=1&format=json"
+}
+[
+    2026-01-24 05: 48: 39
 ] local.ERROR: SSLCommerz IPN validation failed {
     "tran_id": "69dd165a-8d2d-4bde-a992-debd97b8d5c7",
     "db_amount": 1221.84,

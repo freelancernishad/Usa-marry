@@ -57,45 +57,45 @@ class SslCommerzNotification extends AbstractSslCommerz
         return false;
     }
 
-    $val_id = urlencode($post_data['val_id']);
-    $store_id = urlencode($this->getStoreId());
-    $store_passwd = urlencode($this->getStorePassword());
+    // $val_id = urlencode($post_data['val_id']);
+    // $store_id = urlencode($this->getStoreId());
+    // $store_passwd = urlencode($this->getStorePassword());
 
-    $requested_url =
-        $this->config['apiDomain']
-        . $this->config['apiUrl']['order_validate']
-        . "?val_id={$val_id}&store_id={$store_id}&store_passwd={$store_passwd}&v=1&format=json";
-    Log::info('SSLCommerz validation URL', ['url' => $requested_url]);
+    // $requested_url =
+    //     $this->config['apiDomain']
+    //     . $this->config['apiUrl']['order_validate']
+    //     . "?val_id={$val_id}&store_id={$store_id}&store_passwd={$store_passwd}&v=1&format=json";
+    // Log::info('SSLCommerz validation URL', ['url' => $requested_url]);
 
-    $handle = curl_init($requested_url);
-    curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
+    // $handle = curl_init($requested_url);
+    // curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
 
-    if ($this->config['connect_from_localhost']) {
-        curl_setopt($handle, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, 0);
-    }
+    // if ($this->config['connect_from_localhost']) {
+    //     curl_setopt($handle, CURLOPT_SSL_VERIFYHOST, 0);
+    //     curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, 0);
+    // }
 
-    $result = curl_exec($handle);
-    curl_close($handle);
+    // $result = curl_exec($handle);
+    // curl_close($handle);
 
-    if (!$result) {
-        return false;
-    }
+    // if (!$result) {
+    //     return false;
+    // }
 
-    $result = json_decode($result);
-    Log::info('SSLCommerz validation response', (array) $result);
+    // $result = json_decode($result);
+    // Log::info('SSLCommerz validation response', (array) $result);
 
     // ✅ Status check
-    if (!in_array($result->status, ['VALID', 'VALIDATED'])) {
+    if (!in_array($post_data->status, ['VALID', 'VALIDATED'])) {
         return false;
     }
 
     // ✅ Amount check (ONLY amount)
-    $sslAmount = round((float) $result->amount, 2);
+    $sslAmount = round((float) $post_data->amount, 2);
     $merchantAmount = round((float) $merchant_trans_amount, 2);
 
     if (
-        trim($merchant_trans_id) == trim($result->tran_id)
+        trim($merchant_trans_id) == trim($post_data->tran_id)
         && abs($merchantAmount - $sslAmount) < 1
     ) {
         return true;

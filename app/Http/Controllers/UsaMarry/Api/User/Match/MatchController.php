@@ -512,13 +512,28 @@ public function getMatchesWithLimit(Request $request)
     $limit = $isPremium ? 20 : $perPage;
 
     // Get three types of matches: New Matches, My Matches, and Premium Matches
-    $newMatches = $this->findPotentialMatches($user, false)
-        ->where('id', '!=', $user->id)
-        ->reorder()
-        ->orderByDesc('photos_count') // Priority 1: Has photos
-        ->orderBy('created_at', 'desc') // Priority 2: Newest
-        ->limit($perPage)
-        ->get();
+    // Get three types of matches: New Matches, My Matches, and Premium Matches
+    
+    // 1. Try to get matches from the last 7 days
+    // $newMatches = $this->findPotentialMatches($user, false)
+    //     ->where('id', '!=', $user->id)
+    //     ->where('created_at', '>=', now()->subDays(7))
+    //     ->reorder()
+    //     ->orderByDesc('photos_count') // Priority 1: Has photos
+    //     ->orderBy('created_at', 'desc') // Priority 2: Newest
+    //     ->limit($perPage)
+    //     ->get();
+
+    // 2. If no matches found in last 7 days, fallback to latest registered users
+    // if ($newMatches->isEmpty()) {
+        $newMatches = $this->findPotentialMatches($user, false)
+            ->where('id', '!=', $user->id)
+            ->reorder()
+            ->orderByDesc('photos_count') // Priority 1: Has photos
+            ->orderBy('created_at', 'desc') // Priority 2: Newest
+            ->limit($perPage)
+            ->get();
+    // }
     
     // sorting by match percentage might defeat the purpose of "newest first", but users usually want new people. 
     // The user asked for "match kora last created data" -> Matched data, last created.

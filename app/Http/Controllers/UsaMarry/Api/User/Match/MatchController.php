@@ -333,10 +333,9 @@ public function getMatches(Request $request)
     {
         $user = Auth::user();
         $perPage = $request->per_page ?? 10;
-        // $page = $request->page ?? 1; // Not needed for eloquent paginate
+        $page = $request->page ?? 1;
 
         $query = $this->findPotentialMatches($user, false)
-            ->where('created_at', '>=', now()->subDays(60)) // "New" users: last 3 days
             ->where('id', '!=', $user->id);
 
         // Remove default sorts from findPotentialMatches and apply new logic
@@ -347,13 +346,24 @@ public function getMatches(Request $request)
         // Apply reusable filters
         $query = applyFilters($query, $request);
 
+        // Fetch top 322 matches
         $matches = $query
             ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-            ->paginate($perPage);
+            ->limit(322)
+            ->get();
 
-        // We use direct pagination to preserve our specific sort order (Photos -> Newest)
-        // sortMatchesWithPercentage would override this with match score sorting
-        return new UserPaginationResource($matches);
+        // Manual Pagination
+        $items = $matches->slice(($page - 1) * $perPage, $perPage)->values();
+        
+        $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $items,
+            $matches->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        return new UserPaginationResource($paginated);
     }
 
 
@@ -585,10 +595,11 @@ public function getFullMenuWithCounts()
 
 
 
-    $newMatchesCount = $this->findPotentialMatches($user, false)
-        ->where('created_at', '>=', now()->subDays(7))
-        ->count();
+    // $newMatchesCount = $this->findPotentialMatches($user, false)
+    //     ->where('created_at', '>=', now()->subDays(7))
+    //     ->count();
 
+    $newMatchesCount = 322;
 
 
         $todayMatchesCount = $this->findPotentialMatches($user, false)

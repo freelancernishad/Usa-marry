@@ -336,7 +336,7 @@ public function getMatches(Request $request)
         // $page = $request->page ?? 1; // Not needed for eloquent paginate
 
         $query = $this->findPotentialMatches($user, false)
-            ->where('created_at', '>=', now()->subDays(30)) // "New" users: last 3 days
+            ->where('created_at', '>=', now()->subDays(60)) // "New" users: last 3 days
             ->where('id', '!=', $user->id);
 
         // Remove default sorts from findPotentialMatches and apply new logic

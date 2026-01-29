@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers\UsaMarry\Api\User\Match;
 
-use App\Models\User;
-use App\Models\UserMatch;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\MyMatchPaginationResource;
+use App\Http\Resources\MyMatchResource;
+use App\Http\Resources\SingleUser\SingleUserPaginationResource;
+use App\Http\Resources\UserPaginationResource;
+use App\Http\Resources\UserResource;
 use App\Models\ContactView;
 use App\Models\PhotoRequest;
 use App\Models\ProfileVisit;
-use Illuminate\Http\Request;
+use App\Models\User;
 use App\Models\UserConnection;
-use App\Http\Controllers\Controller;
-use App\Http\Resources\UserResource;
+use App\Models\UserMatch;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Http\Resources\UserPaginationResource;
-use App\Http\Resources\SingleUser\SingleUserPaginationResource;
-use App\Http\Resources\MyMatchPaginationResource;
 
 class MatchController extends Controller
 {
@@ -705,7 +706,7 @@ $requestsCount = $sentPendingCount + $receivedPendingCount;
 }
 
 
-    public function suggestedMatches(Request $request)
+    public function suggestedMatchesOld(Request $request)
     {
         $user = auth()->user();
         $limit = $request->limit ?? 6;
@@ -737,5 +738,69 @@ $requestsCount = $sentPendingCount + $receivedPendingCount;
 
 
 
+
+    public function suggestedMatches(Request $request)
+    {
+        $user = auth()->user();
+        
+        // 1. Determine opposite gender
+        $oppositeGender = $user->gender === 'Male' ? 'Female' : 'Male';
+
+        $query = User::query()
+            ->where('id', '!=', $user->id)
+            ->where('account_status', 'Active')
+            ->where('gender', $oppositeGender);
+
+        // Exclude already matched/rejected users (important to avoid stale suggestions)
+        $existingMatches = $user->matches()->pluck('matched_user_id');
+        $query->whereNotIn('id', $existingMatches);
+
+        // 2. Match Religion OR Location (At least one must match)
+        $query->where(function($q) use ($user) {
+            
+            // Check Religion
+            if (!empty($user->religion)) {
+                $q->orWhere('religion', $user->religion);
+            }
+
+            // Check Location
+            if ($user->profile && !empty($user->profile->country)) {
+                $userCountry = $user->profile->country;
+                $q->orWhereHas('profile', function ($subQ) use ($userCountry) {
+                    $subQ->where('country', $userCountry);
+                });
+            }
+        });
+
+        // Debug: Check how many users actually match criteria
+        $candidateIds = $query->pluck('id');
+        $totalPool = $candidateIds->count();
+
+        if ($totalPool === 0) {
+            return response()->json([
+                'success' => true,
+                'data' => [],
+                'count' => 0,
+                'total_available_pool' => 0
+            ]);
+        }
+
+        // 4. Random 10 using PHP (more reliable than DB random in some cases)
+        $randomIds = $candidateIds->random(min(10, $totalPool));
+
+        $matches = User::whereIn('id', $randomIds)
+            ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
+            ->get();
+            
+        // Shuffle again to ensure display order is random (whereIn doesn't respect input order)
+        $matches = $matches->shuffle();
+
+        return response()->json([
+            'success' => true,
+            'data' => MyMatchResource::collection($matches),
+            'count' => $matches->count(),
+            'total_available_pool' => $totalPool 
+        ]);
+    }
 
 }

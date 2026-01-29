@@ -515,7 +515,8 @@ public function getMatchesWithLimit(Request $request)
     $newMatches = $this->findPotentialMatches($user, false)
         ->where('id', '!=', $user->id)
         ->reorder()
-        ->orderBy('created_at', 'desc')
+        ->orderByDesc('photos_count') // Priority 1: Has photos
+        ->orderBy('created_at', 'desc') // Priority 2: Newest
         ->limit($perPage)
         ->get();
     

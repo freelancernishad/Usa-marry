@@ -119,13 +119,13 @@ class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 
     public function getMatchPercentageAttribute()
     {
-        $authUser = Auth::user();
+        $authUser = Auth::user() ?? request()->user() ?? Auth::guard('api')->user();
 
         if ($authUser && $authUser->id !== $this->id) {
             return calculateMatchPercentage($authUser, $this);
         }
 
-        return null;
+        return 0;
     }
 
     public function getIsPremiumAttribute(): bool

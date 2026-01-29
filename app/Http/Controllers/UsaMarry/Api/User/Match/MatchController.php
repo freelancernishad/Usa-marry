@@ -59,7 +59,7 @@ public function getMatches(Request $request)
     $oppositeGender = $user->gender === 'Male' ? 'Female' : 'Male';
 
     $query = User::query()
-    ->with('photos')
+    ->with(['photos', 'activeSubscription'])
         ->where('gender', $oppositeGender)
         ->where('account_status', 'Active')
         ->where('id', '!=', $user->id);
@@ -174,13 +174,11 @@ public function getMatches(Request $request)
         $query->selectRaw("(0 + profile_completion * 0.1) AS match_score");
     }
 
-    $query->orderByDesc('match_score');
-
-    // =================================================================
-    // এখানে নতুন লাইনটি যোগ করা হয়েছে
-    // এটি প্রথমে ছবির সংখ্যা অনুযায়ী সাজাবে (যাদের বেশি ছবি তারা আগে)
-    // =================================================================
-    $query->withCount('photos')->orderBy('photos_count', 'desc');
+    // Prioritize premium subscribers, then users with photos, then sort by match score
+    $query->withCount(['activeSubscription', 'photos'])
+        ->orderByDesc('active_subscription_count')
+        ->orderByDesc('photos_count')
+        ->orderByDesc('match_score');
 
 
     return $query;

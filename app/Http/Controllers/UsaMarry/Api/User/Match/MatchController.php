@@ -506,21 +506,35 @@ public function getMatchesWithLimit(Request $request)
     $perPage = $request->per_page ?? 10;
 
     // Check if the user has a premium account
-    $isPremium = $user->account_type === 'premium'; // Assuming 'account_type' is used to distinguish account types
+    $isPremium = $user->is_premium; // Use the accessor defined in User model
 
     // Get the correct pagination limit based on the account type
     $limit = $isPremium ? 20 : $perPage;
 
     // Get three types of matches: New Matches, My Matches, and Premium Matches
-    $newMatches = $this->findPotentialMatches($user,false)->where('created_at', '>=', now()->subDays(7)) // Example condition for "new"
-                               ->where('id', '!=', $user->id)->limit($perPage)->get();
-    $newMatches = collect($newMatches)->sortByDesc(fn($m) => $m->match_percentage);
+    $newMatches = $this->findPotentialMatches($user, false)
+        ->where('id', '!=', $user->id)
+        ->reorder()
+        ->orderBy('created_at', 'desc')
+        ->limit($perPage)
+        ->get();
+    
+    // sorting by match percentage might defeat the purpose of "newest first", but users usually want new people. 
+    // The user asked for "match kora last created data" -> Matched data, last created.
+    // So created_at desc is the primary sort. I will remove the secondary collection sort if it exists or just rely on the query.
+    // The original code had: $newMatches = collect($newMatches)->sortByDesc(fn($m) => $m->match_percentage);
+    // If I sort by match percentage again, I lose the "newest" order. 
+    // I will keep the collection sort IF the user wants "Best matches among the newest". 
+    // But usually "New Matches" section implies chronological order. 
+    // However, the user said "match data" (matched data).
+    // Let's stick to returning the query result which is ordered by created_at.
+    
+    // Removing the collection sort to preserve created_at order.
 
+    $myMatches =  $this->findPotentialMatches($user,false)->limit($perPage)->get();
+    $myMatches = collect($myMatches)->sortByDesc(fn($m) => $m->match_percentage);
 
-
-        $myMatches =  $this->findPotentialMatches($user,false)->limit($perPage)->get();
-        $myMatches = collect($myMatches)->sortByDesc(fn($m) => $m->match_percentage);
-
+    // Fetch premium matches if user is premium
     $premiumMatches = $isPremium ? $this->findPotentialMatches($user,false)->limit($perPage)->get() : [];
     $premiumMatches = collect($premiumMatches)->sortByDesc(fn($m) => $m->match_percentage);
 

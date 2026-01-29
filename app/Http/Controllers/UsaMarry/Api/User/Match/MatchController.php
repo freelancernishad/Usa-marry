@@ -163,12 +163,22 @@ public function getMatches(Request $request)
 
     $religions = $user->partnerPreference->religion ?? [];
 
-    $query->select('users.*');
+    // Only select fields needed for PHP match calculation + sort + ID
+    $query->select([
+        'users.id',
+        'users.dob',
+        'users.height',
+        'users.religion', 
+        'users.caste',
+        'users.marital_status',
+        'users.profile_completion',
+        'users.gender'
+    ]);
 
     if (!empty($religions)) {
         $placeholders = implode(',', array_fill(0, count($religions), '?'));
         $query->selectRaw(
-            "(CASE WHEN religion IN ($placeholders) THEN 20 ELSE 0 END + profile_completion * 0.1) AS match_score",
+            "(CASE WHEN religion IN ($placeholders) THEN 20 ELSE 0 END + profile_completion * 0.1) AS match_score", 
             $religions
         );
     } else {
@@ -416,22 +426,31 @@ public function todaysMatches(Request $request)
 
 
 
-public function myMatches(Request $request)
-{
-    $user = Auth::user();
-    $perPage = $request->per_page ?? 10;
-    $page = $request->page ?? 1;
+    public function myMatches(Request $request)
+    {
+        $user = Auth::user();
+        $perPage = $request->per_page ?? 10;
+        $page = $request->page ?? 1;
 
-    $query = $this->findPotentialMatches($user, false);
+        $query = $this->findPotentialMatches($user, false);
 
+        // Optimization: Reset eager loads to prevent loading photos/subscriptions for all matches
+        $query->setEagerLoads([]);
+        // re-add profile as it is needed for sorting
+        $query->with('profile');
 
-    $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-                     ->get();
+        $matches = $query->get();
 
-    $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);
+        $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);
 
-    return new MyMatchPaginationResource($paginated);
-}
+        // Load heavy relationships only for the current page items
+        $paginated->getCollection()->each->load([
+            'photos' => fn($q) => $q->where('is_primary', true),
+            'activeSubscription'
+        ]);
+
+        return new MyMatchPaginationResource($paginated);
+    }
 
 
 

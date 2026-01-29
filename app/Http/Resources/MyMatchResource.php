@@ -26,7 +26,7 @@ class MyMatchResource extends JsonResource
             'age' => $this->age,
             'about' => $this->profile->about ?? null,
             'hobbies' => $this->hobbies,
-            'match_percentage' => calculateMatchPercentageAllFields($authUser, $this->resource),
+            'match_percentage' => null,
             'plan_name' => $this->plan_name,
             'marital_status' => $this->marital_status,
             'religion' => $this->religion,

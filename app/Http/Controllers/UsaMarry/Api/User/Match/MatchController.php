@@ -14,6 +14,7 @@ use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Resources\UserPaginationResource;
 use App\Http\Resources\SingleUser\SingleUserPaginationResource;
+use App\Http\Resources\MyMatchPaginationResource;
 
 class MatchController extends Controller
 {
@@ -423,12 +424,13 @@ public function myMatches(Request $request)
 
     $query = $this->findPotentialMatches($user, false);
 
+
     $matches = $query->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
                      ->get();
 
     $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);
 
-    return new UserPaginationResource($paginated);
+    return new MyMatchPaginationResource($paginated);
 }
 
 

@@ -62,9 +62,9 @@ public function getMatches(Request $request)
 
     $query = User::query()
     ->with(['photos', 'activeSubscription'])
-        ->where('gender', $oppositeGender)
-        ->where('account_status', 'Active')
-        ->where('id', '!=', $user->id);
+        ->where('users.gender', $oppositeGender)
+        ->where('users.account_status', 'Active')
+        ->where('users.id', '!=', $user->id);
 
     if ($user->partnerPreference) {
         $prefs = $user->partnerPreference;
@@ -536,8 +536,20 @@ public function getMatchesWithLimit(Request $request)
     $myMatches = collect($myMatches)->sortByDesc(fn($m) => $m->match_percentage);
 
     // Fetch premium matches if user is premium
-    $premiumMatches = $isPremium ? $this->findPotentialMatches($user,false)->limit($perPage)->get() : [];
-    $premiumMatches = collect($premiumMatches)->sortByDesc(fn($m) => $m->match_percentage);
+    $premiumMatches = $isPremium ? $this->findPotentialMatches($user, false)
+        ->join('subscriptions', function($join) {
+            $join->on('users.id', '=', 'subscriptions.user_id')
+                 ->where('subscriptions.status', 'Success')
+                 ->where('subscriptions.end_date', '>=', now());
+        })
+        ->reorder() // Clear default sorts
+        ->orderByDesc('subscriptions.final_amount') // Sort by actual paid amount
+        ->select('users.*') // Ensure we return User models
+        ->limit($perPage)
+        ->get() : [];
+        
+    // No need to resort by match_percentage as the user explicitly asked for package size order
+    // $premiumMatches = collect($premiumMatches)->sortByDesc(fn($m) => $m->match_percentage);
 
 
     // Format the results using UserResource

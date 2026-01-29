@@ -780,7 +780,6 @@ $requestsCount = $sentPendingCount + $receivedPendingCount;
             return response()->json([
                 'success' => true,
                 'data' => [],
-                'count' => 0,
                 'total_available_pool' => 0
             ]);
         }
@@ -798,7 +797,6 @@ $requestsCount = $sentPendingCount + $receivedPendingCount;
         return response()->json([
             'success' => true,
             'data' => MyMatchResource::collection($matches),
-            'count' => $matches->count(),
             'total_available_pool' => $totalPool 
         ]);
     }

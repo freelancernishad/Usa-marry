@@ -727,7 +727,24 @@ function calculateMatchPercentageAllFields(User $user, User $matchedUser)
     $sorted = $matches->transform(function ($matchedUser) use ($user) {
         $matchedUser->match_percentage = calculateMatchPercentageAllFields($user, $matchedUser);
         return $matchedUser;
-    })->sortByDesc('match_percentage')->values();
+    })->sort(function ($a, $b) {
+        // 1. Sort by Active Subscription (Premium) - Descending
+        $aSub = $a->active_subscription_count ?? 0;
+        $bSub = $b->active_subscription_count ?? 0;
+        if ($aSub !== $bSub) {
+            return $bSub <=> $aSub;
+        }
+
+        // 2. Sort by Photos Count - Descending
+        $aPhotos = $a->photos_count ?? 0;
+        $bPhotos = $b->photos_count ?? 0;
+        if ($aPhotos !== $bPhotos) {
+            return $bPhotos <=> $aPhotos;
+        }
+
+        // 3. Sort by Match Percentage - Descending
+        return $b->match_percentage <=> $a->match_percentage;
+    })->values();
 
     return new \Illuminate\Pagination\LengthAwarePaginator(
         $sorted->forPage($page, $perPage),

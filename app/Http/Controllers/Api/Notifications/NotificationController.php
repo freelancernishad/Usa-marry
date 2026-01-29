@@ -38,7 +38,16 @@ class NotificationController extends Controller
             ], 401);
         }
 
-        return response()->json($notifications);
+        // Calculate unread count
+        $unreadCount = isset($user) 
+            ? Notification::where('user_id', $user->id)->where('is_read', false)->count()
+            : Notification::where('admin_id', $admin->id)->where('is_read', false)->count();
+
+        // Convert pagination to array and add unread_count
+        $response = $notifications->toArray();
+        $response['total_unread'] = $unreadCount;
+
+        return response()->json($response);
     }
 
     /**

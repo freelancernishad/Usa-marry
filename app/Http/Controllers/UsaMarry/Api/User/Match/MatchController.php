@@ -164,16 +164,7 @@ public function getMatches(Request $request)
     $religions = $user->partnerPreference->religion ?? [];
 
     // Only select fields needed for PHP match calculation + sort + ID
-    $query->select([
-        'users.id',
-        'users.dob',
-        'users.height',
-        'users.religion', 
-        'users.caste',
-        'users.marital_status',
-        'users.profile_completion',
-        'users.gender'
-    ]);
+ $query->select('users.*');
 
     if (!empty($religions)) {
         $placeholders = implode(',', array_fill(0, count($religions), '?'));

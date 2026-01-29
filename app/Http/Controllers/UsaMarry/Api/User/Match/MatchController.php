@@ -332,24 +332,27 @@ public function getMatches(Request $request)
     public function newMatches(Request $request)
     {
         $user = Auth::user();
-    $perPage = $request->per_page ?? 10;
-    $page = $request->page ?? 1;
+        $perPage = $request->per_page ?? 10;
+        // $page = $request->page ?? 1; // Not needed for eloquent paginate
 
         $query = $this->findPotentialMatches($user, false)
-            ->where('created_at', '>=', now()->subDays(7)) // "New" users: last 3 days
             ->where('id', '!=', $user->id);
+
+        // Remove default sorts from findPotentialMatches and apply new logic
+        $query->reorder()
+              ->orderByDesc('photos_count') // Priority 1: Has photos
+              ->orderBy('created_at', 'desc'); // Priority 2: Newest
 
         // Apply reusable filters
         $query = applyFilters($query, $request);
 
         $matches = $query
             ->with(['profile', 'photos' => fn($q) => $q->where('is_primary', true)])
-            ->get();
+            ->paginate($perPage);
 
-
-    $paginated = sortMatchesWithPercentage($matches, $user, $perPage, $page);
-
-    return new UserPaginationResource($paginated);
+        // We use direct pagination to preserve our specific sort order (Photos -> Newest)
+        // sortMatchesWithPercentage would override this with match score sorting
+        return new UserPaginationResource($matches);
     }
 
 
@@ -514,26 +517,14 @@ public function getMatchesWithLimit(Request $request)
     // Get three types of matches: New Matches, My Matches, and Premium Matches
     // Get three types of matches: New Matches, My Matches, and Premium Matches
     
-    // 1. Try to get matches from the last 7 days
-    // $newMatches = $this->findPotentialMatches($user, false)
-    //     ->where('id', '!=', $user->id)
-    //     ->where('created_at', '>=', now()->subDays(7))
-    //     ->reorder()
-    //     ->orderByDesc('photos_count') // Priority 1: Has photos
-    //     ->orderBy('created_at', 'desc') // Priority 2: Newest
-    //     ->limit($perPage)
-    //     ->get();
-
-    // 2. If no matches found in last 7 days, fallback to latest registered users
-    // if ($newMatches->isEmpty()) {
-        $newMatches = $this->findPotentialMatches($user, false)
-            ->where('id', '!=', $user->id)
-            ->reorder()
-            ->orderByDesc('photos_count') // Priority 1: Has photos
-            ->orderBy('created_at', 'desc') // Priority 2: Newest
-            ->limit($perPage)
-            ->get();
-    // }
+    // Get three types of matches: New Matches, My Matches, and Premium Matches
+    $newMatches = $this->findPotentialMatches($user, false)
+        ->where('id', '!=', $user->id)
+        ->reorder()
+        ->orderByDesc('photos_count') // Priority 1: Has photos
+        ->orderBy('created_at', 'desc') // Priority 2: Newest
+        ->limit($perPage)
+        ->get();
     
     // sorting by match percentage might defeat the purpose of "newest first", but users usually want new people. 
     // The user asked for "match kora last created data" -> Matched data, last created.

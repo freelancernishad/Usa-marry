@@ -590,15 +590,32 @@ public function subscribeByPaypal(Request $request)
     /** ----------------------------
      * 3️⃣ END DATE CALCULATION
      * ---------------------------- */
+    // if (is_numeric($plan->duration)) {
+    //     $endDate = now()->addMonths((int) $plan->duration);
+    // } elseif (preg_match('/^(\d+)\s*(year|years)$/i', $plan->duration, $m)) {
+    //     $endDate = now()->addYears((int) $m[1]);
+    // } elseif (strtolower($plan->duration) === 'lifetime') {
+    //     $endDate = null;
+    // } else {
+    //     $endDate = now()->addMonth();
+    // }
+
+
+        // Calculate end date
     if (is_numeric($plan->duration)) {
-        $endDate = now()->addMonths((int) $plan->duration);
-    } elseif (preg_match('/^(\d+)\s*(year|years)$/i', $plan->duration, $m)) {
-        $endDate = now()->addYears((int) $m[1]);
+        $endDate = now()->addMonths((int)$plan->duration);
+    } elseif (preg_match('/^(\d+)\s*(month|months)$/i', $plan->duration, $matches)) {
+        $endDate = now()->addMonths((int)$matches[1]);
+    } elseif (preg_match('/^(\d+)\s*(year|years)$/i', $plan->duration, $matches)) {
+        $endDate = now()->addYears((int)$matches[1]);
     } elseif (strtolower($plan->duration) === 'lifetime') {
         $endDate = null;
     } else {
         $endDate = now()->addMonth();
     }
+
+
+
 
     /** ----------------------------
      * 4️⃣ DUPLICATE CHECK

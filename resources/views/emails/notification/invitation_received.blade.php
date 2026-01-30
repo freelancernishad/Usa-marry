@@ -99,7 +99,7 @@
                 <div class="container">
                     <!-- Header -->
                     <div class="header" style="display: flex; justify-content: space-between; align-items: center; color: #333; padding: 20px 0;">
-                        <img src="https://usamarry.com/_next/image?url=%2Fusa-marry-logo.png&w=384&q=75" alt="Usa Marry Logo" style="width: 180px; filter: contrast(150%);" />
+                        <img src="https://usamarry.com/logo-for-mail.png" alt="Usa Marry Logo" style="width: 180px; filter: contrast(150%);" />
                     </div>
 
                     <!-- BODY CONTENT -->

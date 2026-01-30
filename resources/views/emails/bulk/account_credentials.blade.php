@@ -54,7 +54,7 @@
                     <tr>
                         <!-- Added border-bottom and padding to match the Usa Marry header style -->
                         <td align="center" style="padding: 20px 30px 15px 30px; border-bottom: 1px solid #801b1b;">
-                            <img src="https://usamarry.com/_next/image?url=%2Fusa-marry-logo.png&w=384&q=75"
+                            <img src="https://usamarry.com/logo-for-mail.png"
                                 alt="Usa Marry Logo" style="width: 180px; height: auto; display: block; filter: contrast(150%); margin: 0 auto;">
                         </td>
                     </tr>

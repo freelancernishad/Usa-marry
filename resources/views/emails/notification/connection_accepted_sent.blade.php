@@ -85,7 +85,7 @@
             <td style="background-color: #f4f5f7;">
                 <div class="container">
                     <div class="header">
-                        <img src="https://usamarry.com/_next/image?url=%2Fusa-marry-logo.png&w=384&q=75" alt="Usa Marry Logo" style="width: 180px; filter: contrast(150%);" />
+                        <img src="https://usamarry.com/logo-for-mail.png" alt="Usa Marry Logo" style="width: 180px; filter: contrast(150%);" />
                     </div>
                     <div class="content" style="padding: 10px 0; text-align: center;">
                         <h1 style="font-size: 28px; font-weight: 800; color: #1a202c; margin: 0 0 10px 0;">
@@ -149,7 +149,7 @@
                         <p><strong>Need help?</strong> Visit our <a href="https://usamarry.com/help" style="color: #c05346;">Help Center</a> or reach out to us directly.</p>
                         <div class="contact-info">
                             <div><strong>Email:</strong> <a href="mailto:contact@usamarry.com">contact@usamarry.com</a></div>
-                            <div><strong>Phone:</strong> +1 (888) 887 5027</div>
+                            <div><strong>Phone:</strong> +1 (929) 733-7442</div>
                             <div><strong>Office:</strong> 74-09 37TH Avenue, Suite 203B, Jackson Heights, NY 11372</div>
                         </div>
                         <p><a href="https://usamarry.com" style="color: #c05346;">www.usamarry.com</a></p>

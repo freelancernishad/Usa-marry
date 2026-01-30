@@ -104,7 +104,7 @@
         <table style="width: 100%; border-bottom: 2px solid #fce7f3; margin-bottom: 30px;">
             <tr>
                 <td style="vertical-align: middle;">
-                    <img src="https://usamarry.com/_next/image?url=%2Fusa-marry-logo.png&w=384&q=75" alt="{{ config('app.name') }} Logo" style="height: 40px; vertical-align: middle; margin-right: 10px;">
+                    <img src="https://usamarry.com/logo-for-mail.png" alt="{{ config('app.name') }} Logo" style="height: 40px; vertical-align: middle; margin-right: 10px;">
                     <span style="font-size: 20px; font-weight: 600; color: #be123c;"></span>
                 </td>
                 <td style="text-align: right; font-size: 14px; color: #6b7280;">

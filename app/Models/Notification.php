@@ -33,6 +33,7 @@ class Notification extends Model
 
     public function related()
     {
-        return $this->morphTo(__FUNCTION__, 'related_model', 'related_model_id');
+        return $this->morphTo(null, 'related_model', 'related_model_id');
     }
+    
 }

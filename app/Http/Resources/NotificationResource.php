@@ -28,16 +28,16 @@ class NotificationResource extends JsonResource
                     'profile_picture' => $this->user->profile_picture,
                 ];
             }),
-'related_user' => $this->when(
-    $this->related_model === \App\Models\User::class || $this->related_model === 'User',
-    function () {
-        return $this->related ? [
-            'id' => $this->related->id,
-            'name' => $this->related->name,
-            'profile_picture' => $this->related->profile_picture,
-        ] : null;
-    }
-),
+            'related_user' => $this->when(
+                $this->related_model === \App\Models\User::class || $this->related_model === 'User',
+                function () {
+                    return $this->related ? [
+                        'id' => $this->related->id,
+                        'name' => $this->related->name,
+                        'profile_picture' => $this->related->profile_picture,
+                    ] : null;
+                }
+            ),
         ];
     }
 }

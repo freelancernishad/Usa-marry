@@ -23,9 +23,23 @@ class NotificationController extends Controller
         // Check if the request is from a user or admin
         if (Auth::guard('user')->check()) {
             $user = Auth::guard('user')->user();
-            $notifications = Notification::with('user')->where('user_id', $user->id)
+            $notifications = Notification::with(['user:id,gender'])->where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->paginate($request->get('per_page', 15));
+
+                // Transform user data
+$notifications->getCollection()->transform(function ($notification) {
+
+    if ($notification->user) {
+        $notification->user = [
+            'id' => $notification->user->id,
+            'profile_picture' => $notification->user->profile_picture,
+        ];
+    }
+
+    return $notification;
+});
+
 
         } elseif (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();

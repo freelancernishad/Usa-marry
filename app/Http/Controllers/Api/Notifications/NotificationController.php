@@ -34,6 +34,12 @@ class NotificationController extends Controller
             ->where('is_read', false)
             ->count();
 
+             $response = $notifications->toArray();
+        $response['total_unread'] = $unreadCount;
+
+        return response()->json($response);
+
+
         // ✅ Resource only for user
         return NotificationResource::collection($notifications)
             ->additional([

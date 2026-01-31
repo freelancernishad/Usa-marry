@@ -758,106 +758,106 @@ function calculateMatchPercentageAllFields(User $user, User $matchedUser)
 
 
      function applyFilters($query, Request $request)
-{
-    // Basic filters with 'all' condition
-    $photoVisibility = $request->photo_visibility; // 'all', 'profile_only', etc.
-    $maritalStatus = $request->marital_status;     // 'all', 'single', etc.
-    $recent = strtolower($request->recent);                    // 'all', 'day', 'week', 'month'
+    {
+        // Basic filters with 'all' condition
+        $photoVisibility = $request->photo_visibility; // 'all', 'profile_only', etc.
+        $maritalStatus = $request->marital_status;     // 'all', 'single', etc.
+        $recent = strtolower($request->recent);                    // 'all', 'day', 'week', 'month'
 
 
 
-    $recentDaysMap = [
-        'day' => 1,
-        'week' => 7,
-        'month' => 30,
-    ];
-    $recentDays = $recentDaysMap[$recent] ?? null;
+        $recentDaysMap = [
+            'day' => 1,
+            'week' => 7,
+            'month' => 30,
+        ];
+        $recentDays = $recentDaysMap[$recent] ?? null;
 
-    if ($photoVisibility && $photoVisibility !== 'all') {
-        $query->where('photo_visibility', $photoVisibility);
-    }
-
-    if ($maritalStatus && $maritalStatus !== 'all') {
-        $query->where('marital_status', $maritalStatus);
-    }
-
-    if ($recent && $recent !== 'all' && $recentDays) {
-        $query->where('created_at', '>=', now()->subDays($recentDays));
-    }
-
-    // Age filter
-    if ($request->has('age_min') || $request->has('age_max')) {
-        $minAge = $request->age_min ?? 18;
-        $maxAge = $request->age_max ?? 99;
-        $query->whereRaw("TIMESTAMPDIFF(YEAR, dob, CURDATE()) BETWEEN ? AND ?", [$minAge, $maxAge]);
-    }
-
-    // Height filter
-    if ($request->has('height_min') || $request->has('height_max')) {
-        $minHeight = $request->height_min ?? 100;
-        $maxHeight = $request->height_max ?? 250;
-        $query->whereBetween('height', [$minHeight, $maxHeight]);
-    }
-
-    // Religion & Caste
-    if ($request->religion) {
-        $query->where('religion', $request->religion);
-        if ($request->caste) {
-            $query->where('caste', $request->caste);
+        if ($photoVisibility && $photoVisibility !== 'all') {
+            $query->where('photo_visibility', $photoVisibility);
         }
-    }
 
-    // Marital status again if provided differently (optional, but safe)
-    if ($request->gender) {
-        $query->where('gender', $request->gender);
-    }
+        if ($maritalStatus && $maritalStatus !== 'all') {
+            $query->where('marital_status', $maritalStatus);
+        }
 
-    if ($request->marital_status) {
-        $query->where('marital_status', $request->marital_status);
-    }
+        if ($recent && $recent !== 'all' && $recentDays) {
+            $query->where('created_at', '>=', now()->subDays($recentDays));
+        }
 
-    // Education
-    if ($request->education) {
-        $query->whereHas('profile', function($q) use ($request) {
-            $q->where('highest_degree', $request->education);
-        });
-    }
+        // Age filter
+        if ($request->has('age_min') || $request->has('age_max')) {
+            $minAge = $request->age_min ?? 18;
+            $maxAge = $request->age_max ?? 99;
+            $query->whereRaw("TIMESTAMPDIFF(YEAR, dob, CURDATE()) BETWEEN ? AND ?", [$minAge, $maxAge]);
+        }
 
-    // Occupation
-    if ($request->occupation) {
-        $query->whereHas('profile', function($q) use ($request) {
-            $q->where('occupation', $request->occupation);
-        });
-    }
+        // Height filter
+        if ($request->has('height_min') || $request->has('height_max')) {
+            $minHeight = $request->height_min ?? 100;
+            $maxHeight = $request->height_max ?? 250;
+            $query->whereBetween('height', [$minHeight, $maxHeight]);
+        }
 
-    // Country
-    if ($request->country) {
-        $query->whereHas('profile', function($q) use ($request) {
-            $q->where('country', $request->country);
-        });
-    }
+        // Religion & Caste
+        if ($request->religion) {
+            $query->where('religion', $request->religion);
+            if ($request->caste) {
+                $query->where('caste', $request->caste);
+            }
+        }
 
-    // Lifestyle filters: diet, drink, smoke
-    if ($request->diet) {
-        $query->whereHas('profile', function($q) use ($request) {
-            $q->where('diet', $request->diet);
-        });
-    }
+        // Marital status again if provided differently (optional, but safe)
+        if ($request->gender) {
+            $query->where('gender', $request->gender);
+        }
 
-    if ($request->drink) {
-        $query->whereHas('profile', function($q) use ($request) {
-            $q->where('drink', $request->drink);
-        });
-    }
+        if ($request->marital_status) {
+            $query->where('marital_status', $request->marital_status);
+        }
 
-    if ($request->smoke) {
-        $query->whereHas('profile', function($q) use ($request) {
-            $q->where('smoke', $request->smoke);
-        });
-    }
+        // Education
+        if ($request->education) {
+            $query->whereHas('profile', function($q) use ($request) {
+                $q->where('highest_degree', $request->education);
+            });
+        }
 
-    return $query;
-}
+        // Occupation
+        if ($request->occupation) {
+            $query->whereHas('profile', function($q) use ($request) {
+                $q->where('occupation', $request->occupation);
+            });
+        }
+
+        // Country
+        if ($request->country) {
+            $query->whereHas('profile', function($q) use ($request) {
+                $q->where('country', $request->country);
+            });
+        }
+
+        // Lifestyle filters: diet, drink, smoke
+        if ($request->diet) {
+            $query->whereHas('profile', function($q) use ($request) {
+                $q->where('diet', $request->diet);
+            });
+        }
+
+        if ($request->drink) {
+            $query->whereHas('profile', function($q) use ($request) {
+                $q->where('drink', $request->drink);
+            });
+        }
+
+        if ($request->smoke) {
+            $query->whereHas('profile', function($q) use ($request) {
+                $q->where('smoke', $request->smoke);
+            });
+        }
+
+        return $query;
+    }
 
 
 

@@ -23,12 +23,12 @@ class NotificationController extends Controller
         // Check if the request is from a user or admin
         if (Auth::guard('user')->check()) {
             $user = Auth::guard('user')->user();
-            $notifications = Notification::where('user_id', $user->id)
+            $notifications = Notification::with('user')->where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->paginate($request->get('per_page', 15));
         } elseif (Auth::guard('admin')->check()) {
             $admin = Auth::guard('admin')->user();
-            $notifications = Notification::where('admin_id', $admin->id)
+            $notifications = Notification::with('admin')->where('admin_id', $admin->id)
                 ->orderBy('created_at', 'desc')
                 ->paginate($request->get('per_page', 15));
         } else {
@@ -39,7 +39,7 @@ class NotificationController extends Controller
         }
 
         // Calculate unread count
-        $unreadCount = isset($user) 
+        $unreadCount = isset($user)
             ? Notification::where('user_id', $user->id)->where('is_read', false)->count()
             : Notification::where('admin_id', $admin->id)->where('is_read', false)->count();
 

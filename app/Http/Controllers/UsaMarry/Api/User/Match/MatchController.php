@@ -440,6 +440,9 @@ public function todaysMatches(Request $request)
 
         $query = $this->findPotentialMatches($user, false);
 
+        // Apply filters
+        $query = applyFilters($query, $request);
+
         // Optimization: Reset eager loads to prevent loading photos/subscriptions for all matches
         $query->setEagerLoads([]);
         // re-add profile as it is needed for sorting

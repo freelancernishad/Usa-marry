@@ -19,6 +19,7 @@ class NotificationResource extends JsonResource
             'user' => $this->whenLoaded('user', function () {
                 return [
                     'id' => $this->user->id,
+                    'name' => $this->user->name,
                     'profile_picture' => $this->user->profile_picture,
                 ];
             }),

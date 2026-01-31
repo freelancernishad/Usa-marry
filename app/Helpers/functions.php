@@ -762,7 +762,9 @@ function calculateMatchPercentageAllFields(User $user, User $matchedUser)
     // Basic filters with 'all' condition
     $photoVisibility = $request->photo_visibility; // 'all', 'profile_only', etc.
     $maritalStatus = $request->marital_status;     // 'all', 'single', etc.
-    $recent = $request->recent;                    // 'all', 'day', 'week', 'month'
+    $recent = strtolower($request->recent);                    // 'all', 'day', 'week', 'month'
+
+
 
     $recentDaysMap = [
         'day' => 1,

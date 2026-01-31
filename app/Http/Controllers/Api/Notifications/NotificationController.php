@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Resources\NotificationResource;
 use App\Models\Admin; // Assuming you have an Admin model
 
 class NotificationController extends Controller
@@ -18,52 +19,53 @@ class NotificationController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Request $request)
-    {
-        // Check if the request is from a user or admin
-        if (Auth::guard('user')->check()) {
-            $user = Auth::guard('user')->user();
-            $notifications = Notification::with(['user:id,gender'])->where('user_id', $user->id)
-                ->orderBy('created_at', 'desc')
-                ->paginate($request->get('per_page', 15));
+   public function index(Request $request)
+{
+    if (Auth::guard('user')->check()) {
 
-                // Transform user data
-$notifications->getCollection()->transform(function ($notification) {
+        $user = Auth::guard('user')->user();
 
-    if ($notification->user) {
-        $notification->user = [
-            'id' => $notification->user->id,
-            'profile_picture' => $notification->user->profile_picture,
-        ];
+        $notifications = Notification::with(['user:id,gender'])
+            ->where('user_id', $user->id)
+            ->latest()
+            ->paginate($request->get('per_page', 15));
+
+        $unreadCount = Notification::where('user_id', $user->id)
+            ->where('is_read', false)
+            ->count();
+
+        // ✅ Resource only for user
+        return NotificationResource::collection($notifications)
+            ->additional([
+                'total_unread' => $unreadCount
+            ]);
     }
 
-    return $notification;
-});
+    elseif (Auth::guard('admin')->check()) {
 
+        $admin = Auth::guard('admin')->user();
 
-        } elseif (Auth::guard('admin')->check()) {
-            $admin = Auth::guard('admin')->user();
-            $notifications = Notification::with('admin')->where('admin_id', $admin->id)
-                ->orderBy('created_at', 'desc')
-                ->paginate($request->get('per_page', 15));
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Unauthenticated.',
-            ], 401);
-        }
+        $notifications = Notification::with('admin')
+            ->where('admin_id', $admin->id)
+            ->latest()
+            ->paginate($request->get('per_page', 15));
 
-        // Calculate unread count
-        $unreadCount = isset($user)
-            ? Notification::where('user_id', $user->id)->where('is_read', false)->count()
-            : Notification::where('admin_id', $admin->id)->where('is_read', false)->count();
+        $unreadCount = Notification::where('admin_id', $admin->id)
+            ->where('is_read', false)
+            ->count();
 
-        // Convert pagination to array and add unread_count
+        // ✅ Admin stays normal JSON
         $response = $notifications->toArray();
         $response['total_unread'] = $unreadCount;
 
         return response()->json($response);
     }
+
+    return response()->json([
+        'status' => 'error',
+        'message' => 'Unauthenticated.',
+    ], 401);
+}
 
     /**
      * Mark a notification as read.

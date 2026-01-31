@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Resources\NotificationResource;
+use App\Http\Resources\NotificationCollection;
 use App\Models\Admin; // Assuming you have an Admin model
 
 class NotificationController extends Controller
@@ -41,10 +42,8 @@ class NotificationController extends Controller
 
 
         // ✅ Resource only for user
-        return NotificationResource::collection($notifications)
-            ->additional([
-                'total_unread' => $unreadCount
-            ]);
+        return (new NotificationCollection($notifications))
+                ->additional(['total_unread' => $unreadCount]);
     }
 
     elseif (Auth::guard('admin')->check()) {

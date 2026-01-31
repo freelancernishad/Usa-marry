@@ -26,9 +26,7 @@ class NotificationController extends Controller
 
         $user = Auth::guard('user')->user();
 
-        $notifications = Notification::with(['user:id,gender,name'  ,  'related' => function ($query) {
-        $query->select('id','name','gender');
-    }])
+        $notifications = Notification::with(['user:id,gender,name'])
             ->where('user_id', $user->id)
             ->latest()
             ->paginate($request->get('per_page', 15));

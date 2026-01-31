@@ -31,9 +31,6 @@ class Notification extends Model
         return $this->belongsTo(Admin::class);
     }
 
-    public function related()
-    {
-        return $this->morphTo(null, 'related_model', 'related_model_id');
-    }
-    
+
+
 }

@@ -69,6 +69,16 @@ Route::get('/plans', [SubscriptionController::class, 'plans']);
 
 // Authenticated routes
 Route::middleware(AuthenticateUser::class)->group(function () {
+
+
+
+
+
+    Route::post('/user/update-active-status',[AuthController::class, 'updateActiveStatus']);
+
+
+
+
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (Request $request) {
@@ -179,3 +189,4 @@ Route::prefix('coupons')->group(function () {
     Route::post('/check', [CouponController::class, 'checkCoupon']);
 
 });
+

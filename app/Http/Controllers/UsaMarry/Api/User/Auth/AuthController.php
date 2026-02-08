@@ -199,4 +199,51 @@ class AuthController extends Controller
 
 
 
+    public function updateActiveStatus(Request $request)
+    {
+      // 1️⃣ Validate using Validator
+        $validator = Validator::make($request->all(), [
+            'is_active' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        // 2️⃣ Get authenticated user
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        // 3️⃣ Update active status & last active time
+        $user->update([
+            'is_active' => $request->is_active,
+            'last_active_at' => now(),
+        ]);
+
+        // 4️⃣ Success response
+        return response()->json([
+            'status' => true,
+            'message' => $request->is_active
+                ? 'User is now active'
+                : 'User is now inactive',
+            'data' => [
+                'is_active' => $user->is_active,
+                'last_active_at' => $user->last_active_at,
+            ],
+        ], 200);
+    }
+
+
+
+
 }

@@ -31,6 +31,8 @@ class MyMatchResource extends JsonResource
             'marital_status' => $this->marital_status,
             'religion' => $this->religion,
             'caste' => $this->caste,
+            'is_active' => $this->is_active,
+            'last_active_at' => $this->last_active_at,
             'mother_tongue' => $this->mother_tongue,
             'height' => $this->height,
             'occupation' => $this->profile->occupation ?? null,

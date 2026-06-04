@@ -318,6 +318,9 @@
                     @if(request()->filled('search'))
                         <a href="{{ url('admin/login-logs') }}" class="btn btn-outline-secondary px-3"><i class="fa-solid fa-rotate-left"></i></a>
                     @endif
+                    <a href="{{ route('admin.login-logs.export', request()->query()) }}" class="btn btn-success px-3">
+                        <i class="fa-regular fa-file-excel me-1"></i>Export Excel
+                    </a>
                 </form>
             </div>
 

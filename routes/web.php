@@ -68,5 +68,6 @@ Route::get('/files/{path}', function ($path) {
 
     // Admin Login Logs Views
     Route::get('admin/login-logs', [\App\Http\Controllers\LoginLogViewController::class, 'index'])->name('admin.login-logs');
+    Route::get('admin/login-logs/export', [\App\Http\Controllers\LoginLogViewController::class, 'export'])->name('admin.login-logs.export');
     Route::get('admin/login-logs/{id}/details', [\App\Http\Controllers\LoginLogViewController::class, 'details'])->name('admin.login-logs.details');
 

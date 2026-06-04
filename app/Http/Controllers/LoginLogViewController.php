@@ -74,6 +74,89 @@ class LoginLogViewController extends Controller
     }
 
     /**
+     * Export the login logs matching the active filter to an Excel-compatible CSV.
+     */
+    public function export(Request $request)
+    {
+        // 1. User List Query
+        $query = User::select('id', 'name', 'profile_id', 'email', 'phone', 'whatsapps', 'gender')
+            ->whereHas('loginLogs')
+            ->withCount('loginLogs as login_count')
+            ->withMax('loginLogs as last_login_at', 'logged_in_at');
+
+        // Apply search if requested
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%")
+                  ->orWhere('profile_id', 'LIKE', "%{$search}%")
+                  ->orWhere('phone', 'LIKE', "%{$search}%")
+                  ->orWhere('whatsapps', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Sort options
+        $sortBy = $request->input('sort', 'login_count');
+        $sortOrder = $request->input('order', 'desc');
+
+        if ($sortBy === 'login_count') {
+            $query->orderBy('login_count', $sortOrder);
+        } else {
+            $query->orderBy('last_login_at', $sortOrder);
+        }
+
+        $users = $query->get();
+
+        $fileName = 'user_login_logs_export_' . date('Y-m-d_H-i-s') . '.csv';
+
+        $headers = [
+            "Content-type"        => "text/csv; charset=UTF-8",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $callback = function() use ($users) {
+            $file = fopen('php://output', 'w');
+            
+            // Add UTF-8 BOM so Excel opens it with correct formatting automatically
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Write CSV Header
+            fputcsv($file, [
+                'Profile ID',
+                'Name',
+                'Email',
+                'Phone',
+                'WhatsApp',
+                'Gender',
+                'Total Logins',
+                'Last Login Date'
+            ]);
+
+            // Write Row Data
+            foreach ($users as $user) {
+                fputcsv($file, [
+                    $user->profile_id ?? 'N/A',
+                    $user->name ?? 'N/A',
+                    $user->email ?? 'N/A',
+                    $user->phone ?? 'N/A',
+                    $user->whatsapps ?? 'N/A',
+                    $user->gender ?? 'N/A',
+                    $user->login_count ?? 0,
+                    $user->last_login_at ? Carbon::parse($user->last_login_at)->format('Y-m-d h:i A') : 'N/A'
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
      * Get detailed login logs for a specific user (AJAX).
      */
     public function details($id)

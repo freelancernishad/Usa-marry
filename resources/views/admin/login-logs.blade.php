@@ -217,10 +217,10 @@
                                         <div class="flex items-center gap-4">
                                             <div class="relative flex-shrink-0">
                                                 @if($user->gender === 'Female')
-                                                    <img class="w-11 h-11 rounded-full object-cover border-2 border-rose-100 bg-rose-50" src="{{ url('files/female.jpeg') }}" alt="Female User">
+                                                    <img class="w-11 h-11 rounded-full object-cover border-2 border-rose-100 bg-rose-50" src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=fdf2f8&color=db2777&bold=true" alt="Female User">
                                                     <span class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white bg-rose-400"></span>
                                                 @else
-                                                    <img class="w-11 h-11 rounded-full object-cover border-2 border-indigo-100 bg-indigo-50" src="{{ url('files/male.jpeg') }}" alt="Male User">
+                                                    <img class="w-11 h-11 rounded-full object-cover border-2 border-indigo-100 bg-indigo-50" src="https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=e0e7ff&color=4f46e5&bold=true" alt="Male User">
                                                     <span class="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white bg-indigo-400"></span>
                                                 @endif
                                             </div>
@@ -427,7 +427,10 @@
                         
                         // Set Avatar
                         const isFemale = data.user.gender === 'Female';
-                        const avatarUrl = isFemale ? "{{ url('files/female.jpeg') }}" : "{{ url('files/male.jpeg') }}";
+                        const encodedName = encodeURIComponent(data.user.name);
+                        const avatarUrl = isFemale 
+                            ? `https://ui-avatars.com/api/?name=${encodedName}&background=fdf2f8&color=db2777&bold=true` 
+                            : `https://ui-avatars.com/api/?name=${encodedName}&background=e0e7ff&color=4f46e5&bold=true`;
                         const borderClass = isFemale ? 'border-rose-100 bg-rose-50' : 'border-indigo-100 bg-indigo-50';
                         document.getElementById('drawer-avatar').innerHTML = `
                             <img class="w-12 h-12 rounded-full object-cover border-2 ${borderClass}" src="${avatarUrl}" alt="Profile avatar">

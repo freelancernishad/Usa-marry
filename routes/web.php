@@ -66,3 +66,7 @@ Route::get('/files/{path}', function ($path) {
     Route::get('sslcommerz/example1', [SslCommerzPaymentController::class, 'exampleEasyCheckout']);
     Route::get('sslcommerz/example2', [SslCommerzPaymentController::class, 'exampleHostedCheckout']);
 
+    // Admin Login Logs Views
+    Route::get('admin/login-logs', [\App\Http\Controllers\LoginLogViewController::class, 'index'])->name('admin.login-logs');
+    Route::get('admin/login-logs/{id}/details', [\App\Http\Controllers\LoginLogViewController::class, 'details'])->name('admin.login-logs.details');
+

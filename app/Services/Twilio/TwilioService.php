@@ -4,10 +4,11 @@ namespace App\Services\Twilio;
 
 use Twilio\Rest\Client;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class TwilioService
 {
-    protected Client $client;
+    protected ?Client $client = null;
 
     /**
      * Default country (ISO)
@@ -29,11 +30,9 @@ class TwilioService
         $sid   = config('TWILIO_SID');
         $token = config('TWILIO_AUTH_TOKEN');
 
-        if (!$sid || !$token) {
-            throw new \RuntimeException('Twilio credentials are missing');
+        if ($sid && $token) {
+            $this->client = new Client($sid, $token);
         }
-
-        $this->client = new Client($sid, $token);
     }
 
     /**
@@ -45,25 +44,90 @@ class TwilioService
             // Format & validate number
             $to = $this->formatPhoneNumber($to, $country ?? $this->defaultCountry);
 
-            Log::info('Sending Twilio SMS', [
-                'to' => $to,
-                'via' => 'messaging_service'
-            ]);
+            // If it is a Bangladesh number, send using SMSNOC
+            if (str_starts_with($to, '+880')) {
+                return $this->sendViaSmsNoc($to, $message);
+            }
 
-            $this->client->messages->create($to, [
-                'messagingServiceSid' => 'MG09d843fbd6518ceadafaef2ad4ba3a57',
-                'body' => $message,
-            ]);
-
-            return true;
+            // Otherwise, send using Twilio
+            return $this->sendViaTwilio($to, $message);
         } catch (\Throwable $e) {
-            Log::error('Twilio SMS Error', [
+            Log::error('SMS Routing/Sending Error', [
                 'error' => $e->getMessage(),
                 'to'    => $to ?? null,
             ]);
 
             return false;
         }
+    }
+
+    /**
+     * Send SMS via Twilio
+     */
+    protected function sendViaTwilio(string $to, string $message): bool
+    {
+        if (!$this->client) {
+            Log::error('Twilio client is not initialized because TWILIO_SID or TWILIO_AUTH_TOKEN is missing.');
+            return false;
+        }
+
+        Log::info('Sending Twilio SMS', [
+            'to' => $to,
+            'via' => 'messaging_service'
+        ]);
+
+        $this->client->messages->create($to, [
+            'messagingServiceSid' => 'MG09d843fbd6518ceadafaef2ad4ba3a57',
+            'body' => $message,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Send SMS via SMSNOC API
+     */
+    protected function sendViaSmsNoc(string $to, string $message): bool
+    {
+        $apiKey = config('SMSNOC_API_KEY') ?? env('SMSNOC_API_KEY');
+        $senderId = config('SMSNOC_SENDER_ID') ?? env('SMSNOC_SENDER_ID');
+
+        if (!$apiKey || !$senderId) {
+            Log::error('SMSNOC credentials are missing. Please set SMSNOC_API_KEY and SMSNOC_SENDER_ID in settings/env.');
+            return false;
+        }
+
+        $recipient = ltrim($to, '+');
+        $isUnicode = preg_match('/[^\x00-\x7F]/', $message);
+
+        $payload = [
+            'recipient' => $recipient,
+            'sender_id' => $senderId,
+            'type'      => $isUnicode ? 'unicode' : 'plain',
+            'message'   => $message,
+        ];
+
+        Log::info('Sending SMS via SMSNOC', [
+            'to' => $to,
+        ]);
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . $apiKey,
+        ])->post('https://app.smsnoc.com/api/v3/sms/send', $payload);
+
+        if ($response->successful()) {
+            Log::info('SMS sent successfully via SMSNOC', ['to' => $to]);
+            return true;
+        }
+
+        Log::error('SMSNOC sending failed', [
+            'status' => $response->status(),
+            'body'   => $response->body(),
+            'to'     => $to,
+        ]);
+
+        return false;
     }
 
     /**

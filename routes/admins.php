@@ -91,6 +91,16 @@ Route::prefix('admin')->group(function () {
                 }
                 );
 
+                Route::prefix('sms')->group(function () {
+                    Route::post('/send', [\App\Http\Controllers\Api\Admin\Sms\SmsController::class, 'send']);
+                    Route::get('/logs', [\App\Http\Controllers\Api\Admin\Sms\SmsController::class, 'logs']);
+                });
+
+                Route::prefix('email')->group(function () {
+                    Route::post('/send', [\App\Http\Controllers\Api\Admin\Email\EmailController::class, 'send']);
+                    Route::get('/logs', [\App\Http\Controllers\Api\Admin\Email\EmailController::class, 'logs']);
+                });
+
 
 
 

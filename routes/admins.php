@@ -101,6 +101,12 @@ Route::prefix('admin')->group(function () {
                     Route::get('/logs', [\App\Http\Controllers\Api\Admin\Email\EmailController::class, 'logs']);
                 });
 
+                Route::prefix('settings')->group(function () {
+                    Route::get('/', [\App\Http\Controllers\Api\SystemSettings\SystemSettingController::class, 'index']);
+                    Route::post('/', [\App\Http\Controllers\Api\SystemSettings\SystemSettingController::class, 'storeOrUpdate']);
+                    Route::post('/clear-cache', [\App\Http\Controllers\Api\SystemSettings\SystemSettingController::class, 'clearCache']);
+                });
+
 
 
 

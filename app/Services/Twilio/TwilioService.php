@@ -2,13 +2,12 @@
 
 namespace App\Services\Twilio;
 
-use Twilio\Rest\Client;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 
 class TwilioService
 {
-    protected ?Client $client = null;
+    protected $client = null;
 
     /**
      * Default country (ISO)
@@ -30,8 +29,8 @@ class TwilioService
         $sid   = config('TWILIO_SID');
         $token = config('TWILIO_AUTH_TOKEN');
 
-        if ($sid && $token) {
-            $this->client = new Client($sid, $token);
+        if (class_exists('Twilio\Rest\Client') && $sid && $token) {
+            $this->client = new \Twilio\Rest\Client($sid, $token);
         }
     }
 

@@ -11,6 +11,15 @@ use Illuminate\Support\Facades\Validator;
 
 class SystemSettingController extends Controller
 {
+    public function index()
+    {
+        $settings = SystemSetting::pluck('value', 'key');
+        return response()->json([
+            'success' => true,
+            'data' => $settings
+        ]);
+    }
+
     public function storeOrUpdate(Request $request)
     {
         // Validation rules for the input
